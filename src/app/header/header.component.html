@@ -1,0 +1,27 @@
+
+<nav class="navbar navbar-expand-lg sticky-top" [ngClass]="{'bg-light': !isDarkMode, 'bg-dark': isDarkMode}">
+  <div class="container">
+    <div class="navbar-brand-wrapper">
+      <img src="assets/favicon.ico" alt="Logo Segus Engineering" class="logo" />
+      <a class="navbar-brand" routerLink="/">Segus Engineering</a>
+      <span class="nav-icon"><i class="bx bx-menu"></i></span>
+    </div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Basculer la navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" routerLink="/" [ngClass]="{'active': isActive('/')}">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/about" [ngClass]="{'active': isActive('/about')}">À propos</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/services" [ngClass]="{'active': isActive('/services')}">Services</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/projets" [ngClass]="{'active': isActive('/projets')}">Projets</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/carriere" [ngClass]="{'active': isActive('/carriere')}">Carrière</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/team" [ngClass]="{'active': isActive('/team')}">Équipe</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/reviews" [ngClass]="{'active': isActive('/reviews')}">Témoignages</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/blog" [ngClass]="{'active': isActive('/blog')}">Blog</a></li>
+      </ul>
+      <a href="#" data-bs-toggle="modal" data-bs-target="#contactModal" class="btn btn-brand ms-lg-3" aria-label="Ouvrir le modal de contact">Contact</a>
+    </div>
+  </div>
+</nav>

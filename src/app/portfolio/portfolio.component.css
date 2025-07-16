@@ -1,0 +1,9 @@
+#projects-slider {
+  padding: 20px 0;
+}
+.project {
+  text-align: center;
+}
+.owl-carousel .owl-stage-outer {
+  overflow: hidden; /* Assure le défilement */
+}

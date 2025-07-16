@@ -1,0 +1,58 @@
+<section class="about-section">
+  <div class="container">
+    <!-- Header Section -->
+    <header class="about-header" @fadeInUp>
+      <h1 class="main-title">À propos de nous</h1>
+      <p class="main-subtitle">
+        SEGUS ENGINEERING transforme vos défis technologiques en opportunités d'innovation grâce à l'IA et la data science.
+      </p>
+    </header>
+
+    <!-- Mission Section -->
+    <div class="mission-section" @fadeInUp>
+      <div class="mission-content">
+        <div class="mission-text">
+          <h2 class="section-heading">Notre Mission</h2>
+          <p>
+            Nous créons des solutions IA sur mesure pour convertir vos données en succès durables, avec une approche innovante et centrée sur vos besoins.
+          </p>
+        </div>
+        <div class="mission-image">
+          <img src="assets/img/mission.jpg" alt="Mission Segus Engineering" loading="lazy" class="mission-photo">
+        </div>
+      </div>
+    </div>
+
+    <!-- Expertises Section -->
+    <div class="expertises-section" @fadeInUp>
+      <h2 class="section-heading">Nos Expertises</h2>
+      <div class="expertises-grid" @staggerIn>
+        <div class="service-card" *ngFor="let service of services; trackBy: trackByServiceId">
+          <div class="service-icon">
+            <i [class]="service.icon"></i>
+          </div>
+          <div class="service-content">
+            <h4>{{ service.title }}</h4>
+            <p>{{ service.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Values Section -->
+    <div class="values-section" @fadeInUp>
+      <h2 class="section-heading">Nos Valeurs</h2>
+      <div class="values-grid" @staggerIn>
+        <div class="value-card" *ngFor="let value of values; trackBy: trackByValueId">
+          <div class="value-icon">
+            <i [class]="value.icon"></i>
+          </div>
+          <h4>{{ value.title }}</h4>
+          <p>{{ value.description }}</p>
+          <img src="assets/img/value{{value.id}}.jpg" alt="{{value.title}}" loading="lazy" class="value-photo">
+        </div>
+      </div>
+    </div>
+ 
+  </div>
+</section>

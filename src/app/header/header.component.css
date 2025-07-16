@@ -1,0 +1,113 @@
+.navbar {
+  padding: 1rem 0;
+  background-color: #002552; /* Couleur principale */
+  transition: background-color 0.3s ease;
+  font-family: 'Arial', sans-serif; /* Police simple */
+}
+
+.navbar-brand-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+
+  border-radius: 4px;
+}
+
+.navbar-brand {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #002552; /* Gris clair au lieu de blanc */
+  transition: color 0.3s ease;
+}
+
+
+.nav-icon {
+  margin-left: 10px;
+  font-size: 24px;
+  color: #ffffff;
+  transition: color 0.3s ease;
+}
+
+.nav-icon:hover {
+  color: #002552;
+}
+
+.nav-link {
+  color: #fcfcfd;
+  margin-left: 1.2rem;
+  padding: 0.4rem 0.8rem;
+  transition: color 0.3s ease;
+}
+
+.nav-link.active {
+  color: #002552;
+  font-weight: bold;
+}
+
+.nav-link:hover {
+  color: #002552;
+}
+
+.btn-brand {
+  background-color: #002552; /* Accent bleu pour le bouton */
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.btn-brand:hover {
+  background-color: #002552; /* Retour à la couleur principale */
+}
+
+.bg-dark {
+  background-color: #04040a; /* Mode sombre */
+  color: #ffffff;
+}
+
+.bg-dark .nav-link {
+  color: #ffffff;
+}
+
+.bg-dark .navbar-brand {
+  color: #ffffff;
+}
+
+.bg-dark .nav-icon {
+  color: #ffffff;
+}
+
+.bg-dark .btn-brand {
+  background-color: #002552;
+}
+
+.bg-dark .btn-brand:hover {
+  background-color: #1a73c1;
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-width='2' stroke-linecap='round' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.bg-dark .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.8)' stroke-width='2' stroke-linecap='round' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+@media (max-width: 768px) {
+  .navbar-nav {
+    text-align: center;
+    background-color: #002552; /* Fond cohérent */
+  }
+  .nav-link {
+    margin: 0.5rem 0;
+    padding: 0.6rem;
+  }
+  .navbar-brand {
+    font-size: 1.1rem;
+  }
+}

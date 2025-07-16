@@ -1,0 +1,136 @@
+<section class="careers-section">
+  <div class="container">
+   <div class="owl-carousel owl-theme hero-slider" #slider>
+  <div class="slide slide1">
+    <div class="container">
+      <div class="row">
+        <div class="col-12 text-center text-white">
+          <h6 class="text-white text-uppercase">Design Driven for Professionals</h6>
+          <h1 class="display-3 my-4">We craft digital experiences</h1>
+          <a href="#" class="btn btn-brand">Get Started</a>
+          <a href="#" class="btn btn-outline-light ms-3">Our Work</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide slide2">
+    <div class="container">
+      <div class="row">
+        <div class="col-12 col-lg-10 offset-lg-1 text-white">
+          <h6 class="text-white text-uppercase">We craft digital experiences</h6>
+          <h1 class="display-3 my-4">Design Driven For Professionals</h1>
+          <a href="#" class="btn btn-brand">Get Started</a>
+          <a href="#" class="btn btn-outline-light ms-3">Our Work</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Pourquoi Segus Engineering? -->
+    <div class="why-segus" @fadeInUp>
+      <h2 class="section-heading">Pourquoi Segus Engineering ?</h2>
+      <div class="benefits-grid" @staggerIn>
+        <div class="benefit-card" *ngFor="let benefit of benefits; trackBy: trackByBenefitId">
+          <div class="benefit-icon">
+            <i [class]="benefit.icon"></i>
+          </div>
+          <h3>{{ benefit.title }}</h3>
+          <ul class="benefit-list">
+            <li *ngFor="let item of benefit.items">{{ item }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nos Offres -->
+    <div class="job-offers" id="job-offers" @fadeInUp>
+      <h2 class="section-heading">Nos Offres d'Emploi</h2>
+      <div class="job-filters">
+        <button class="filter-button" [class.active]="selectedFilter === 'all'" (click)="setFilter('all')" aria-label="Afficher toutes les offres">Tous</button>
+        <button class="filter-button" [class.active]="selectedFilter === 'engineering'" (click)="setFilter('engineering')" aria-label="Afficher les offres d'ingénierie">Ingénierie</button>
+        <button class="filter-button" [class.active]="selectedFilter === 'development'" (click)="setFilter('development')" aria-label="Afficher les offres de développement">Développement</button>
+        <button class="filter-button" [class.active]="selectedFilter === 'management'" (click)="setFilter('management')" aria-label="Afficher les offres de management">Management</button>
+      </div>
+      <div class="jobs-grid" @staggerIn>
+        <div class="job-card" *ngFor="let job of filteredJobs; trackBy: trackByJobId" [attr.data-category]="job.category">
+          <h3 class="job-title">{{ job.title }}</h3>
+          <div class="job-meta">
+            <span class="job-tag">{{ job.category }}</span>
+            <span class="job-tag">{{ job.location }}</span>
+            <span class="job-tag">{{ job.type }}</span>
+          </div>
+          <p class="job-description">{{ job.description }}</p>
+          <button class="apply-button" (click)="scrollToSection('spontaneous-application')">Postuler</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Candidature Spontanée -->
+    <div class="spontaneous-application" id="spontaneous-application" @fadeInUp>
+      <h2 class="section-heading">Candidature Spontanée</h2>
+      <p class="application-intro">Vous ne trouvez pas l'offre qui vous correspond ? Envoyez-nous votre candidature spontanée !</p>
+      <form class="application-form" [formGroup]="applicationForm" (ngSubmit)="onSubmit()" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="fullName">Nom & Prénom *</label>
+          <input type="text" id="fullName" formControlName="fullName" required aria-required="true">
+        </div>
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" formControlName="email" required aria-required="true">
+        </div>
+        <div class="form-group">
+          <label for="phone">Téléphone *</label>
+          <input type="tel" id="phone" formControlName="phone" required aria-required="true">
+        </div>
+        <div class="form-group">
+          <label for="position">Poste recherché *</label>
+          <input type="text" id="position" formControlName="position" required aria-required="true">
+        </div>
+        <div class="form-group">
+          <label for="cv">CV *</label>
+          <div class="file-upload">
+            <input type="file" id="cv" formControlName="cv" accept=".pdf,.doc,.docx" (change)="onFileChange($event)" required aria-required="true">
+            <label for="cv" class="file-upload-label">
+              <i class="fas fa-upload"></i> {{ fileName || 'Choisir un fichier' }}
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="motivation">Lettre de motivation *</label>
+          <textarea id="motivation" formControlName="motivation" placeholder="Expliquez-nous pourquoi vous souhaitez rejoindre Segus Engineering..." required aria-required="true"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="portfolio">Portfolio/LinkedIn (optionnel)</label>
+          <input type="url" id="portfolio" formControlName="portfolio" placeholder="https://...">
+        </div>
+        <button type="submit" class="submit-button">Envoyer ma candidature</button>
+      </form>
+    </div>
+
+    <!-- Où Nous Trouver? -->
+    <div class="find-us" @fadeInUp>
+      <h2 class="section-heading">Où Nous Trouver ?</h2>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <div class="contact-item" *ngFor="let contact of contactInfo; trackBy: trackByContactId">
+            <div class="contact-icon">
+              <i [class]="contact.icon"></i>
+            </div>
+            <div class="contact-details">
+              <h4>{{ contact.title }}</h4>
+              <p>
+                <a *ngIf="contact.link" [href]="contact.link">{{ contact.value }}</a>
+                <span *ngIf="!contact.link">{{ contact.value }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="map-container">
+          <img src="assets/img/map.jpg" alt="Carte de localisation" loading="lazy" class="map-photo">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

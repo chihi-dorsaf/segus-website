@@ -1,0 +1,67 @@
+.top-nav {
+  background-color: #002552;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  /* Animation d'apparition au chargement */
+  opacity: 0;
+  animation: fadeIn 1s ease-in-out forwards;
+  animation-delay: 0.5s; /* Délai pour un effet naturel */
+}
+
+/* Animation de fondu */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px); /* Déplacement vers le haut au départ */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0); /* Retour à la position normale */
+  }
+}
+
+.top-nav a {
+  color: #ffffff;
+  margin: 0 5px;
+  font-size: 18px;
+  transition: color 0.3s ease, transform 0.3s ease; /* Transition fluide pour couleur et échelle */
+}
+
+.top-nav a:hover {
+  color: #002552; /* Jaune au survol */
+  transform: scale(1.2); /* Zoom léger */
+}
+
+.top-nav .social-icons .bx.bxl-linkedin:hover {
+  color: #0077b5; /* Couleur LinkedIn officielle */
+}
+
+.brand-text {
+  font-weight: bold;
+  margin-right: 15px;
+  transition: transform 0.3s ease, color 0.3s ease; /* Transition pour le texte de marque */
+}
+
+.top-nav:hover .brand-text {
+  transform: translateX(5px); /* Déplacement léger vers la droite au survol */
+  color: #e0e0e0; /* Légère variation de couleur */
+}
+
+@media (max-width: 768px) {
+  .top-nav .col-auto p {
+    margin-bottom: 5px;
+  }
+  .top-nav a {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .top-nav .row {
+    flex-direction: column;
+    text-align: center;
+  }
+  .social-icons {
+    margin-top: 10px;
+  }
+}

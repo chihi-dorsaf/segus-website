@@ -1,0 +1,68 @@
+<section id="blog" class="blog-section">
+  <div class="container">
+    <!-- Introduction de la section -->
+    <div class="blog-intro" @slideInLeft>
+      <h6 class="section-subtitle">Blog</h6>
+      <h1 class="section-title">Nos derniers articles</h1>
+      <p class="section-description">
+        Découvrez les tendances en IA, ingénierie et marketing numérique.
+      </p>
+    </div>
+
+    <!-- Filtres par tags -->
+    <div class="blog-filters" @fadeInUp>
+      <div class="filter-tabs">
+        <button
+          *ngFor="let tag of availableTags"
+          (click)="onTagChange(tag)"
+          [class.active]="selectedTag === tag"
+          class="filter-tab">
+          {{ getTagDisplayName(tag) }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicateur de chargement -->
+    <div *ngIf="isLoading" class="loading-indicator">
+      <div class="spinner"></div>
+      <p>Chargement des articles...</p>
+    </div>
+
+    <!-- Grille des articles -->
+    <div class="blog-grid" *ngIf="!isLoading" @staggerIn>
+      <article class="blog-post" *ngFor="let post of visiblePosts; trackBy: trackByPostId">
+
+        <div class="blog-post-image">
+          <img [src]="post.image" [alt]="post.title" loading="lazy" >
+          <span class="tag" [ngClass]="post.tag.toLowerCase()">{{ post.tag }}</span>
+        </div>
+        <div class="blog-post-content">
+          <div class="post-meta">
+            <small class="post-date">{{ formatDate(post.date) }}</small>
+            <span class="meta-separator">•</span>
+            <small class="read-time">{{ getReadTimeText(post.readTime) }}</small>
+          </div>
+          <h5>
+            <a [routerLink]="['/blog', post.slug]" class="post-title-link">
+              {{ post.title }}
+            </a>
+          </h5>
+          <p>{{ post.excerpt }}</p>
+        </div>
+      </article>
+    </div>
+
+    <!-- Pagination -->
+    <div class="blog-pagination" *ngIf="!isLoading">
+      <div class="pagination-info">
+        <span>{{ visiblePosts.length }} article(s) sur {{ filteredPosts.length }}</span>
+      </div>
+      <button
+        *ngIf="currentPage < totalPages"
+        (click)="loadMorePosts()"
+        class="load-more-btn">
+        Charger plus
+      </button>
+    </div>
+  </div>
+</section>
