@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Contact</title>
+</head>
+<body>
+    <h1>Test Direct API Contact</h1>
+    <button onclick="testAPI()">Tester l'API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const data = {
+                first_name: "Test",
+                last_name: "User",
+                email: "test@example.com",
+                subject: "Test Subject",
+                message: "This is a test message from direct HTML"
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/contact-messages/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Résultat:</h3>
+                    <p>Status: ${response.status}</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+                console.log('Success:', result);
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>Erreur:</h3>
+                    <p style="color: red;">${error.message}</p>
+                `;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

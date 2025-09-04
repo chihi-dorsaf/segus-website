@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenue chez Segus Engineering</title>
+  <style>
+    body { 
+      background: #fcfcfd; 
+      font-family: Arial, Helvetica, sans-serif; 
+      color: #04040a; 
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper { 
+      max-width: 600px; 
+      margin: 24px auto; 
+      background: #ffffff; 
+      border-radius: 12px; 
+      box-shadow: 0 10px 30px rgba(0,37,82,0.1); 
+      overflow: hidden; 
+    }
+    .header { 
+      background: linear-gradient(135deg, #002552, #1a73c1); 
+      color: #fff; 
+      padding: 30px 24px; 
+      text-align: center;
+    }
+    .header h1 { 
+      margin: 0; 
+      font-size: 24px; 
+      font-weight: 600;
+    }
+    .header .subtitle {
+      margin: 8px 0 0 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .content { 
+      padding: 32px 24px; 
+    }
+    .welcome-message {
+      font-size: 18px;
+      color: #002552;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .credentials-box {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .credentials-box h3 {
+      color: #002552;
+      margin: 0 0 15px 0;
+      font-size: 16px;
+    }
+    .credential-item {
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border-left: 3px solid #1a73c1;
+    }
+    .btn { 
+      display: inline-block; 
+      background: #1a73c1; 
+      color: #fff !important; 
+      text-decoration: none; 
+      padding: 14px 24px; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      margin: 20px 0;
+      text-align: center;
+    }
+    .btn:hover { 
+      background: #135fa0; 
+    }
+    .info-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .info-section h3 {
+      color: #002552;
+      margin: 0 0 15px 0;
+      font-size: 16px;
+    }
+    .footer { 
+      padding: 20px 24px; 
+      color: #6c757d; 
+      font-size: 14px; 
+      border-top: 1px solid #e9ecef; 
+      text-align: center;
+    }
+    .highlight {
+      color: #1a73c1;
+      font-weight: 600;
+    }
+  </style>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'none'; object-src 'none'">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-amphtml" content="not-allowed">
+  <meta name="x-noopener" content="true">
+  <meta name="x-noreferrer" content="true">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Download-Options" content="noopen">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-Permitted-Cross-Domain-Policies" content="none">
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Bienvenue chez Segus Engineering</h1>
+      <p class="subtitle">Votre compte a été créé avec succès</p>
+    </div>
+    <div class="content">
+      <div class="welcome-message">
+        Bonjour {{ employee.user.first_name|default:employee.user.username }},
+      </div>
+      
+      <p>Nous sommes ravis de vous accueillir dans l'équipe Segus Engineering ! Votre compte employé a été créé avec succès.</p>
+      
+      <div class="credentials-box">
+        <h3>🔐 Vos identifiants de connexion</h3>
+        <div class="credential-item">
+          <strong>Nom d'utilisateur :</strong> {{ employee.user.username }}
+        </div>
+        <div class="credential-item">
+          <strong>Mot de passe :</strong> {{ password }}
+        </div>
+        <div class="credential-item">
+          <strong>Matricule :</strong> {{ employee.matricule }}
+        </div>
+      </div>
+      
+      <p>Pour commencer à utiliser votre compte, veuillez vous connecter à notre plateforme :</p>
+      
+      <a href="http://localhost:4200/login" class="btn" target="_blank" rel="noopener noreferrer">
+        Se connecter à la plateforme
+      </a>
+      
+      <div class="info-section">
+        <h3>📋 Informations importantes</h3>
+        <ul>
+          <li><strong>Poste :</strong> {{ employee.position|default:"Non défini" }}</li>
+          <li><strong>Date d'embauche :</strong> {{ employee.hire_date|date:"d/m/Y"|default:"Non définie" }}</li>
+          <li><strong>Statut :</strong> <span class="highlight">Actif</span></li>
+        </ul>
+      </div>
+      
+      <p><strong>⚠️ Important :</strong> Pour des raisons de sécurité, nous vous recommandons de changer votre mot de passe lors de votre première connexion.</p>
+      
+      <p>Si vous avez des questions ou besoin d'aide, n'hésitez pas à contacter l'équipe d'administration.</p>
+      
+      <p>Cordialement,<br>
+      <strong>L'équipe Segus Engineering</strong></p>
+    </div>
+    <div class="footer">
+      <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
+      <p>&copy; {{ now|default:"2025" }} Segus Engineering. Tous droits réservés.</p>
+    </div>
+  </div>
+</body>
+</html>
+
+

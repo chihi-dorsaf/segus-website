@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue chez Segus Engineering</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .welcome-message {
+            margin-bottom: 30px;
+        }
+        
+        .welcome-message h2 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .welcome-message p {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .credentials-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .credentials-box h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .credential-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .credential-label {
+            font-weight: 600;
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .credential-value {
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            min-width: 200px;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .instructions h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .instructions li {
+            padding: 8px 0;
+            color: #555;
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .instructions li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .footer p {
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .footer .contact {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        .security-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .security-note strong {
+            color: #d63031;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Bienvenue chez Segus Engineering</h1>
+            <p>Votre compte employé a été créé avec succès</p>
+        </div>
+        
+        <div class="content">
+            <div class="welcome-message">
+                <h2>Bonjour {{ employee_name }},</h2>
+                <p>Nous sommes ravis de vous accueillir dans notre équipe ! Votre compte employé a été créé avec succès et vous pouvez dès maintenant accéder à notre plateforme.</p>
+                <p>Voici vos identifiants de connexion :</p>
+            </div>
+            
+            <div class="credentials-box">
+                <h3>🔐 Vos Identifiants de Connexion</h3>
+                <div class="credential-item">
+                    <div class="credential-label">Adresse Email</div>
+                    <div class="credential-value">{{ email }}</div>
+                </div>
+                <div class="credential-item">
+                    <div class="credential-label">Mot de Passe Temporaire</div>
+                    <div class="credential-value">{{ password }}</div>
+                </div>
+            </div>
+            
+            <div class="security-note">
+                <strong>⚠️ Important :</strong> Pour des raisons de sécurité, nous vous recommandons fortement de changer votre mot de passe lors de votre première connexion.
+            </div>
+            
+            <div class="instructions">
+                <h4>📋 Prochaines Étapes</h4>
+                <ul>
+                    <li>Connectez-vous à votre compte avec les identifiants ci-dessus</li>
+                    <li>Changez votre mot de passe dans les paramètres de votre profil</li>
+                    <li>Complétez votre profil avec vos informations personnelles</li>
+                    <li>Consultez les documents et procédures de l'entreprise</li>
+                    <li>Prenez contact avec votre responsable pour votre intégration</li>
+                </ul>
+            </div>
+            
+            <div class="instructions">
+                <h4>🔗 Accès à la Plateforme</h4>
+                <p>Vous pouvez accéder à votre espace employé en visitant :</p>
+                <p style="text-align: center; margin: 15px 0;">
+                    <a href="{{ login_url }}" style="background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                        🚀 Accéder à Mon Espace
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Segus Engineering</strong></p>
+            <p>Votre partenaire de confiance en ingénierie</p>
+            <div class="contact">
+                <p>📧 support@segus-engineering.com</p>
+                <p>📞 +33 1 23 45 67 89</p>
+                <p>🌐 www.segus-engineering.com</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
