@@ -84,6 +84,38 @@ class UserViewSet(viewsets.ModelViewSet):
         prc.save()
         return Response({'message': 'Mot de passe réinitialisé avec succès'}, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get', 'patch'], url_path='me', url_name='me')
+    def me(self, request):
+        """
+        Get or update current user profile
+        Accessible via: GET/PATCH /api/auth/users/me/
+        """
+        try:
+            user = request.user
+            logger.info(f"[UserViewSet] Profile request for {user.email}")
+            
+            if request.method == 'GET':
+                from .serializers import UserSerializer
+                serializer = UserSerializer(user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            elif request.method == 'PATCH':
+                from .serializers import UserSerializer
+                serializer = UserSerializer(user, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    logger.info(f"[UserViewSet] Profile updated for {user.email}")
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    logger.error(f"[UserViewSet] Profile update validation errors: {serializer.errors}")
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+        except Exception as e:
+            logger.error(f"[UserViewSet] Error in profile endpoint: {str(e)}")
+            return Response({
+                'error': f'Erreur lors de la gestion du profil: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['get'], url_path='employees', url_name='employees')
     def employees(self, request):
         """

@@ -132,25 +132,95 @@ class SubTaskViewSet(viewsets.ModelViewSet):
         except Employee.DoesNotExist:
             return Response({'error': 'Employé non trouvé'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['post'])
+    def sync_project_subtasks(self, request):
+        """Synchroniser les sous-tâches du système de projets avec le système de gamification"""
+        try:
+            employee = Employee.objects.get(user=request.user)
+            today = date.today()
+            
+            # Déclencher le calcul des performances pour aujourd'hui
+            self._update_daily_performance(employee, today)
+            
+            return Response({
+                'message': 'Synchronisation terminée',
+                'employee': employee.user.get_full_name(),
+                'date': today
+            })
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employé non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'])
+    def complete_project_subtask(self, request, pk=None):
+        """Marquer une sous-tâche du système de projets comme terminée et déclencher le calcul des étoiles"""
+        try:
+            from projects.models import SubTask as ProjectSubTask
+            employee = Employee.objects.get(user=request.user)
+            
+            # Récupérer la sous-tâche du système de projets
+            project_subtask = get_object_or_404(ProjectSubTask, pk=pk)
+            
+            # Vérifier que l'employé est assigné à cette sous-tâche
+            if employee.user not in project_subtask.assigned_employees.all():
+                return Response({'error': 'Vous n\'êtes pas assigné à cette sous-tâche'}, 
+                              status=status.HTTP_403_FORBIDDEN)
+            
+            # Marquer comme terminée
+            project_subtask.is_completed = True
+            project_subtask.save()
+            
+            # Déclencher le calcul des performances pour la date de création
+            creation_date = project_subtask.created_at.date()
+            self._update_daily_performance(employee, creation_date)
+            
+            return Response({
+                'message': 'Sous-tâche marquée comme terminée',
+                'subtask_id': pk,
+                'employee': employee.user.get_full_name()
+            })
+            
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employé non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def _update_daily_performance(self, employee, date_obj):
         """Mettre à jour la performance quotidienne après completion d'une tâche"""
-        completed_subtasks = SubTask.objects.filter(
+        # Compter les sous-tâches terminées dans le système de gamification
+        gamification_completed = SubTask.objects.filter(
             employee=employee,
             assigned_date=date_obj,
             status='completed'
         ).count()
         
+        # Compter aussi les sous-tâches terminées dans le système de projets
+        from projects.models import SubTask as ProjectSubTask
+        project_completed = ProjectSubTask.objects.filter(
+            assigned_employees=employee.user,  # Utiliser employee.user au lieu de employee
+            created_at__date=date_obj,
+            is_completed=True
+        ).count()
+        
+        # Total des sous-tâches terminées
+        total_completed = gamification_completed + project_completed
+        
         performance, created = DailyPerformance.objects.get_or_create(
             employee=employee,
             date=date_obj,
-            defaults={'completed_subtasks': completed_subtasks}
+            defaults={'completed_subtasks': total_completed}
         )
         
         if not created:
-            performance.completed_subtasks = completed_subtasks
+            performance.completed_subtasks = total_completed
             performance.save()
         
         performance.calculate_performance()
+        
+        # Mettre à jour les statistiques globales de l'employé
+        from .models import EmployeeStats
+        employee_stats, created = EmployeeStats.objects.get_or_create(employee=employee)
+        employee_stats.update_stats()
+        employee_stats.check_and_award_badges()
 
 
 class DailyPerformanceViewSet(viewsets.ModelViewSet):

@@ -89,7 +89,7 @@ class DailyPerformance(models.Model):
         return f"{self.employee.user.get_full_name()} - {self.date} - {self.daily_stars_earned} étoiles"
 
     def calculate_performance(self):
-        """Calculer la performance quotidienne"""
+        """Calculer la performance quotidienne selon la méthode de badging améliorée"""
         if self.objective:
             # Vérifier si les objectifs sont atteints
             self.subtasks_goal_achieved = self.completed_subtasks >= self.objective.target_subtasks
@@ -99,13 +99,46 @@ class DailyPerformance(models.Model):
             # Calculer les heures supplémentaires
             if self.worked_hours > self.objective.target_hours:
                 self.overtime_hours = self.worked_hours - self.objective.target_hours
+            else:
+                self.overtime_hours = Decimal('0.00')
             
-            # Attribution des étoiles (¼ étoile si tous les objectifs sont atteints)
+            # Attribution des étoiles selon la méthode améliorée
+            if self.all_goals_achieved:
+                # ¼ étoile par jour si tous les objectifs sont atteints
+                self.daily_stars_earned = Decimal('0.25')
+            else:
+                self.daily_stars_earned = Decimal('0.00')
+        else:
+            # Si pas d'objectifs définis, utiliser des objectifs par défaut
+            default_target_subtasks = 2  # 2 sous-tâches par défaut
+            default_target_hours = Decimal('8.00')  # 8 heures par défaut
+            
+            self.subtasks_goal_achieved = self.completed_subtasks >= default_target_subtasks
+            self.hours_goal_achieved = self.worked_hours >= default_target_hours
+            self.all_goals_achieved = self.subtasks_goal_achieved and self.hours_goal_achieved
+            
+            # Calculer les heures supplémentaires
+            if self.worked_hours > default_target_hours:
+                self.overtime_hours = self.worked_hours - default_target_hours
+            else:
+                self.overtime_hours = Decimal('0.00')
+            
+            # Attribution des étoiles même sans objectifs formels
             if self.all_goals_achieved:
                 self.daily_stars_earned = Decimal('0.25')
-                self.bonus_points = int(self.overtime_hours * 10)  # 10 points par heure supplémentaire
-            
-            self.save()
+            else:
+                self.daily_stars_earned = Decimal('0.00')
+        
+        # Calcul des points bonus selon la méthode améliorée
+        # Points pour sous-tâches accomplies (1 point par sous-tâche)
+        subtask_points = self.completed_subtasks
+        
+        # Points pour heures supplémentaires (10 points par heure)
+        overtime_points = int(self.overtime_hours * 10)
+        
+        self.bonus_points = subtask_points + overtime_points
+        
+        self.save()
 
 
 class MonthlyPerformance(models.Model):
@@ -137,7 +170,7 @@ class MonthlyPerformance(models.Model):
         return f"{self.employee.user.get_full_name()} - {self.month}/{self.year} - {self.total_monthly_stars} étoiles"
 
     def calculate_monthly_performance(self):
-        """Calculer la performance mensuelle"""
+        """Calculer la performance mensuelle selon la méthode de badging améliorée"""
         # Récupérer toutes les performances quotidiennes du mois
         daily_performances = DailyPerformance.objects.filter(
             employee=self.employee,
@@ -152,9 +185,11 @@ class MonthlyPerformance(models.Model):
         self.days_with_all_goals = daily_performances.filter(all_goals_achieved=True).count()
         
         # Calculer les étoiles de régularité (¼ étoile par jour avec tous les objectifs atteints)
+        # Ceci correspond aux étoiles quotidiennes déjà gagnées
         self.regularity_stars = Decimal(self.days_with_all_goals) * Decimal('0.25')
         
-        # Bonus mensuel pour heures supplémentaires (½ étoile si > 32h supplémentaires)
+        # Bonus mensuel pour heures supplémentaires selon la méthode améliorée
+        # ½ étoile si l'employé accumule plus de 32 heures supplémentaires dans le mois
         if self.total_overtime_hours > 32:
             self.overtime_bonus_stars = Decimal('0.50')
         else:
@@ -163,7 +198,7 @@ class MonthlyPerformance(models.Model):
         # Total des étoiles mensuelles
         self.total_monthly_stars = self.regularity_stars + self.overtime_bonus_stars
         
-        # Total des points mensuels
+        # Total des points mensuels (sous-tâches + heures supplémentaires)
         self.total_monthly_points = sum(dp.bonus_points for dp in daily_performances)
         
         self.save()
@@ -247,14 +282,14 @@ class EmployeeStats(models.Model):
 
     def update_stats(self):
         """Mettre à jour les statistiques globales"""
-        # Calculer les totaux à partir des performances mensuelles
-        monthly_perfs = MonthlyPerformance.objects.filter(employee=self.employee)
+        # Calculer les totaux à partir des performances quotidiennes directement
+        daily_perfs = DailyPerformance.objects.filter(employee=self.employee)
         
-        self.total_stars = sum(mp.total_monthly_stars for mp in monthly_perfs)
-        self.total_points = sum(mp.total_monthly_points for mp in monthly_perfs)
-        self.total_completed_subtasks = sum(mp.total_completed_subtasks for mp in monthly_perfs)
-        self.total_worked_hours = sum(mp.total_worked_hours for mp in monthly_perfs)
-        self.total_overtime_hours = sum(mp.total_overtime_hours for mp in monthly_perfs)
+        self.total_stars = sum(dp.daily_stars_earned for dp in daily_perfs)
+        self.total_points = sum(dp.bonus_points for dp in daily_perfs)
+        self.total_completed_subtasks = sum(dp.completed_subtasks for dp in daily_perfs)
+        self.total_worked_hours = sum(dp.worked_hours for dp in daily_perfs)
+        self.total_overtime_hours = sum(dp.overtime_hours for dp in daily_perfs)
         
         # Compter les badges
         self.total_badges = EmployeeBadge.objects.filter(employee=self.employee).count()

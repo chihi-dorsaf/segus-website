@@ -30,7 +30,7 @@ class WorkSessionSSEView(View):
                     content_type='text/plain',
                     status=401
                 )
-                response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+                response['Access-Control-Allow-Origin'] = '*'
                 response['Access-Control-Allow-Credentials'] = 'true'
                 return response
             
@@ -43,7 +43,7 @@ class WorkSessionSSEView(View):
                     content_type='text/plain',
                     status=401
                 )
-                response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+                response['Access-Control-Allow-Origin'] = '*'
                 response['Access-Control-Allow-Credentials'] = 'true'
                 return response
             
@@ -56,7 +56,7 @@ class WorkSessionSSEView(View):
             )
             response['Cache-Control'] = 'no-cache'
             response['X-Accel-Buffering'] = 'no'  # Disable nginx buffering
-            response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+            response['Access-Control-Allow-Origin'] = '*'
             response['Access-Control-Allow-Credentials'] = 'true'
             
             logger.info("SSE response created successfully")
@@ -69,14 +69,14 @@ class WorkSessionSSEView(View):
                 content_type='text/plain',
                 status=500
             )
-            response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+            response['Access-Control-Allow-Origin'] = '*'
             response['Access-Control-Allow-Credentials'] = 'true'
             return response
     
     def options(self, request):
         """Handle CORS preflight requests"""
         response = HttpResponse()
-        response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+        response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
         response['Access-Control-Allow-Credentials'] = 'true'
@@ -85,49 +85,74 @@ class WorkSessionSSEView(View):
     def authenticate_user(self, token):
         """Authentifier un utilisateur via JWT token"""
         try:
-            if token.startswith('Bearer%20'):
-                token = token[10:]
-            elif token.startswith('Bearer '):
+            # Handle URL encoded token
+            import urllib.parse
+            token = urllib.parse.unquote(token)
+            
+            if token.startswith('Bearer '):
                 token = token[7:]
+            elif token.startswith('Bearer%20'):
+                token = token[10:]
+            
+            logger.info(f"Processing token: {token[:50]}...")
             
             jwt_auth = JWTAuthentication()
             validated_token = jwt_auth.get_validated_token(token)
             user = jwt_auth.get_user(validated_token)
+            logger.info(f"User authenticated: {user.email}")
             return user
         except (InvalidToken, TokenError) as e:
             logger.error(f"Token authentication failed: {e}")
             return None
+        except Exception as e:
+            logger.error(f"Unexpected error in authentication: {e}")
+            return None
     
     def event_stream(self, user):
         """Générateur pour le flux d'événements SSE"""
+        connection_id = f"{user.id}_{int(time.time())}"
+        logger.info(f"Creating SSE connection {connection_id} for user {user.email}")
+        
         try:
-            connection_id = f"{user.id}_{int(time.time())}"
-            logger.info(f"Creating SSE connection {connection_id} for user {user.email}")
-            
             sse_connections[connection_id] = {
                 'user': user,
                 'last_ping': time.time(),
-                'pending_messages': []
+                'pending_messages': [],
+                'active': True
             }
             
             # Message de connexion
             yield f"data: {json.dumps({'type': 'connected', 'user_id': user.id})}\n\n"
             logger.info(f"Sent connection message for user {user.email}")
             
-            # Boucle de maintien de connexion
-            while True:
+            # Boucle de maintien de connexion avec limite de temps
+            start_time = time.time()
+            max_connection_time = 3600  # 1 heure maximum
+            
+            while (connection_id in sse_connections and 
+                   sse_connections[connection_id].get('active', False) and
+                   (time.time() - start_time) < max_connection_time):
                 try:
-                    # Ping périodique pour maintenir la connexion
+                    # Vérifier si la connexion est toujours active
+                    if connection_id not in sse_connections:
+                        logger.info(f"Connection {connection_id} no longer exists, breaking loop")
+                        break
+                    
+                    connection = sse_connections[connection_id]
                     current_time = time.time()
-                    if current_time - sse_connections[connection_id]['last_ping'] > 30:
+                    
+                    # Ping périodique pour maintenir la connexion
+                    if current_time - connection['last_ping'] > 30:
                         yield f"data: {json.dumps({'type': 'ping', 'timestamp': current_time})}\n\n"
-                        sse_connections[connection_id]['last_ping'] = current_time
+                        connection['last_ping'] = current_time
                     
                     # Vérifier s'il y a des messages en attente
-                    if connection_id in sse_connections and sse_connections[connection_id]['pending_messages']:
-                        for message in sse_connections[connection_id]['pending_messages']:
+                    if connection['pending_messages']:
+                        messages_to_send = connection['pending_messages'].copy()
+                        connection['pending_messages'].clear()
+                        
+                        for message in messages_to_send:
                             yield f"data: {json.dumps(message)}\n\n"
-                        sse_connections[connection_id]['pending_messages'].clear()
                     
                     time.sleep(5)  # Attendre 5 secondes avant la prochaine vérification
                     
@@ -136,14 +161,18 @@ class WorkSessionSSEView(View):
                     break
                 
         except GeneratorExit:
-            # Nettoyage lors de la déconnexion
-            if connection_id in sse_connections:
-                del sse_connections[connection_id]
-            logger.info(f"SSE connection closed for user {user.email}")
+            logger.info(f"Generator exit for connection {connection_id}")
         except Exception as e:
             logger.error(f"Error in event_stream: {e}", exc_info=True)
-            if connection_id in sse_connections:
-                del sse_connections[connection_id]
+        finally:
+            # Nettoyage lors de la déconnexion
+            try:
+                if connection_id in sse_connections:
+                    sse_connections[connection_id]['active'] = False
+                    del sse_connections[connection_id]
+                    logger.info(f"SSE connection closed and cleaned up for user {user.email}")
+            except Exception as cleanup_error:
+                logger.error(f"Error during connection cleanup: {cleanup_error}")
 
 def broadcast_work_session_event(event_type, user_id, data):
     """Diffuser un événement de session de travail à toutes les connexions SSE"""
@@ -168,7 +197,7 @@ def notify_session_event(request):
     """Endpoint pour notifier les événements de session"""
     if request.method == 'OPTIONS':
         response = HttpResponse()
-        response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+        response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
         response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
         response['Access-Control-Allow-Credentials'] = 'true'
@@ -188,7 +217,7 @@ def notify_session_event(request):
                 json.dumps({'status': 'success'}),
                 content_type='application/json'
             )
-            response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+            response['Access-Control-Allow-Origin'] = '*'
             response['Access-Control-Allow-Credentials'] = 'true'
             return response
         except Exception as e:
@@ -198,7 +227,7 @@ def notify_session_event(request):
                 content_type='application/json',
                 status=500
             )
-            response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+            response['Access-Control-Allow-Origin'] = '*'
             response['Access-Control-Allow-Credentials'] = 'true'
             return response
     
@@ -207,7 +236,7 @@ def notify_session_event(request):
         content_type='application/json',
         status=405
     )
-    response['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+    response['Access-Control-Allow-Origin'] = '*'
     response['Access-Control-Allow-Credentials'] = 'true'
     return response
 
