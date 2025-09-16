@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL pour développement
+  db:
+    image: postgres:15-alpine
+    container_name: segus_db_dev
+    environment:
+      POSTGRES_DB: segus_engineering_dev
+      POSTGRES_USER: segus_dev
+      POSTGRES_PASSWORD: dev_password_123
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - segus_dev_network
+
+  # Redis pour développement
+  redis:
+    image: redis:7-alpine
+    container_name: segus_redis_dev
+    ports:
+      - "6380:6379"
+    networks:
+      - segus_dev_network
+
+  # Backend Django en mode développement
+  backend:
+    build:
+      context: ./segus_engineering_Backend
+      dockerfile: Dockerfile.dev
+    container_name: segus_backend_dev
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://segus_user:segus_password_2024@db:5432/segus_engineering
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=django-insecure-dev-key-change-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:4200
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+    volumes:
+      - ./segus_engineering_Backend:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - logs_volume:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - segus-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Segus_Engineering_Frontend
+      dockerfile: Dockerfile.dev
+    container_name: segus_frontend_dev
+    environment:
+      - API_URL=http://localhost:8000/api
+      - AUTH_URL=http://localhost:8000/auth
+      - WS_URL=ws://localhost:8000
+      - ENVIRONMENT=development
+    volumes:
+      - ./Segus_Engineering_Frontend:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+    networks:
+      - segus-network
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  static_volume:
+    driver: local
+  dev_media_volume:
+    driver: local
+
+networks:
+  segus_dev_network:
+    driver: bridge

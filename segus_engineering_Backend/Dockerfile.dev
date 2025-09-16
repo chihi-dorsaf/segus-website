@@ -1,0 +1,45 @@
+# Dockerfile pour le développement Django
+FROM python:3.11-slim
+
+# Variables d'environnement pour le développement
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=segus_engineering_Backend.settings
+
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libmariadb-dev \
+    pkg-config \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Créer le répertoire de travail
+WORKDIR /app
+
+# Copier et installer les dépendances Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Installer des outils de développement supplémentaires
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-django \
+    pytest-cov \
+    black \
+    flake8 \
+    isort \
+    django-debug-toolbar
+
+# Copier le code source
+COPY . .
+
+# Créer les répertoires nécessaires
+RUN mkdir -p static media logs
+
+# Exposer le port
+EXPOSE 8000
+
+# Commande par défaut pour le développement
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
