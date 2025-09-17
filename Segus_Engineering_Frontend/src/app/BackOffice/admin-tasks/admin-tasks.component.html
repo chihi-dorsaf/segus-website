@@ -1,0 +1,941 @@
+<div class="admin-tasks-container">
+  <!-- En-tête avec statistiques -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Gestion des Tâches</h1>
+      <p class="subtitle">Organisation et suivi des tâches et sous-tâches</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openCreateTaskModal()">
+        <i class="fas fa-plus"></i>
+        Nouvelle Tâche
+      </button>
+      <button class="btn btn-outline-secondary" (click)="viewMode = (viewMode === 'grid' ? 'list' : 'grid')">
+        <i class="fas" [class.fa-th]="viewMode === 'grid'" [class.fa-list]="viewMode === 'list'"></i>
+        {{ viewMode === 'grid' ? 'Vue Liste' : 'Vue Grille' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques rapides -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-icon" style="background-color: #3b82f6">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ taskStats.totalTasks }}</h3>
+        <p>Total Tâches</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background-color: #10b981">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ taskStats.completedTasks }}</h3>
+        <p>Terminées</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background-color: #3b82f6">
+        <i class="fas fa-play-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ taskStats.tasksInProgress }}</h3>
+        <p>En Cours</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background-color: #ef4444">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ taskStats.tasksTodo }}</h3>
+        <p>À Faire</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        placeholder="Rechercher une tâche..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+      >
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label>Statut:</label>
+        <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
+          <option value="">Tous les statuts</option>
+          <option [value]="TaskStatus.TODO">À faire</option>
+          <option [value]="TaskStatus.IN_PROGRESS">En cours</option>
+          <option [value]="TaskStatus.COMPLETED">Terminé</option>
+          <option [value]="TaskStatus.BLOCKED">Bloqué</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Priorité:</label>
+        <select [(ngModel)]="selectedPriority" (change)="applyFilters()">
+          <option value="">Toutes les priorités</option>
+          <option [value]="Priority.VERY_LOW">Très basse</option>
+          <option [value]="Priority.LOW">Basse</option>
+          <option [value]="Priority.MEDIUM">Moyenne</option>
+          <option [value]="Priority.HIGH">Haute</option>
+          <option [value]="Priority.VERY_HIGH">Très haute</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Projet:</label>
+        <select [(ngModel)]="selectedProject" (change)="applyFilters()">
+          <option value="">Tous les projets</option>
+          <option *ngFor="let proj of projects" [value]="proj.id">
+            {{ proj.title }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Assigné à:</label>
+        <select [(ngModel)]="selectedAssignee" (change)="applyFilters()">
+          <option value="">Tous les assignés</option>
+          <option *ngFor="let emp of employees" [value]="emp.id">
+            {{ emp.full_name || emp.username }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Date échéance:</label>
+        <input type="date" [(ngModel)]="dueDateFilter" (change)="applyFilters()">
+      </div>
+
+      <button class="btn btn-outline-secondary" (click)="clearFilters()">
+        <i class="fas fa-times"></i>
+        Effacer
+      </button>
+    </div>
+  </div>
+
+  <!-- Vue en Grille -->
+  <div class="tasks-grid" *ngIf="viewMode === 'grid'">
+    <div class="task-card" *ngFor="let task of filteredTasks"
+         [class.overdue]="isTaskOverdue(task)"
+         [class.due-soon]="isTaskDueSoon(task)">
+
+      <div class="card-header">
+        <div class="task-priority" [style.background-color]="getPriorityColor(task.priority)">
+          {{ getPriorityLabel(task.priority) }}
+        </div>
+        <div class="task-status" [class]="'status-' + task.status">
+          {{ getStatusLabel(task.status) }}
+        </div>
+        <div class="task-menu">
+          <button class="btn-menu" (click)="openTaskMenu($event, task)">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h3 class="task-title">{{ task.title }}</h3>
+        <p class="task-description">{{ task.description | slice:0:100 }}{{ task.description.length > 100 ? '...' : '' }}</p>
+
+        <div class="task-project">
+          <i class="fas fa-project-diagram"></i>
+          <span>{{ getProjectTitle(task.project) }}</span>
+        </div>
+
+        <div class="task-progress">
+          <div class="progress-info">
+            <span>Progression</span>
+            <span>{{ task.progress_percentage || 0 }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="task.progress_percentage || 0"></div>
+          </div>
+        </div>
+
+        <div class="task-dates">
+          <div class="date-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Début: {{ task.start_date | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="date-item">
+            <i class="fas fa-flag-checkered"></i>
+            <span>Fin: {{ task.end_date | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+        <div class="task-assignees">
+          <div class="assignee-avatars">
+            <div class="avatar" *ngFor="let emp of task.assigned_employees?.slice(0, 3)"
+                 [title]="emp.full_name || emp.username">
+              {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+            </div>
+            <div class="avatar-more" *ngIf="(task.assigned_employees.length || 0) > 3">
+              +{{ (task.assigned_employees.length || 0) - 3 }}
+            </div>
+          </div>
+          <span class="assignee-count">{{ task.assigned_employees.length || 0 }} assigné(s)</span>
+        </div>
+
+        <!-- Sous-tâches -->
+        <div class="subtasks-section" *ngIf="task.subtasks && task.subtasks.length > 0">
+          <div class="subtasks-header">
+            <span class="subtasks-title">
+              <i class="fas fa-list-ul"></i>
+              Sous-tâches ({{ task.completed_subtasks || 0 }}/{{ task.total_subtasks || 0 }})
+            </span>
+          </div>
+          <div class="subtasks-list">
+            <div class="subtask-item" *ngFor="let subtask of task.subtasks.slice(0, 3)">
+              <label class="subtask-checkbox">
+                <input type="checkbox"
+                       [checked]="subtask.is_completed"
+                       (change)="toggleSubtask(subtask)">
+                <span class="checkmark"></span>
+                <span class="subtask-name">{{ subtask.section_name }}</span>
+              </label>
+            </div>
+            <div class="subtask-more" *ngIf="task.subtasks.length > 3">
+              <i class="fas fa-ellipsis-h"></i>
+              {{ task.subtasks.length - 3 }} autres...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn btn-sm btn-outline-primary" (click)="viewTask(task)">
+          <i class="fas fa-eye"></i>
+          Voir
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="openEditTaskModal(task)">
+          <i class="fas fa-edit"></i>
+          Modifier
+        </button>
+        <button class="btn btn-sm btn-outline-info" (click)="openCreateSubtaskModal(task)">
+          <i class="fas fa-plus"></i>
+          Sous-tâche
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue en Liste -->
+  <div class="tasks-table" *ngIf="viewMode === 'list'">
+    <table class="table">
+      <thead>
+        <tr>
+          <th (click)="sortBy('title')" class="sortable">
+            Titre <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'title' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'title' && sortDirection === 'desc'"></i>
+          </th>
+          <th (click)="sortBy('status')" class="sortable">
+            Statut <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'status' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'status' && sortDirection === 'desc'"></i>
+          </th>
+          <th (click)="sortBy('priority')" class="sortable">
+            Priorité <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'priority' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'priority' && sortDirection === 'desc'"></i>
+          </th>
+          <th>Projet</th>
+          <th (click)="sortBy('end_date')" class="sortable">
+            Échéance <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'end_date' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'end_date' && sortDirection === 'desc'"></i>
+          </th>
+          <th>Assigné à</th>
+          <th>Progression</th>
+          <th>Sous-tâches</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let task of filteredTasks"
+            [class.overdue]="isTaskOverdue(task)"
+            [class.due-soon]="isTaskDueSoon(task)">
+          <td>
+            <div class="task-title-cell">
+              <strong>{{ task.title }}</strong>
+              <p class="task-description-small">{{ task.description | slice:0:60 }}{{ task.description.length > 60 ? '...' : '' }}</p>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [class]="'status-' + task.status">
+              {{ getStatusLabel(task.status) }}
+            </span>
+          </td>
+          <td>
+            <span class="priority-badge" [style.background-color]="getPriorityColor(task.priority)">
+              {{ getPriorityLabel(task.priority) }}
+            </span>
+          </td>
+          <td>
+            <span class="project-name">{{ getProjectTitle(task.project) }}</span>
+          </td>
+          <td>
+            <span [class]="{'overdue': isTaskOverdue(task), 'due-soon': isTaskDueSoon(task)}">
+              {{ task.end_date | date:'dd/MM/yyyy' }}
+            </span>
+          </td>
+          <td>
+            <div class="assignee-cell">
+              <div class="assignee-avatars">
+                <div class="assignee-avatar" *ngFor="let emp of task.assigned_employees?.slice(0, 2)"
+                     [title]="emp.full_name || emp.username">
+                  {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+                </div>
+                <div class="assignee-more" *ngIf="(task.assigned_employees.length || 0) > 2">
+                  +{{ (task.assigned_employees.length || 0) - 2 }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="progress-cell">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="task.progress_percentage || 0"></div>
+              </div>
+              <span class="progress-text">{{ task.progress_percentage || 0 }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="subtasks-count">
+              {{ task.completed_subtasks || 0 }}/{{ task.total_subtasks || 0 }}
+            </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-outline-primary" (click)="viewTask(task)" title="Voir la tâche">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" (click)="openEditTaskModal(task)" title="Modifier">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-info" (click)="openCreateSubtaskModal(task)" title="Ajouter sous-tâche">
+                <i class="fas fa-plus"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteTask(task.id)" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="totalPages > 1">
+    <div class="pagination-info">
+      Affichage {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} sur {{ totalItems }} tâches
+    </div>
+    <div class="pagination-controls">
+      <button class="btn btn-outline-secondary" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+        <i class="fas fa-chevron-left"></i>
+        Précédent
+      </button>
+
+      <div class="page-numbers">
+        <button *ngFor="let page of getPageNumbers()"
+                class="btn btn-outline-secondary"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </div>
+
+      <button class="btn btn-outline-secondary" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+        Suivant
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Menu contextuel pour tâche -->
+  <div class="context-menu" *ngIf="showContextMenu"
+       [style.left.px]="contextMenuX"
+       [style.top.px]="contextMenuY">
+    <div class="menu-item" (click)="viewTask(selectedTask!)" *ngIf="selectedTask">
+      <i class="fas fa-eye"></i>
+      Voir la tâche
+    </div>
+    <div class="menu-item" (click)="openEditTaskModal(selectedTask!)" *ngIf="selectedTask">
+      <i class="fas fa-edit"></i>
+      Modifier
+    </div>
+    <div class="menu-item" (click)="openCreateSubtaskModal(selectedTask!)" *ngIf="selectedTask">
+      <i class="fas fa-plus"></i>
+      Ajouter sous-tâche
+    </div>
+    <div class="menu-item" (click)="duplicateTask(selectedTask!)" *ngIf="selectedTask">
+      <i class="fas fa-copy"></i>
+      Dupliquer
+    </div>
+    <div class="menu-item danger" (click)="deleteTask(selectedTask!.id)" *ngIf="selectedTask">
+      <i class="fas fa-trash"></i>
+      Supprimer
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement...</p>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredTasks.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-tasks"></i>
+    </div>
+    <h3>Aucune tâche trouvée</h3>
+    <p>Commencez par créer votre première tâche ou ajustez vos filtres de recherche.</p>
+    <button class="btn btn-primary" (click)="openCreateTaskModal()">
+      <i class="fas fa-plus"></i>
+      Créer une tâche
+    </button>
+  </div>
+</div>
+
+<!-- Create Task Modal -->
+<div *ngIf="showCreateTaskModal" class="modal-overlay" 
+     style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(0,0,0,0.8) !important; backdrop-filter: blur(4px) !important;"
+     (click)="showCreateTaskModal = false">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 600px !important; width: 90% !important; max-height: 90vh !important; overflow-y: auto !important; background: white !important; border-radius: 12px !important; box-shadow: 0 25px 50px rgba(0,0,0,0.25) !important; position: relative !important;">
+    <div class="modal-header">
+      <h2>Créer une nouvelle tâche</h2>
+      <button class="btn-close" (click)="showCreateTaskModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="createTask()">
+        <div class="form-group">
+          <label for="taskTitle">Titre de la tâche *</label>
+          <input
+            type="text"
+            id="taskTitle"
+            [(ngModel)]="createTaskForm.title"
+            name="taskTitle"
+            autocomplete="off"
+            required
+            placeholder="Entrez le titre de la tâche">
+        </div>
+
+        <div class="form-group">
+          <label for="taskDescription">Description</label>
+          <textarea
+            id="taskDescription"
+            [(ngModel)]="createTaskForm.description"
+            name="taskDescription"
+            autocomplete="off"
+            rows="3"
+            placeholder="Description détaillée de la tâche"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskProject">Projet *</label>
+            <select
+              id="taskProject"
+              [(ngModel)]="createTaskForm.project"
+              name="taskProject"
+              autocomplete="off"
+              required>
+              <option value="">Sélectionner un projet</option>
+              <option *ngFor="let project of projects" [value]="project.id">
+                {{project.name}}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="taskStatus">Statut</label>
+            <select
+              id="taskStatus"
+              [(ngModel)]="createTaskForm.status"
+              name="taskStatus"
+              autocomplete="off">
+              <option value="TODO">À faire</option>
+              <option value="IN_PROGRESS">En cours</option>
+              <option value="COMPLETED">Terminé</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskPriority">Priorité</label>
+            <select
+              id="taskPriority"
+              [(ngModel)]="createTaskForm.priority"
+              name="taskPriority">
+              <option [value]="Priority.VERY_LOW">Très basse</option>
+              <option [value]="Priority.LOW">Basse</option>
+              <option [value]="Priority.MEDIUM">Moyenne</option>
+              <option [value]="Priority.HIGH">Haute</option>
+              <option [value]="Priority.VERY_HIGH">Très haute</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskStartDate">Date de début</label>
+            <input
+              type="date"
+              id="taskStartDate"
+              [(ngModel)]="createTaskForm.start_date"
+              name="taskStartDate">
+          </div>
+
+          <div class="form-group">
+            <label for="taskEndDate">Date de fin</label>
+            <input
+              type="date"
+              id="taskEndDate"
+              [(ngModel)]="createTaskForm.end_date"
+              name="taskEndDate"
+              autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="taskEstimatedHours">Heures estimées</label>
+            <input
+              type="number"
+              id="taskEstimatedHours"
+              [(ngModel)]="createTaskForm.estimated_hours"
+              name="taskEstimatedHours"
+              autocomplete="off"
+              min="0"
+              step="0.5"
+              placeholder="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskAssignees">Employés assignés</label>
+          <select
+            id="taskAssignees"
+            [(ngModel)]="createTaskForm.assigned_employee_ids"
+            name="taskAssignees"
+            autocomplete="off"
+            multiple>
+            <option *ngFor="let employee of employees" [value]="employee.id">
+              {{employee.first_name}} {{employee.last_name}}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="showCreateTaskModal = false">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading">
+            <i class="fas fa-plus"></i>
+            Créer la tâche
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div *ngIf="showEditTaskModal" class="modal-overlay" (click)="showEditTaskModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Modifier la tâche</h2>
+      <button class="btn-close" (click)="showEditTaskModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="editTask()">
+        <div class="form-group">
+          <label for="editTaskTitle">Titre de la tâche *</label>
+          <input
+            type="text"
+            id="editTaskTitle"
+            [(ngModel)]="editTaskForm.title"
+            name="editTaskTitle"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="editTaskDescription">Description</label>
+          <textarea
+            id="editTaskDescription"
+            [(ngModel)]="editTaskForm.description"
+            name="editTaskDescription"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editTaskStatus">Statut</label>
+            <select
+              id="editTaskStatus"
+              [(ngModel)]="editTaskForm.status"
+              name="editTaskStatus">
+              <option [value]="TaskStatus.TODO">À faire</option>
+              <option [value]="TaskStatus.IN_PROGRESS">En cours</option>
+              <option [value]="TaskStatus.COMPLETED">Terminé</option>
+              <option [value]="TaskStatus.BLOCKED">Bloqué</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskPriority">Priorité</label>
+            <select
+              id="editTaskPriority"
+              [(ngModel)]="editTaskForm.priority"
+              name="editTaskPriority">
+              <option [value]="Priority.VERY_LOW">Très basse</option>
+              <option [value]="Priority.LOW">Basse</option>
+              <option [value]="Priority.MEDIUM">Moyenne</option>
+              <option [value]="Priority.HIGH">Haute</option>
+              <option [value]="Priority.VERY_HIGH">Très haute</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editTaskStartDate">Date de début</label>
+            <input
+              type="date"
+              id="editTaskStartDate"
+              [(ngModel)]="editTaskForm.start_date"
+              name="editTaskStartDate">
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskEndDate">Date de fin</label>
+            <input
+              type="date"
+              id="editTaskEndDate"
+              [(ngModel)]="editTaskForm.end_date"
+              name="editTaskEndDate">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editTaskAssignees">Employés assignés</label>
+          <select
+            id="editTaskAssignees"
+            [(ngModel)]="editTaskForm.assigned_employee_ids"
+            name="editTaskAssignees"
+            multiple>
+            <option *ngFor="let employee of employees" [value]="employee.id">
+              {{employee.full_name || employee.username}}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="showEditTaskModal = false">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading">
+            <i class="fas fa-save"></i>
+            Sauvegarder
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Create Subtask Modal -->
+<div *ngIf="showCreateSubtaskModal" class="modal-overlay" (click)="showCreateSubtaskModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Créer une sous-tâche</h2>
+      <button class="btn-close" (click)="showCreateSubtaskModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="createSubtask()">
+        <div class="form-group">
+          <label for="subtaskSectionName">Nom de la section *</label>
+          <input
+            type="text"
+            id="subtaskSectionName"
+            [(ngModel)]="createSubtaskForm.section_name"
+            name="subtaskSectionName"
+            required
+            placeholder="Nom de la section">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="subtaskSectionNumber">Numéro de section *</label>
+            <input
+              type="text"
+              id="subtaskSectionNumber"
+              [(ngModel)]="createSubtaskForm.section_number"
+              name="subtaskSectionNumber"
+              required
+              placeholder="Ex: 1.1">
+          </div>
+
+          <div class="form-group">
+            <label for="subtaskSectionId">ID de section *</label>
+            <input
+              type="text"
+              id="subtaskSectionId"
+              [(ngModel)]="createSubtaskForm.section_id"
+              name="subtaskSectionId"
+              required
+              placeholder="ID unique">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="subtaskKilometrage">Kilométrage</label>
+          <input
+            type="number"
+            id="subtaskKilometrage"
+            [(ngModel)]="createSubtaskForm.kilometrage"
+            name="subtaskKilometrage"
+            min="0"
+            step="0.01"
+            placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label for="subtaskAssignees">Employés assignés</label>
+          <select
+            id="subtaskAssignees"
+            [(ngModel)]="createSubtaskForm.assigned_employee_ids"
+            name="subtaskAssignees"
+            multiple>
+            <option *ngFor="let employee of employees" [value]="employee.id">
+              {{employee.full_name || employee.username}}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="showCreateSubtaskModal = false">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading">
+            <i class="fas fa-plus"></i>
+            Créer la sous-tâche
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Subtask Modal -->
+<div *ngIf="showEditSubtaskModal" class="modal-overlay" (click)="showEditSubtaskModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Modifier la sous-tâche</h2>
+      <button class="btn-close" (click)="showEditSubtaskModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="editSubtask()">
+        <div class="form-group">
+          <label for="editSubtaskSectionName">Nom de la section *</label>
+          <input
+            type="text"
+            id="editSubtaskSectionName"
+            [(ngModel)]="editSubtaskForm.section_name"
+            name="editSubtaskSectionName"
+            required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editSubtaskSectionNumber">Numéro de section *</label>
+            <input
+              type="text"
+              id="editSubtaskSectionNumber"
+              [(ngModel)]="editSubtaskForm.section_number"
+              name="editSubtaskSectionNumber"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="editSubtaskSectionId">ID de section *</label>
+            <input
+              type="text"
+              id="editSubtaskSectionId"
+              [(ngModel)]="editSubtaskForm.section_id"
+              name="editSubtaskSectionId"
+              required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editSubtaskKilometrage">Kilométrage</label>
+          <input
+            type="number"
+            id="editSubtaskKilometrage"
+            [(ngModel)]="editSubtaskForm.kilometrage"
+            name="editSubtaskKilometrage"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label for="editSubtaskAssignees">Employés assignés</label>
+          <select
+            id="editSubtaskAssignees"
+            [(ngModel)]="editSubtaskForm.assigned_employee_ids"
+            name="editSubtaskAssignees"
+            multiple>
+            <option *ngFor="let employee of employees" [value]="employee.id">
+              {{employee.full_name || employee.username}}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="showEditSubtaskModal = false">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading">
+            <i class="fas fa-save"></i>
+            Sauvegarder
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Modal -->
+<div *ngIf="showAssignModal" class="modal-overlay" (click)="showAssignModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Assigner des employés</h2>
+      <button class="btn-close" (click)="showAssignModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Sélectionner les employés à assigner :</label>
+        <div class="employee-list">
+          <div
+            *ngFor="let employee of employees"
+            class="employee-item">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [value]="employee.id"
+                [checked]="editTaskForm.assigned_employee_ids?.includes(employee.id)"
+                (change)="toggleEmployeeAssignment(employee.id, $event)">
+              <span class="employee-info">
+                <div class="employee-avatar">
+                  {{(employee.full_name || employee.username || 'U').charAt(0).toUpperCase()}}
+                </div>
+                <div class="employee-details">
+                  <div class="employee-name">{{employee.full_name || employee.username}}</div>
+                  <div class="employee-email">{{employee.email}}</div>
+                </div>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="showAssignModal = false">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="assignEmployees()"
+          [disabled]="loading">
+          <i class="fas fa-users"></i>
+          Assigner
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div *ngIf="showDeleteModal" class="modal-overlay" (click)="showDeleteModal = false">
+  <div class="modal modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirmer la suppression</h2>
+      <button class="btn-close" (click)="showDeleteModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p>Êtes-vous sûr de vouloir supprimer cette tâche ?</p>
+      <p class="text-muted">Cette action supprimera également toutes les sous-tâches associées et est irréversible.</p>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="showDeleteModal = false">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="deleteTask(selectedTask!.id)"
+          [disabled]="loading">
+          <i class="fas fa-trash"></i>
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

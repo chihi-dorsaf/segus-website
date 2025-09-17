@@ -1,0 +1,428 @@
+<div class="gamification-dashboard-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>
+          <i class="material-icons">emoji_events</i>
+          Tableau de Bord Gamification
+        </h1>
+        <p>Suivez vos performances, objectifs et récompenses</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement du tableau de bord...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-state">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h3>Erreur de chargement</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadDashboard()">
+      <i class="fas fa-redo"></i>
+      Réessayer
+    </button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="dashboard && !isLoading" class="dashboard-content">
+    
+    <!-- Stats Overview -->
+    <div class="stats-section">
+      <div class="stats-cards">
+        <!-- Total Stars -->
+        <div class="stat-card stars-card">
+          <div class="stat-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.employee_info.total_stars }}</div>
+            <div class="stat-label">Étoiles Totales</div>
+            <div class="stat-rating">
+              <i *ngFor="let star of getStarRating(dashboard.employee_info.total_stars)" 
+                 class="material-icons star-icon">{{ star }}</i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Points -->
+        <div class="stat-card points-card">
+          <div class="stat-icon">
+            <i class="fas fa-coins"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.employee_info.total_points }}</div>
+            <div class="stat-label">Points Totaux</div>
+          </div>
+        </div>
+
+        <!-- Current Level -->
+        <div class="stat-card level-card">
+          <div class="stat-icon" [style.background-color]="getLevelColor(dashboard.employee_info.current_level)">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.employee_info.current_level }}</div>
+            <div class="stat-label">Niveau Actuel</div>
+          </div>
+        </div>
+
+        <!-- Leaderboard Position -->
+        <div class="stat-card rank-card">
+          <div class="stat-icon">
+            <i class="fas fa-medal"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">#{{ dashboard.leaderboard_position }}</div>
+            <div class="stat-label">Classement</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Objective -->
+    <div class="objective-section" *ngIf="dashboard.today_objective">
+      <div class="section-header">
+        <h2>
+          <i class="material-icons">today</i>
+          Objectif du Jour
+        </h2>
+      </div>
+      
+      <div class="objective-card">
+        <div class="objective-content">
+          <div class="objective-item">
+            <div class="objective-label">Sous-tâches</div>
+            <div class="objective-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getProgressPercentage(
+                       dashboard.employee_info.total_completed_subtasks, 
+                       dashboard.today_objective.target_subtasks
+                     )"></div>
+              </div>
+              <span class="progress-text">
+                {{ dashboard.employee_info.total_completed_subtasks }} / {{ dashboard.today_objective.target_subtasks }}
+              </span>
+            </div>
+          </div>
+
+          <div class="objective-item">
+            <div class="objective-label">Heures de travail</div>
+            <div class="objective-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getProgressPercentage(
+                       dashboard.employee_info.total_worked_hours, 
+                       dashboard.today_objective.target_hours
+                     )"></div>
+              </div>
+              <span class="progress-text">
+                {{ dashboard.employee_info.total_worked_hours }}h / {{ dashboard.today_objective.target_hours }}h
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Tasks -->
+    <div class="tasks-section">
+      <div class="section-header">
+        <h2>
+          <i class="material-icons">assignment</i>
+          Mes Tâches En Cours
+        </h2>
+        <button class="btn btn-primary" (click)="openTaskModal()">
+          <i class="material-icons">add</i>
+          Nouvelle Tâche
+        </button>
+      </div>
+
+      <div class="tasks-grid" *ngIf="dashboard.pending_subtasks.length > 0">
+        <div *ngFor="let task of dashboard.pending_subtasks" class="task-card">
+          <div class="task-header">
+            <h3>{{ task.title }}</h3>
+            <span class="task-status" [style.color]="getStatusColor(task.status)">
+              {{ getStatusLabel(task.status) }}
+            </span>
+          </div>
+          
+          <p class="task-description" *ngIf="task.description">{{ task.description }}</p>
+          
+          <div class="task-footer">
+            <span class="task-date">{{ formatDate(task.assigned_date) }}</span>
+            <button *ngIf="task.status !== 'completed'" 
+                    class="btn btn-success btn-sm" 
+                    (click)="completeTask(task.id)">
+              <i class="material-icons">check</i>
+              Terminer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="dashboard.pending_subtasks.length === 0" class="no-tasks">
+        <i class="fas fa-check-circle"></i>
+        <h3>Aucune tâche en cours</h3>
+        <p>Toutes vos tâches sont terminées ! Excellent travail.</p>
+      </div>
+    </div>
+
+    <!-- Recent Performance -->
+    <div class="performance-section">
+      <div class="section-header">
+        <h2>
+          <i class="material-icons">trending_up</i>
+          Performance Récente
+        </h2>
+      </div>
+
+      <div class="performance-chart" *ngIf="dashboard.recent_daily_performances.length > 0">
+        <div *ngFor="let perf of dashboard.recent_daily_performances" class="performance-day">
+          <div class="day-header">
+            <span class="day-date">{{ formatDate(perf.date) }}</span>
+            <span class="day-stars">{{ perf.daily_stars_earned }} ⭐</span>
+          </div>
+          
+          <div class="day-stats">
+            <div class="stat-item">
+              <span class="stat-label">Tâches:</span>
+              <span class="stat-value">{{ perf.completed_subtasks }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Heures:</span>
+              <span class="stat-value">{{ perf.worked_hours }}h</span>
+            </div>
+            <div class="stat-item" *ngIf="perf.overtime_hours > 0">
+              <span class="stat-label">Sup:</span>
+              <span class="stat-value">+{{ perf.overtime_hours }}h</span>
+            </div>
+          </div>
+
+          <div class="achievement-indicator" *ngIf="perf.all_goals_achieved">
+            <i class="fas fa-trophy"></i>
+            Objectifs atteints
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges Section -->
+    <div class="badges-section">
+      <div class="section-header">
+        <h2>
+          <i class="material-icons">military_tech</i>
+          Mes Badges ({{ dashboard.employee_info.total_badges }})
+        </h2>
+      </div>
+
+      <div class="badges-grid" *ngIf="dashboard.employee_info.badges.length > 0">
+        <div *ngFor="let employeeBadge of dashboard.employee_info.badges" 
+             class="badge-card" 
+             (click)="openBadgeDetails(employeeBadge.badge)">
+          <div class="badge-icon" [style.color]="employeeBadge.badge.color">
+            <i class="fas" [ngClass]="'fa-' + employeeBadge.badge.icon"></i>
+          </div>
+          <h3>{{ employeeBadge.badge.name }}</h3>
+          <p>{{ employeeBadge.badge.description }}</p>
+          <div class="badge-earned">
+            Obtenu le {{ formatDate(employeeBadge.earned_date) }}
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="dashboard.employee_info.badges.length === 0" class="no-badges">
+        <i class="fas fa-medal"></i>
+        <h3>Aucun badge obtenu</h3>
+        <p>Continuez vos efforts pour débloquer votre premier badge !</p>
+      </div>
+
+      <!-- Next Badge -->
+      <div *ngIf="dashboard.next_badge" class="next-badge-card">
+        <h3>Prochain Badge à Débloquer</h3>
+        <div class="next-badge-content">
+          <div class="badge-preview">
+            <div class="badge-icon" [style.color]="dashboard.next_badge.color">
+              <i class="fas" [ngClass]="'fa-' + dashboard.next_badge.icon"></i>
+            </div>
+            <div class="badge-info">
+              <h4>{{ dashboard.next_badge.name }}</h4>
+              <p>{{ dashboard.next_badge.description }}</p>
+            </div>
+          </div>
+          <div class="badge-requirements">
+            <div class="requirement">
+              <span>Étoiles requises:</span>
+              <span>{{ dashboard.next_badge.required_stars }} ({{ dashboard.employee_info.total_stars }} / {{ dashboard.next_badge.required_stars }})</span>
+            </div>
+            <div class="requirement">
+              <span>Points requis:</span>
+              <span>{{ dashboard.next_badge.required_points }} ({{ dashboard.employee_info.total_points }} / {{ dashboard.next_badge.required_points }})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Performance -->
+    <div class="monthly-section" *ngIf="dashboard.current_month_performance">
+      <div class="section-header">
+        <h2>
+          <i class="material-icons">calendar_month</i>
+          Performance Mensuelle
+        </h2>
+      </div>
+
+      <div class="monthly-stats">
+        <div class="monthly-stat">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.current_month_performance.total_worked_hours }}h</div>
+            <div class="stat-label">Heures Travaillées</div>
+          </div>
+        </div>
+
+        <div class="monthly-stat">
+          <div class="stat-icon">
+            <i class="fas fa-plus-circle"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.current_month_performance.total_overtime_hours }}h</div>
+            <div class="stat-label">Heures Supplémentaires</div>
+          </div>
+        </div>
+
+        <div class="monthly-stat">
+          <div class="stat-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.current_month_performance.days_with_all_goals }}</div>
+            <div class="stat-label">Jours Parfaits</div>
+          </div>
+        </div>
+
+        <div class="monthly-stat">
+          <div class="stat-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboard.current_month_performance.total_monthly_stars }}</div>
+            <div class="stat-label">Étoiles du Mois</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Creation Modal -->
+<div class="modal-overlay" *ngIf="showTaskModal" (click)="closeTaskModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="material-icons">add_task</i>
+        Nouvelle Tâche
+      </h3>
+      <button class="modal-close" (click)="closeTaskModal()">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="createTask()">
+        <div class="form-group">
+          <label for="taskTitle">Titre de la tâche *</label>
+          <input
+            type="text"
+            id="taskTitle"
+            class="form-control"
+            [(ngModel)]="newTask.title"
+            name="taskTitle"
+            placeholder="Titre de la tâche"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="taskDescription">Description</label>
+          <textarea
+            id="taskDescription"
+            class="form-control"
+            [(ngModel)]="newTask.description"
+            name="taskDescription"
+            placeholder="Description détaillée de la tâche"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeTaskModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!newTask.title">
+            <i class="material-icons">add</i>
+            Créer la Tâche
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Badge Details Modal -->
+<div class="modal-overlay" *ngIf="showBadgeDetailsModal" (click)="closeBadgeDetailsModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="material-icons">military_tech</i>
+        Détails du Badge
+      </h3>
+      <button class="modal-close" (click)="closeBadgeDetailsModal()">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedBadge">
+      <div class="badge-details">
+        <div class="badge-icon-large" [style.color]="selectedBadge.color">
+          <i class="fas" [ngClass]="'fa-' + selectedBadge.icon"></i>
+        </div>
+        
+        <h2>{{ selectedBadge.name }}</h2>
+        <p class="badge-description">{{ selectedBadge.description }}</p>
+        
+        <div class="badge-requirements">
+          <h4>Critères d'obtention:</h4>
+          <ul>
+            <li *ngIf="selectedBadge.required_stars > 0">
+              {{ selectedBadge.required_stars }} étoiles minimum
+            </li>
+            <li *ngIf="selectedBadge.required_points > 0">
+              {{ selectedBadge.required_points }} points minimum
+            </li>
+            <li *ngIf="selectedBadge.required_months > 0">
+              {{ selectedBadge.required_months }} mois de performance
+            </li>
+          </ul>
+        </div>
+
+        <div class="badge-rewards" *ngIf="selectedBadge.salary_increase_percentage > 0">
+          <h4>Récompenses:</h4>
+          <div class="reward-item">
+            <i class="fas fa-money-bill-wave"></i>
+            Augmentation de salaire: +{{ selectedBadge.salary_increase_percentage }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

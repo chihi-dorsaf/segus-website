@@ -1,0 +1,468 @@
+<div class="modern-dashboard">
+  <!-- Section de bienvenue moderne -->
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <div class="welcome-text">
+        <h1>🚀 Dashboard Administrateur</h1>
+        <p>Pilotez votre organisation avec des insights en temps réel</p>
+        <div class="current-time">
+          <i class="fas fa-clock"></i>
+          {{getCurrentDateTime()}}
+        </div>
+      </div>
+      <div class="quick-actions">
+        <button class="quick-action-btn primary" (click)="loadDashboardData()" [disabled]="loading">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+          <span>Actualiser</span>
+        </button>
+        <button class="quick-action-btn secondary" (click)="downloadReport('complete')">
+          <i class="fas fa-download"></i>
+          <span>Rapport</span>
+        </button>
+        <button class="quick-action-btn tertiary" (click)="exportData()">
+          <i class="fas fa-file-export"></i>
+          <span>Exporter</span>
+          <div class="notification-badge" *ngIf="hasNewData">{{newDataCount}}</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards modernes -->
+  <div class="kpi-grid">
+    <div class="kpi-card primary">
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="kpi-trend positive" *ngIf="stats.newEmployeesThisMonth > 0">
+          <i class="fas fa-arrow-up"></i>
+          +{{stats.newEmployeesThisMonth}}
+        </div>
+        <div class="kpi-status">
+          <div class="status-dot"></div>
+          <span>Actif</span>
+        </div>
+      </div>
+      <div class="kpi-content">
+        <h2>{{stats.totalEmployees}}</h2>
+        <p>Employés</p>
+        <div class="kpi-subtitle">{{stats.newEmployeesThisMonth}} nouveaux ce mois</div>
+      </div>
+    </div>
+
+    <div class="kpi-card success">
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="kpi-trend positive">
+          <i class="fas fa-chart-line"></i>
+          {{Math.round((stats.activeProjects / stats.totalProjects) * 100)}}%
+        </div>
+      </div>
+      <div class="kpi-content">
+        <h2>{{stats.totalProjects}}</h2>
+        <p>Projets</p>
+        <div class="kpi-subtitle">{{stats.activeProjects}} actifs sur {{stats.totalProjects}}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card warning">
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="kpi-trend" [class.positive]="getTaskEfficiency() > 75" [class.negative]="getTaskEfficiency() <= 75">
+          <i class="fas" [class.fa-arrow-up]="getTaskEfficiency() > 75" [class.fa-arrow-down]="getTaskEfficiency() <= 75"></i>
+          {{getTaskEfficiency()}}%
+        </div>
+      </div>
+      <div class="kpi-content">
+        <h2>{{stats.totalTasks}}</h2>
+        <p>Tâches</p>
+        <div class="kpi-subtitle">{{stats.totalSubtasks}} sous-tâches incluses</div>
+      </div>
+    </div>
+
+    <div class="kpi-card info">
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+        <div class="kpi-trend" [class.positive]="stats.completionTrend > 0" [class.negative]="stats.completionTrend < 0">
+          <i class="fas" [class.fa-arrow-up]="stats.completionTrend > 0" [class.fa-arrow-down]="stats.completionTrend < 0"></i>
+          {{Math.abs(stats.completionTrend)}}%
+        </div>
+      </div>
+      <div class="kpi-content">
+        <h2>{{stats.completionRate}}%</h2>
+        <p>Taux de Complétion</p>
+        <div class="kpi-subtitle">{{stats.completedTasks}}/{{stats.totalTasks}} terminées</div>
+      </div>
+    </div>
+
+    <div class="kpi-card jobs">
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-briefcase"></i>
+        </div>
+        <div class="kpi-trend positive" *ngIf="stats.activeJobOffers && stats.totalJobOffers">
+          <i class="fas fa-arrow-up"></i>
+          {{Math.round((stats.activeJobOffers / stats.totalJobOffers) * 100)}}%
+        </div>
+      </div>
+      <div class="kpi-content">
+        <h2>{{stats.totalJobOffers || 0}}</h2>
+        <p>Offres d'Emploi</p>
+        <div class="kpi-subtitle">{{stats.activeJobOffers || 0}} actives</div>
+      </div>
+    </div>
+
+    <div class="kpi-card applications">
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="kpi-trend positive" *ngIf="stats.newApplications && stats.newApplications > 0">
+          <i class="fas fa-plus"></i>
+          +{{stats.newApplications}}
+        </div>
+      </div>
+      <div class="kpi-content">
+        <h2>{{stats.totalApplications || 0}}</h2>
+        <p>Candidatures</p>
+        <div class="kpi-subtitle">{{stats.newApplications || 0}} nouvelles</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grille organisée avec sections principales -->
+  <div class="organized-grid">
+    <!-- Section Performance et Statistiques -->
+    <div class="section-group performance-section">
+      <h2 class="section-title"><i class="fas fa-chart-line"></i> Performance & Statistiques</h2>
+      
+      <!-- Performance en temps réel -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-tachometer-alt"></i> Tableau de Bord</h3>
+          <button class="view-all-btn" (click)="loadRealTimeMetrics()">
+            <i class="fas fa-sync-alt"></i> Actualiser
+          </button>
+        </div>
+        <div class="chart-container">
+          <div class="donut-chart">
+            <div class="chart-center">
+              <span class="chart-percentage">{{stats.completionRate}}%</span>
+              <span class="chart-label">Complétion</span>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item completed">
+              <div class="legend-dot"></div>
+              <span>Terminées ({{stats.completedTasks}})</span>
+            </div>
+            <div class="legend-item progress">
+              <div class="legend-dot"></div>
+              <span>En cours ({{stats.tasksInProgress}})</span>
+            </div>
+            <div class="legend-item pending">
+              <div class="legend-dot"></div>
+              <span>À faire ({{stats.pendingTasks}})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métriques hebdomadaires -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-calendar-week"></i> Métriques Hebdomadaires</h3>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <div class="metric-icon productivity">
+              <i class="fas fa-rocket"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-value">{{weeklyStats.employeeProductivity || 0}}%</span>
+              <span class="metric-label">Productivité</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-icon">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-value">{{weeklyStats.tasksCompleted || 0}}</span>
+              <span class="metric-label">Tâches/Semaine</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-value">{{weeklyStats.weeklyGrowth > 0 ? '+' : ''}}{{weeklyStats.weeklyGrowth || 0}}%</span>
+              <span class="metric-label">Croissance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Tâches et Projets -->
+    <div class="section-group tasks-projects-section">
+      <h2 class="section-title"><i class="fas fa-project-diagram"></i> Tâches & Projets</h2>
+      
+      <!-- Statistiques des Tâches par État -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-chart-pie"></i> Répartition des Tâches</h3>
+          <button class="view-all-btn" (click)="exportTasksByStatus()">Exporter</button>
+        </div>
+        <div class="status-stats">
+          <div class="status-item pending">
+            <div class="status-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="status-content">
+              <span class="status-count">{{stats.pendingTasks}}</span>
+              <span class="status-label">À faire</span>
+              <div class="status-progress">
+                <div class="progress-fill" [style.width.%]="getTaskPercentage('pending')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="status-item progress">
+            <div class="status-icon">
+              <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <div class="status-content">
+              <span class="status-count">{{stats.tasksInProgress}}</span>
+              <span class="status-label">En cours</span>
+              <div class="status-progress">
+                <div class="progress-fill" [style.width.%]="getTaskPercentage('in_progress')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="status-item completed">
+            <div class="status-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="status-content">
+              <span class="status-count">{{stats.completedTasks}}</span>
+              <span class="status-label">Terminées</span>
+              <div class="status-progress">
+                <div class="progress-fill" [style.width.%]="getTaskPercentage('completed')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- État des Projets -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-folder-open"></i> État des Projets</h3>
+          <button class="view-all-btn" (click)="exportProjectsStatus()">Exporter</button>
+        </div>
+        <div class="projects-overview">
+          <div class="project-summary">
+            <div class="project-stat active">
+              <div class="project-icon">
+                <i class="fas fa-play-circle"></i>
+              </div>
+              <div class="project-info">
+                <h4>{{stats.activeProjects}}</h4>
+                <p>Projets Actifs</p>
+                <span class="project-percentage">{{getProjectPercentage('active')}}%</span>
+              </div>
+            </div>
+            <div class="project-stat inactive">
+              <div class="project-icon">
+                <i class="fas fa-pause-circle"></i>
+              </div>
+              <div class="project-info">
+                <h4>{{stats.inactiveProjects}}</h4>
+                <p>Projets Inactifs</p>
+                <span class="project-percentage">{{getProjectPercentage('inactive')}}%</span>
+              </div>
+            </div>
+          </div>
+          <div class="recent-projects" *ngIf="recentProjects.length > 0">
+            <h5>Projets Récents</h5>
+            <div class="project-list">
+              <div *ngFor="let project of recentProjects.slice(0, 3)" class="project-item">
+                <div class="project-details">
+                  <span class="project-name">{{project.title}}</span>
+                  <span class="project-desc">{{project.description}}</span>
+                </div>
+                <div class="project-status" [class]="project.status">
+                  <span class="status-badge">{{getStatusLabel(project.status)}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Jobs et Candidatures -->
+    <div class="section-group jobs-section">
+      <h2 class="section-title"><i class="fas fa-briefcase"></i> Jobs & Candidatures</h2>
+      
+      <!-- Statistiques des Offres d'Emploi -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-briefcase"></i> Offres d'Emploi</h3>
+          <button class="view-all-btn" routerLink="/admin/job-offers">Gérer</button>
+        </div>
+        <div class="jobs-overview">
+          <div class="job-stat-item active">
+            <div class="job-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="job-info">
+              <h4>{{stats.activeJobOffers || 0}}</h4>
+              <p>Offres Actives</p>
+              <span class="job-percentage" *ngIf="stats.totalJobOffers">
+                {{Math.round(((stats.activeJobOffers || 0) / stats.totalJobOffers) * 100)}}%
+              </span>
+            </div>
+          </div>
+          <div class="job-stat-item total">
+            <div class="job-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <div class="job-info">
+              <h4>{{stats.totalJobOffers || 0}}</h4>
+              <p>Total Offres</p>
+              <span class="job-percentage">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistiques des Candidatures -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-user-tie"></i> Candidatures</h3>
+          <button class="view-all-btn" routerLink="/admin/applications">Gérer</button>
+        </div>
+        <div class="applications-stats">
+          <div class="application-item new">
+            <div class="application-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="application-content">
+              <span class="application-count">{{stats.newApplications || 0}}</span>
+              <span class="application-label">Nouvelles</span>
+              <div class="application-progress">
+                <div class="progress-fill" [style.width.%]="getApplicationPercentage('new')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="application-item spontaneous">
+            <div class="application-icon">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+            <div class="application-content">
+              <span class="application-count">{{stats.spontaneousApplications || 0}}</span>
+              <span class="application-label">Spontanées</span>
+              <div class="application-progress">
+                <div class="progress-fill" [style.width.%]="getApplicationPercentage('spontaneous')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="application-item interview">
+            <div class="application-icon">
+              <i class="fas fa-handshake"></i>
+            </div>
+            <div class="application-content">
+              <span class="application-count">{{stats.interviewApplications || 0}}</span>
+              <span class="application-label">Entretiens</span>
+              <div class="application-progress">
+                <div class="progress-fill" [style.width.%]="getApplicationPercentage('interview')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="application-item total">
+            <div class="application-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="application-content">
+              <span class="application-count">{{stats.totalApplications || 0}}</span>
+              <span class="application-label">Total</span>
+              <div class="application-progress">
+                <div class="progress-fill" style="width: 100%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Équipe et Activités -->
+    <div class="section-group team-activity-section">
+      <h2 class="section-title"><i class="fas fa-users"></i> Équipe & Activités</h2>
+      
+      <!-- Top Performers -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-trophy"></i> Meilleurs Performers</h3>
+          <button class="view-all-btn" (click)="exportUserStats()">Exporter</button>
+        </div>
+        <div class="user-stats" *ngIf="tasksByUser.length > 0; else noUserStats">
+          <div *ngFor="let user of getTopPerformers(); let i = index" class="user-stat-item">
+            <div class="user-info">
+              <div class="user-avatar">
+                <span class="rank-badge">{{i + 1}}</span>
+              </div>
+              <div class="user-details">
+                <span class="user-name">{{user.name}}</span>
+                <span class="user-total">{{user.total}} tâches • {{Math.round((user.completed / user.total) * 100)}}% réussite</span>
+              </div>
+            </div>
+            <div class="user-progress">
+              <div class="progress-bar">
+                <div class="progress-completed" [style.width.%]="(user.completed / user.total) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noUserStats>
+          <div class="no-data">
+            <i class="fas fa-user-friends"></i>
+            <p>Aucune donnée de performance disponible</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Activité récente -->
+      <div class="modern-card">
+        <div class="card-header">
+          <h3><i class="fas fa-history"></i> Activité Récente</h3>
+          <button class="view-all-btn">Voir tout</button>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item" *ngFor="let activity of getRecentActivities()">
+            <div class="activity-icon" [class]="activity.type">
+              <i class="fas" [class]="activity.icon"></i>
+            </div>
+            <div class="activity-content">
+              <p class="activity-text">{{activity.text}}</p>
+              <span class="activity-time">{{activity.time}}</span>
+            </div>
+          </div>
+          <div class="no-activity" *ngIf="getRecentActivities().length === 0">
+            <i class="fas fa-info-circle"></i>
+            <p>Aucune activité récente</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

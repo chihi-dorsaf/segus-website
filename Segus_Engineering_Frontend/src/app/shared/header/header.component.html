@@ -1,0 +1,235 @@
+
+<nav class="navbar navbar-expand-lg sticky-top" [ngClass]="{'bg-light': !isDarkMode, 'bg-dark': isDarkMode}">
+  <div class="container">
+    <div class="navbar-brand-wrapper">
+      <img src="assets/favicon.ico" alt="Logo Segus Engineering" class="logo" />
+      <a class="navbar-brand" routerLink="/">Segus Engineering</a>
+      <span class="nav-icon"><i class="bx bx-menu"></i></span>
+    </div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Basculer la navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+
+      <!-- Navigation site vitrine -->
+      <ul class="navbar-nav ms-auto showcase-nav" *ngIf="!(isAuthenticated && isEmployee)">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/" [ngClass]="{'active': isActive('/')}"
+             title="Retour à l'accueil">
+            <i class="fas fa-home nav-icon"></i>
+            <span class="nav-text">Accueil</span>
+          </a>
+        </li>
+        <li class="nav-item dropdown" #aboutDropdown>
+          <a class="nav-link dropdown-toggle" href="#" role="button"
+             (click)="toggleDropdown('about')" [class.active]="isDropdownActive('about')"
+             title="En savoir plus sur nous">
+            <i class="fas fa-info-circle nav-icon"></i>
+            <span class="nav-text">À propos</span>
+          </a>
+          <ul class="dropdown-menu" [class.show]="activeDropdown === 'about'">
+            <li><a class="dropdown-item" href="#about">Notre Histoire</a></li>
+            <li><a class="dropdown-item" href="#team">Notre Équipe</a></li>
+            <li><a class="dropdown-item" href="#milestones">Nos Réalisations</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#services" [ngClass]="{'active': isActive('/services')}"
+             title="Découvrez nos services">
+            <i class="fas fa-cogs nav-icon"></i>
+            <span class="nav-text">Services</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#portfolio" [ngClass]="{'active': isActive('/projets')}"
+             title="Consultez nos projets">
+            <i class="fas fa-briefcase nav-icon"></i>
+            <span class="nav-text">Projects</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/carriere" [ngClass]="{'active': isActive('/carriere')}"
+             title="Rejoignez notre équipe">
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-text">Carrières</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#reviews" [ngClass]="{'active': isActive('/reviews')}"
+             title="Témoignages clients">
+            <i class="fas fa-star nav-icon"></i>
+            <span class="nav-text">Témoignages</span>
+          </a>
+        </li>
+        <li class="nav-item contact-btn">
+          <button class="btn btn-brand contact-trigger"
+                  data-bs-toggle="modal" data-bs-target="#contactModal"
+                  aria-label="Nous contacter">
+            <i class="fas fa-envelope"></i>
+            <span>Contact</span>
+          </button>
+        </li>
+        <li class="nav-item login-btn">
+          <a class="btn btn-outline-primary login-trigger"
+             routerLink="/login"
+             aria-label="Se connecter">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Login</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Navigation Espace Employé - Style moderne comme navbar vitrine -->
+      <ul class="navbar-nav ms-auto employee-nav" *ngIf="isAuthenticated && isEmployee">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/frontoffice/dashboard" routerLinkActive="active" title="Tableau de bord">
+            <i class="fas fa-chart-line nav-icon"></i>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/frontoffice/tasks" routerLinkActive="active" title="Mes Tâches">
+            <i class="fas fa-tasks nav-icon"></i>
+            <span class="nav-text">Tâches</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/frontoffice/projects" routerLinkActive="active" title="Mes Projets">
+            <i class="fas fa-project-diagram nav-icon"></i>
+            <span class="nav-text">Projets</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/frontoffice/gamification" routerLinkActive="active" title="Gamification">
+            <i class="fas fa-trophy nav-icon"></i>
+            <span class="nav-text">Gamification</span>
+          </a>
+        </li>
+
+        <!-- Actions rapides - Style navbar -->
+        <li class="nav-item dropdown" #notificationDropdown>
+          <a class="nav-link" href="#" role="button" (click)="toggleNotifications()" title="Notifications">
+            <i class="fas fa-bell nav-icon" [class.fa-shake]="hasUnreadNotifications"></i>
+            <span class="nav-text">Notifications</span>
+            <span class="notification-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
+          </a>
+          <div class="notification-panel dropdown-menu" [class.show]="showNotifications">
+
+            <div class="notification-header">
+              <h6>Notifications</h6>
+              <button class="btn-clear-all" (click)="markAllAsRead()" *ngIf="hasUnreadNotifications">
+                <i class="fas fa-check-double"></i> Tout marquer comme lu
+              </button>
+            </div>
+
+            <div class="notification-list" *ngIf="notifications.length > 0; else noNotifications">
+              <div *ngFor="let notification of notifications"
+                   class="notification-item"
+                   [class.unread]="!notification.is_read"
+                   (click)="markAsRead(notification.id)">
+                <div class="notification-icon" [ngClass]="getNotificationIconClass(notification.type)">
+                  <i class="fas" [ngClass]="getNotificationIcon(notification.type)"></i>
+                </div>
+                <div class="notification-content">
+                  <div class="notification-title">{{ notification.title }}</div>
+                  <div class="notification-message">{{ notification.message }}</div>
+                  <div class="notification-time">{{ getTimeAgo(notification.created_at) }}</div>
+                </div>
+                <div class="notification-actions" *ngIf="!notification.is_read">
+                  <button class="btn-mark-read" (click)="markAsRead(notification.id); $event.stopPropagation()">
+                    <i class="fas fa-check"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noNotifications>
+              <div class="no-notifications">
+                <i class="fas fa-bell-slash"></i>
+                <p>Aucune notification</p>
+              </div>
+            </ng-template>
+
+            <div class="notification-footer">
+              <button class="btn-view-all" (click)="viewAllNotifications()">
+                Voir toutes les notifications
+              </button>
+            </div>
+          </div>
+        </li>
+
+        <!-- Toggle Dark/Light - Style navbar -->
+        <li class="nav-item">
+          <a class="nav-link" href="#" (click)="basculerModeSombre()" title="Changer de thème">
+            <i class="fas nav-icon" [ngClass]="{ 'fa-moon': !isDarkMode, 'fa-sun': isDarkMode }"></i>
+            <span class="nav-text">Thème</span>
+          </a>
+        </li>
+
+        <!-- Profil utilisateur - Style navbar avec photo -->
+        <li class="nav-item dropdown user-profile" #profileDropdown>
+          <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" (click)="toggleUserMenu()" title="Mon profil">
+            <!-- Photo de profil -->
+            <div class="profile-photo">
+              <img *ngIf="currentUser && currentUser.profile_photo && !currentUser.profile_photo.includes('default-avatar')"
+                   [src]="'http://127.0.0.1:8000' + currentUser.profile_photo"
+                   [alt]="(currentUser.username || '')"
+                   class="profile-img" />
+              <div *ngIf="!currentUser || !currentUser.profile_photo || (currentUser.profile_photo && currentUser.profile_photo.includes('default-avatar'))" 
+                   class="profile-placeholder">
+                <i class="fas fa-user"></i>
+              </div>
+            </div>
+            <div class="user-info d-none d-md-block">
+              <span class="nav-text username">{{ currentUser?.first_name || currentUser?.username }}</span>
+              <small class="user-role">{{ getUserRoleLabel(currentUser?.role || '') }}</small>
+            </div>
+          </a>
+
+          <div class="dropdown-menu" [class.show]="userMenuOpen">
+
+            <!-- Header utilisateur -->
+            <div class="dropdown-header p-3 bg-primary text-white text-center">
+              <div class="mb-2">
+                <img *ngIf="currentUser && currentUser.profile_photo && !currentUser.profile_photo.includes('default-avatar')"
+                     [src]="'http://127.0.0.1:8000' + currentUser.profile_photo"
+                     [alt]="(currentUser.username || '')"
+                     style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid white;" />
+                <i *ngIf="!currentUser || !currentUser.profile_photo || (currentUser.profile_photo && currentUser.profile_photo.includes('default-avatar'))" class="fas fa-user fa-2x"></i>
+              </div>
+              <div *ngIf="currentUser">
+                <h6 class="mb-1">{{ currentUser.first_name || currentUser.username }} {{ currentUser.last_name || '' }}</h6>
+                <small>{{ currentUser.email }}</small>
+              </div>
+            </div>
+
+            <!-- Menu items -->
+            <div class="py-1">
+              <button class="dropdown-item d-flex align-items-center px-3 py-2" (click)="navigateToProfile()">
+                <i class="fas fa-user-circle me-2"></i>
+                Mon Profil
+              </button>
+              <button class="dropdown-item d-flex align-items-center px-3 py-2" (click)="navigateToSettings()">
+                <i class="fas fa-cog me-2"></i>
+                Paramètres
+              </button>
+              <a class="dropdown-item d-flex align-items-center px-3 py-2" routerLink="/frontoffice/notifications" (click)="userMenuOpen = false">
+                <i class="fas fa-bell me-2"></i>
+                Notifications
+                <span class="badge bg-danger ms-auto" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
+              </a>
+              <hr class="dropdown-divider">
+              <button class="dropdown-item d-flex align-items-center px-3 py-2 text-danger" (click)="logout()">
+                <i class="fas fa-sign-out-alt me-2"></i>
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+</nav>

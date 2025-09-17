@@ -1,0 +1,137 @@
+<section class="about-section">
+  <div class="container">
+    <!-- Header Section -->
+    <header class="about-header" @fadeInUp>
+      <div class="header-badge">
+        <i class="fas fa-building"></i>
+        <span>SEGUS ENGINEERING</span>
+      </div>
+      <h1 class="main-title">Excellence en Ingénierie</h1>
+      <p class="main-subtitle">
+        Nous transformons vos défis technologiques en opportunités d'innovation grâce à notre expertise en ingénierie avancée et solutions intelligentes.
+      </p>
+    </header>
+
+    <!-- Mission Section -->
+    <div class="mission-section" @fadeInUp>
+      <div class="row align-items-center">
+        <div class="col-lg-6">
+          <div class="mission-content">
+            <h2 class="section-heading">
+              <span class="heading-accent">Notre</span> Mission
+            </h2>
+            <p class="mission-description">
+              Nous créons des solutions d'ingénierie sur mesure pour convertir vos défis techniques en succès durables, avec une approche innovante et centrée sur vos besoins spécifiques.
+            </p>
+            <div class="mission-features">
+              <div class="feature-item">
+                <i class="fas fa-check-circle"></i>
+                <span>Solutions personnalisées</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-check-circle"></i>
+                <span>Technologies de pointe</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-check-circle"></i>
+                <span>Support technique 24/7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="mission-visual">
+            <div class="image-container">
+              <img src="assets/img/mission.jpg" alt="Mission Segus Engineering" loading="lazy" class="mission-photo">
+              <div class="image-overlay">
+                <div class="overlay-content">
+                  <i class="fas fa-play-circle"></i>
+                  <span>Découvrir notre approche</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expertises Section -->
+    <div class="expertises-section" @fadeInUp>
+      <div class="section-header">
+        <h2 class="section-heading">
+          <span class="heading-accent">Nos</span> Expertises
+        </h2>
+        <p class="section-description">
+          Des domaines d'expertise variés pour répondre à tous vos besoins techniques
+        </p>
+      </div>
+      <div class="expertises-grid" @staggerIn>
+        <div class="service-card" *ngFor="let service of services; trackBy: trackByServiceId">
+          <div class="service-header">
+            <div class="service-icon">
+              <i [class]="service.icon"></i>
+            </div>
+            <div class="service-number">0{{ service.id }}</div>
+          </div>
+          <div class="service-content">
+            <h4>{{ service.title }}</h4>
+            <p>{{ service.description }}</p>
+            <div class="service-link">
+              <span>En savoir plus</span>
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Values Section -->
+    <div class="values-section" @fadeInUp>
+      <div class="section-header">
+        <h2 class="section-heading">
+          <span class="heading-accent">Nos</span> Valeurs
+        </h2>
+        <p class="section-description">
+          Les principes qui guident notre excellence et notre engagement
+        </p>
+      </div>
+      <div class="values-grid" @staggerIn>
+        <div class="value-card" *ngFor="let value of values; trackBy: trackByValueId">
+          <div class="value-image">
+            <img src="assets/img/value{{value.id}}.jpg" alt="{{value.title}}" loading="lazy" class="value-photo">
+            <div class="value-overlay">
+              <div class="value-icon">
+                <i [class]="value.icon"></i>
+              </div>
+            </div>
+          </div>
+          <div class="value-content">
+            <h4>{{ value.title }}</h4>
+            <p>{{ value.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-section" @fadeInUp>
+      <div class="cta-content">
+        <h2 class="cta-title">Prêt à transformer vos idées en réalité ?</h2>
+        <p class="cta-description">
+          Contactez-nous dès aujourd'hui pour discuter de votre projet et découvrir comment nous pouvons vous aider.
+        </p>
+        <div class="cta-buttons">
+          <button class="btn btn-primary">
+            <i class="fas fa-phone"></i>
+            <span>Nous contacter</span>
+          </button>
+          <button class="btn btn-outline">
+            <i class="fas fa-calendar"></i>
+            <span>Planifier un rendez-vous</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>

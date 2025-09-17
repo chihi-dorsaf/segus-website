@@ -1,0 +1,67 @@
+<section class="reviews-section" id="reviews">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="reviews-header">
+      <div class="section-badge">
+        <span>TÉMOIGNAGES</span>
+      </div>
+      <h2 class="section-title">Ce Que Disent Nos Clients</h2>
+      <p class="section-subtitle">
+        Découvrez les retours de nos clients satisfaits qui nous font confiance pour leurs projets d'ingénierie les plus critiques
+      </p>
+    </div>
+
+    <!-- Reviews Slider -->
+    <div class="reviews-slider">
+      <div class="slider-container">
+        <div class="slider-track" [style.transform]="'translateX(-' + (currentSlide * 100) + '%)'">
+          <div class="review-slide" *ngFor="let review of reviews; let i = index">
+            <div class="review-card">
+              <div class="review-content">
+                <div class="quote-icon">
+                  <i class="fas fa-quote-left"></i>
+                </div>
+                <p class="review-text">{{ review.text }}</p>
+                <div class="review-rating">
+                  <i class="fas fa-star" *ngFor="let star of getStarArray(review.rating)"></i>
+                  <i class="fas fa-star-half-alt" *ngIf="review.rating % 1 !== 0"></i>
+                </div>
+              </div>
+              <div class="review-author">
+                <div class="author-avatar">
+                  <img [src]="review.avatar" [alt]="review.name" loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4 class="author-name">{{ review.name }}</h4>
+                  <p class="author-position">{{ review.position }}</p>
+                  <p class="author-company">{{ review.company }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slider Navigation -->
+      <div class="slider-nav">
+        <button class="nav-btn prev-btn" (click)="previousSlide()" [disabled]="currentSlide === 0">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="nav-btn next-btn" (click)="nextSlide()" [disabled]="currentSlide === reviews.length - 1">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <!-- Slider Indicators -->
+      <div class="slider-indicators">
+        <button
+          class="indicator"
+          *ngFor="let review of reviews; let i = index"
+          [class.active]="i === currentSlide"
+          (click)="goToSlide(i)"
+          [attr.aria-label]="'Aller au témoignage ' + (i + 1)">
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

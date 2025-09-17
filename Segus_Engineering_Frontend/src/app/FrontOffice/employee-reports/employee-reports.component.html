@@ -1,0 +1,179 @@
+<div class="reports-container">
+  <!-- En-tête -->
+  <div class="reports-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-chart-bar"></i>
+        Mes Rapports de Performance
+      </h1>
+      
+      <div class="header-actions">
+        <select class="form-select" [(ngModel)]="selectedPeriod" (change)="onPeriodChange()">
+          <option *ngFor="let period of periods" [value]="period.value">
+            {{ period.label }}
+          </option>
+        </select>
+        
+        <button class="btn btn-outline-primary" (click)="exportReport()">
+          <i class="fas fa-download"></i>
+          Exporter
+        </button>
+        
+        <button class="btn btn-outline-secondary" (click)="printReport()">
+          <i class="fas fa-print"></i>
+          Imprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Génération du rapport en cours...</p>
+  </div>
+
+  <!-- Contenu du rapport -->
+  <div class="reports-content" *ngIf="reportData && !isLoading">
+    <!-- Statistiques principales -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-icon tasks-icon">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ reportData.tasksCompleted }}/{{ reportData.totalTasks }}</div>
+          <div class="stat-label">Tâches terminées</div>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill bg-success" [style.width.%]="getCompletionRate()"></div>
+            </div>
+            <span class="progress-text">{{ getCompletionRate() }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon hours-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ reportData.hoursWorked }}h</div>
+          <div class="stat-label">Heures travaillées</div>
+          <div class="stat-details">
+            <span class="badge bg-info">{{ (reportData.hoursWorked / 7) | number:'1.1-1' }}h/jour</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon productivity-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ reportData.productivity }}%</div>
+          <div class="stat-label">Productivité</div>
+          <div class="stat-details">
+            <span class="badge" [ngClass]="'bg-' + getProductivityColor()">
+              {{ reportData.productivity >= 80 ? 'Excellente' : reportData.productivity >= 60 ? 'Bonne' : 'À améliorer' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique de productivité -->
+    <div class="chart-section">
+      <h3 class="section-title">
+        <i class="fas fa-chart-area"></i>
+        Évolution de la productivité
+      </h3>
+      
+      <div class="chart-placeholder">
+        <div class="chart-bars">
+          <div class="chart-bar" *ngFor="let day of [85, 92, 78, 88, 95, 82, 90]" 
+               [style.height.%]="day">
+            <div class="bar-value">{{ day }}%</div>
+          </div>
+        </div>
+        <div class="chart-labels">
+          <span *ngFor="let day of ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']">{{ day }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Détail des projets -->
+    <div class="projects-section">
+      <h3 class="section-title">
+        <i class="fas fa-project-diagram"></i>
+        Performance par projet
+      </h3>
+
+      <div class="projects-list">
+        <div class="project-card" *ngFor="let project of reportData.projects">
+          <div class="project-header">
+            <h4 class="project-name">{{ project.name }}</h4>
+            <span class="project-status" [ngClass]="'badge bg-' + getProjectStatusColor(project.status)">
+              {{ getProjectStatusLabel(project.status) }}
+            </span>
+          </div>
+
+          <div class="project-stats">
+            <div class="project-progress">
+              <div class="progress-info">
+                <span>Progression: {{ project.progress }}%</span>
+                <span>{{ project.tasksCompleted }}/{{ project.totalTasks }} tâches</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [ngClass]="'bg-' + getProjectStatusColor(project.status)"
+                     [style.width.%]="project.progress">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommandations -->
+    <div class="recommendations-section">
+      <h3 class="section-title">
+        <i class="fas fa-lightbulb"></i>
+        Recommandations
+      </h3>
+
+      <div class="recommendations-list">
+        <div class="recommendation-item" *ngIf="getCompletionRate() < 80">
+          <div class="recommendation-icon warning">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="recommendation-content">
+            <h4>Améliorer le taux de completion</h4>
+            <p>Votre taux de completion est de {{ getCompletionRate() }}%. Essayez de mieux planifier vos tâches.</p>
+          </div>
+        </div>
+
+        <div class="recommendation-item" *ngIf="reportData.productivity >= 90">
+          <div class="recommendation-icon success">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <div class="recommendation-content">
+            <h4>Excellente performance !</h4>
+            <p>Votre productivité de {{ reportData.productivity }}% est remarquable. Continuez ainsi !</p>
+          </div>
+        </div>
+
+        <div class="recommendation-item">
+          <div class="recommendation-icon info">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="recommendation-content">
+            <h4>Planification recommandée</h4>
+            <p>Planifiez vos tâches en début de semaine pour optimiser votre efficacité.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

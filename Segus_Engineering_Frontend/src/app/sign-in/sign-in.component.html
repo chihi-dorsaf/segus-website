@@ -1,0 +1,96 @@
+<div class="signin-container">
+  <div class="signin-wrapper" [@slideInUp]="animationState">
+
+    <!-- Header -->
+    <div class="header-section" [@fadeInDown]="animationState">
+      <div class="logo-container" [@bounceIn]="animationState">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <h1 [@fadeInUp]="animationState">Bienvenue</h1>
+      <p [@fadeInUp]="animationState">Connectez-vous à votre compte</p>
+    </div>
+
+    <!-- Sign In Form -->
+    <div class="form-card" [@slideInLeft]="animationState">
+      <form [formGroup]="signInForm" (ngSubmit)="onSubmit()" [@staggerForm]="animationState">
+
+        <!-- Email Field -->
+        <div class="form-group" [@fadeInUp]="animationState">
+          <label for="email">Adresse email</label>
+          <div class="input-container" [class.error]="signInForm.get('email')?.invalid && signInForm.get('email')?.touched">
+            <i class="fas fa-envelope"></i>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="votre.email@exemple.com"
+              [class.filled]="signInForm.get('email')?.value"
+            />
+          </div>
+          <div class="error-message" *ngIf="signInForm.get('email')?.invalid && signInForm.get('email')?.touched" [@slideDown]="'in'">
+            <span *ngIf="signInForm.get('email')?.errors?.['required']">L'adresse email est requise</span>
+            <span *ngIf="signInForm.get('email')?.errors?.['email']">Veuillez entrer une adresse email valide</span>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group" [@fadeInUp]="animationState">
+          <label for="password">Mot de passe</label>
+          <div class="input-container" [class.error]="signInForm.get('password')?.invalid && signInForm.get('password')?.touched">
+            <i class="fas fa-lock"></i>
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              [class.filled]="signInForm.get('password')?.value"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePassword()"
+              [@rotateIcon]="showPassword ? 'visible' : 'hidden'"
+            >
+              <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="signInForm.get('password')?.invalid && signInForm.get('password')?.touched" [@slideDown]="'in'">
+            <span *ngIf="signInForm.get('password')?.errors?.['required']">Le mot de passe est requis</span>
+            <span *ngIf="signInForm.get('password')?.errors?.['minlength']">Au moins 6 caractères requis</span>
+          </div>
+          <div class="error-message" *ngIf="errorMessage" [@slideDown]="'in'">{{ errorMessage }}</div>
+        </div>
+
+        <!-- Remember & Forgot -->
+        <div class="form-options" [@fadeInUp]="animationState">
+          <label class="checkbox-container">
+            <input type="checkbox" formControlName="rememberMe">
+            <span class="checkmark"></span>
+            Se souvenir de moi
+          </label>
+          <button type="button" class="forgot-link" [routerLink]="'/reset-password'">Mot de passe oublié ?</button>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="signInForm.invalid || isLoading"
+          [@fadeInUp]="animationState"
+          [@pulseOnHover]="!isLoading ? 'idle' : 'loading'"
+        >
+          <div class="btn-content" [class.loading]="isLoading">
+            <i class="fas fa-spinner fa-spin" *ngIf="isLoading" [@fadeIn]="'in'"></i>
+            <span [@slideText]="isLoading ? 'loading' : 'idle'">
+              {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+            </span>
+            <i class="fas fa-arrow-right" *ngIf="!isLoading" [@fadeIn]="'in'"></i>
+          </div>
+        </button>
+      </form>
+    </div>
+
+
+
+  </div>
+</div>

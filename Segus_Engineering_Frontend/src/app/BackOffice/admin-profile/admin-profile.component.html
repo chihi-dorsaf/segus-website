@@ -1,0 +1,209 @@
+<div class="admin-profile-container">
+  <!-- Header -->
+  <div class="profile-header">
+    <div class="header-content">
+      <button class="back-btn" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+        <span>Retour</span>
+      </button>
+      <div class="header-title">
+        <h1>Mon Profil</h1>
+        <p>Gérez vos informations personnelles et paramètres</p>
+      </div>
+      <div class="header-actions">
+        <button class="edit-btn" (click)="toggleEdit()" [class.active]="isEditing">
+          <i class="fas" [class.fa-edit]="!isEditing" [class.fa-times]="isEditing"></i>
+          <span>{{ isEditing ? 'Annuler' : 'Modifier' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>{{ uploadProgress > 0 ? 'Upload en cours... ' + uploadProgress + '%' : 'Chargement...' }}</p>
+      <div class="progress-bar" *ngIf="uploadProgress > 0">
+        <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Content -->
+  <div class="profile-content" *ngIf="!isLoading">
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+      
+      <!-- Photo Section -->
+      <div class="profile-photo-section">
+        <div class="photo-container">
+          <div class="photo-wrapper" [class.editing]="isEditing">
+            <img *ngIf="previewUrl" [src]="previewUrl" alt="Photo de profil" class="profile-photo">
+            <div *ngIf="!previewUrl" class="photo-placeholder">
+              <span class="initials">{{ getUserInitials() }}</span>
+            </div>
+            
+            <!-- Edit Photo Overlay - Always visible when editing -->
+            <div class="photo-overlay" *ngIf="isEditing" style="display: flex !important; opacity: 1 !important;">
+              <label for="photo-input" class="photo-upload-btn" title="Changer la photo">
+                <i class="fas fa-camera"></i>
+              </label>
+              <button type="button" class="photo-remove-btn" (click)="removePhoto()" *ngIf="previewUrl" title="Supprimer la photo">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <input type="file" id="photo-input" accept="image/*" (change)="onFileSelected($event)" style="display: none;">
+          
+          <div class="photo-info">
+            <h3>{{ user?.first_name }} {{ user?.last_name }}</h3>
+            <p class="user-role">{{ user?.position || 'Administrateur' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="form-sections">
+        
+        <!-- Informations Personnelles -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <i class="fas fa-user"></i>
+            Informations Personnelles
+          </h2>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="first_name">Prénom *</label>
+              <input 
+                type="text" 
+                id="first_name" 
+                formControlName="first_name"
+                [class.error]="profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched"
+                [style.background-color]="!isEditing ? '#f8f9fa' : 'white'"
+                [style.pointer-events]="!isEditing ? 'none' : 'auto'">
+              <div class="error-message" *ngIf="profileForm.get('first_name')?.invalid && profileForm.get('first_name')?.touched">
+                Le prénom est requis (minimum 2 caractères)
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="last_name">Nom *</label>
+              <input 
+                type="text" 
+                id="last_name" 
+                formControlName="last_name"
+                [class.error]="profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched"
+                [style.background-color]="!isEditing ? '#f8f9fa' : 'white'"
+                [style.pointer-events]="!isEditing ? 'none' : 'auto'">
+              <div class="error-message" *ngIf="profileForm.get('last_name')?.invalid && profileForm.get('last_name')?.touched">
+                Le nom est requis (minimum 2 caractères)
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input 
+              type="email" 
+              id="email" 
+              formControlName="email"
+              [class.error]="profileForm.get('email')?.invalid && profileForm.get('email')?.touched"
+              [style.background-color]="!isEditing ? '#f8f9fa' : 'white'"
+              [style.pointer-events]="!isEditing ? 'none' : 'auto'">
+            <div class="error-message" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+              Veuillez entrer une adresse email valide
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="phone">Téléphone</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              formControlName="phone"
+              placeholder="+216 XX XXX XXX"
+              [class.error]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched"
+              [style.background-color]="!isEditing ? '#f8f9fa' : 'white'"
+              [style.pointer-events]="!isEditing ? 'none' : 'auto'">
+            <div class="error-message" *ngIf="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched">
+              Format de téléphone invalide
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="address">Adresse</label>
+            <input 
+              type="text" 
+              id="address" 
+              formControlName="address"
+              placeholder="Ville, Pays"
+              [style.background-color]="!isEditing ? '#f8f9fa' : 'white'"
+              [style.pointer-events]="!isEditing ? 'none' : 'auto'">
+          </div>
+        </div>
+
+        <!-- Informations Professionnelles -->
+        <div class="form-section">
+          <h2 class="section-title">
+            <i class="fas fa-briefcase"></i>
+            Informations Professionnelles
+          </h2>
+          
+          <div class="form-group">
+            <label for="position">Poste</label>
+            <input 
+              type="text" 
+              id="position" 
+              formControlName="position"
+              [style.background-color]="!isEditing ? '#f8f9fa' : 'white'"
+              [style.pointer-events]="!isEditing ? 'none' : 'auto'">
+          </div>
+        </div>
+
+        <!-- Informations Système -->
+        <div class="form-section" *ngIf="!isEditing">
+          <h2 class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Informations Système
+          </h2>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <label>ID Utilisateur</label>
+              <span>{{ user?.id || 'N/A' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Date de création</label>
+              <span>{{ (user?.created_at | date:'dd/MM/yyyy') || 'N/A' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Dernière connexion</label>
+              <span>{{ (user?.last_login | date:'dd/MM/yyyy HH:mm') || 'N/A' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Statut</label>
+              <span class="status-badge active">Actif</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions" *ngIf="isEditing">
+        <button type="button" class="btn btn-secondary" (click)="toggleEdit()">
+          <i class="fas fa-times"></i>
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="profileForm.invalid || isLoading">
+          <i class="fas fa-save"></i>
+          Enregistrer les modifications
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

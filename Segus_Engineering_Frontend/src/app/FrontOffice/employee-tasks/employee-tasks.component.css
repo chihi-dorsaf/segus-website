@@ -1,0 +1,834 @@
+.tasks-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+  border-radius: 16px 16px 0 0;
+}
+
+.header-section h2 {
+  color: #1f2937;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-section h2 i {
+  color: #6366f1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.filter-section {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.view-controls {
+  display: flex;
+  gap: 5px;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  padding: 4px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.view-controls .btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-controls .btn.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+}
+
+.view-controls .btn:hover:not(.active) {
+  color: #374151;
+}
+
+.form-select {
+  padding: 8px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background-color: white;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.loading-spinner i {
+  margin-right: 10px;
+  font-size: 24px;
+  color: #6366f1;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.alert {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alert-danger {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.alert-danger i {
+  color: #ef4444;
+}
+
+/* Styles pour la vue liste */
+.section-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 16px 16px 0 0;
+}
+
+.section-card h3 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-card h3 i {
+  color: #6366f1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #6b7280;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+  margin: 20px 0;
+}
+
+.empty-state i {
+  font-size: 64px;
+  color: #cbd5e1;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state p {
+  font-size: 18px;
+  margin: 0;
+}
+
+.subtasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.subtask-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.subtask-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 0 12px 12px 0;
+}
+
+.subtask-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+}
+
+.subtask-card.completed {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.subtask-card.completed::before {
+  background: linear-gradient(180deg, #10b981, #34d399);
+}
+
+.subtask-card.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: #10b981;
+  font-weight: bold;
+  font-size: 18px;
+  background: rgba(16, 185, 129, 0.1);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.subtask-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.subtask-info h5 {
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.section-details {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.section-details .section-number {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #4338ca;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 11px;
+  box-shadow: 0 1px 3px rgba(67, 56, 202, 0.2);
+  border: 1px solid rgba(67, 56, 202, 0.2);
+}
+
+.section-id {
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.completion-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.completion-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #10b981;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.completion-checkbox:checked {
+  transform: scale(1.1);
+}
+
+.completion-label {
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.subtask-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.task-reference, .kilometrage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assigned-employees {
+  margin-top: 12px;
+}
+
+.employees-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.employees-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.employee-badge {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.2s ease;
+}
+
+.employee-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.kanban-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+  border-top: 4px solid #002552;
+}
+
+.kanban-board {
+  margin-top: 20px;
+}
+
+.kanban-columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  min-height: 600px;
+}
+
+.kanban-column {
+  border-radius: 16px;
+  padding: 20px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Couleurs spécifiques pour chaque colonne */
+.kanban-column:nth-child(1) {
+  background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%);
+  border-color: #f59e0b;
+}
+
+.kanban-column:nth-child(2) {
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border-color: #3b82f6;
+}
+
+.kanban-column:nth-child(3) {
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+  border-color: #6366f1;
+}
+
+.kanban-column:nth-child(4) {
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  border-color: #10b981;
+}
+
+.kanban-column:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 16px 16px 0 0;
+}
+
+.kanban-column:nth-child(1)::before {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.kanban-column:nth-child(2)::before {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.kanban-column:nth-child(3)::before {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.kanban-column:nth-child(4)::before {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.kanban-column.cdk-drop-list-dragging {
+  border-color: #007bff;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.column-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column:nth-child(1) .column-header h3 {
+  color: #92400e;
+}
+
+.kanban-column:nth-child(2) .column-header h3 {
+  color: #1e40af;
+}
+
+.kanban-column:nth-child(3) .column-header h3 {
+  color: #4338ca;
+}
+
+.kanban-column:nth-child(4) .column-header h3 {
+  color: #047857;
+}
+
+.column-header h3 i {
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-column:nth-child(1) .column-header h3 i {
+  color: #f59e0b;
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.kanban-column:nth-child(2) .column-header h3 i {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.kanban-column:nth-child(3) .column-header h3 i {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.kanban-column:nth-child(4) .column-header h3 i {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.column-header .task-count {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  color: #374151;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.column-content {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-list {
+  min-height: 200px;
+}
+
+.kanban-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  cursor: grab;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.kanban-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 0 12px 12px 0;
+}
+
+.kanban-column:nth-child(1) .kanban-card::before {
+  background: linear-gradient(180deg, #f59e0b, #fbbf24);
+}
+
+.kanban-column:nth-child(2) .kanban-card::before {
+  background: linear-gradient(180deg, #3b82f6, #60a5fa);
+}
+
+.kanban-column:nth-child(3) .kanban-card::before {
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+}
+
+.kanban-column:nth-child(4) .kanban-card::before {
+  background: linear-gradient(180deg, #10b981, #34d399);
+}
+
+.kanban-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+  transform: rotate(2deg) scale(0.98);
+}
+
+.kanban-card.in-progress {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.kanban-card.completed {
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+  position: relative;
+}
+
+.kanban-card.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: #10b981;
+  font-weight: bold;
+  font-size: 16px;
+  background: rgba(16, 185, 129, 0.1);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.card-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.4;
+  flex: 1;
+  background: linear-gradient(135deg, #1e293b, #334155);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-number {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-left: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-id {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-family: monospace;
+}
+
+.task-info {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.kilometrage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #059669;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.kilometrage i {
+  font-size: 12px;
+  color: #10b981;
+}
+
+.priority-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  background: #002552;
+  color: #fff;
+}
+
+.priority-low {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.priority-medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.priority-high {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.priority-urgent {
+  background: #f5c6cb;
+  color: #721c24;
+}
+
+.task-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.task-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.project-name {
+  background: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.due-date {
+  font-weight: 500;
+}
+
+.loading-message, .error-message, .no-tasks {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.error-message {
+  color: #dc3545;
+}
+
+/* Styles pour le drag and drop */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 6px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Bordure par statut avec couleur principale */
+.kanban-column:nth-child(1) .task-card { border-left-color: #002552; }
+.kanban-column:nth-child(2) .task-card { border-left-color: #0d6efd; }
+.kanban-column:nth-child(3) .task-card { border-left-color: #198754; }
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .kanban-columns {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .tasks-container {
+    padding: 15px;
+  }
+  
+  .kanban-columns {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-section {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  
+  .filter-section {
+    justify-content: center;
+  }
+  
+  .subtasks-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .subtask-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .completion-toggle {
+    justify-content: flex-start;
+  }
+}

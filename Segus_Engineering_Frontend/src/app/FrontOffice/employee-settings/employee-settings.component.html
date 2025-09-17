@@ -1,0 +1,148 @@
+<div class="settings-container">
+  <h2>Paramètres</h2>
+  
+  <div class="settings-content">
+    <!-- Section Préférences -->
+    <div class="settings-section">
+      <h3><i class="fas fa-cog"></i> Préférences générales</h3>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-moon"></i>
+          Thème sombre
+        </label>
+        <div class="setting-control">
+          <label class="switch">
+            <input type="checkbox" [checked]="isDarkMode" (change)="toggleTheme()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-bell"></i>
+          Notifications
+        </label>
+        <div class="setting-control">
+          <label class="switch">
+            <input type="checkbox" [checked]="notificationsEnabled" (change)="toggleNotifications()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-language"></i>
+          Langue
+        </label>
+        <div class="setting-control">
+          <select class="form-select" [(ngModel)]="selectedLanguage" (change)="changeLanguage()">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Sécurité -->
+    <div class="settings-section">
+      <h3><i class="fas fa-shield-alt"></i> Sécurité</h3>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-key"></i>
+          Changer le mot de passe
+        </label>
+        <div class="setting-control">
+          <button class="btn btn-outline-primary" (click)="openPasswordModal()">
+            Modifier
+          </button>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-mobile-alt"></i>
+          Authentification à deux facteurs
+        </label>
+        <div class="setting-control">
+          <label class="switch">
+            <input type="checkbox" [checked]="twoFactorEnabled" (change)="toggle2FA()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Notifications -->
+    <div class="settings-section">
+      <h3><i class="fas fa-envelope"></i> Notifications par email</h3>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-tasks"></i>
+          Nouvelles tâches assignées
+        </label>
+        <div class="setting-control">
+          <label class="switch">
+            <input type="checkbox" [checked]="emailNotifications.tasks" (change)="updateEmailNotification('tasks')">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-project-diagram"></i>
+          Mises à jour de projets
+        </label>
+        <div class="setting-control">
+          <label class="switch">
+            <input type="checkbox" [checked]="emailNotifications.projects" (change)="updateEmailNotification('projects')">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <label class="setting-label">
+          <i class="fas fa-calendar"></i>
+          Rappels d'échéances
+        </label>
+        <div class="setting-control">
+          <label class="switch">
+            <input type="checkbox" [checked]="emailNotifications.deadlines" (change)="updateEmailNotification('deadlines')">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Actions -->
+    <div class="settings-actions">
+      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="saving">
+        <i class="fas fa-save"></i>
+        {{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}
+      </button>
+      
+      <button class="btn btn-secondary" (click)="resetSettings()">
+        <i class="fas fa-undo"></i>
+        Réinitialiser
+      </button>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+    
+    <div *ngIf="errorMessage" class="alert alert-danger">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+  </div>
+</div>

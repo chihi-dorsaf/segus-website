@@ -1,0 +1,100 @@
+<section class="team-section" id="team">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="team-header">
+      <div class="badge">
+        <i class="fas fa-users"></i>
+        <span>NOTRE ÉQUIPE</span>
+      </div>
+      <h1 class="section-title">Experts en Ingénierie</h1>
+      <p class="section-subtitle">
+        Découvrez l'équipe passionnée qui transforme vos défis techniques en solutions innovantes grâce à leur expertise multidisciplinaire.
+      </p>
+    </div>
+
+    <!-- Team Slider -->
+    <div class="team-slider">
+      <div class="slider-container">
+        <div class="slider-track" [style.transform]="'translateX(' + (-currentSlide * 50) + '%)'">
+          <div
+            class="team-slide"
+            *ngFor="let member of teamMembers; let i = index"
+            [class.active]="i === currentSlide">
+            <div class="team-card">
+              <div class="member-image">
+                <img [src]="member.image" [alt]="member.name">
+                <div class="member-overlay">
+                  <div class="social-links">
+                    <a [href]="member.linkedin" target="_blank" class="social-btn" *ngIf="member.linkedin">
+                      <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a [href]="member.email" class="social-btn" *ngIf="member.email">
+                      <i class="fas fa-envelope"></i>
+                    </a>
+                    <a [href]="member.github" target="_blank" class="social-btn" *ngIf="member.github">
+                      <i class="fab fa-github"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div class="member-info">
+                <div class="member-role">{{ member.role }}</div>
+                <h3 class="member-name">{{ member.name }}</h3>
+                <p class="member-description">{{ member.description }}</p>
+                <div class="member-skills">
+                  <span class="skill-tag" *ngFor="let skill of member.skills">{{ skill }}</span>
+                </div>
+                <div class="member-stats">
+                  <div class="stat">
+                    <span class="stat-number">{{ member.experience }}</span>
+                    <span class="stat-label">ans d'expérience</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-number">{{ member.projects }}+</span>
+                    <span class="stat-label">projets</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Slider Navigation -->
+      <div class="slider-nav">
+        <button class="nav-btn prev-btn" (click)="previousSlide()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="nav-btn next-btn" (click)="nextSlide()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      
+      <!-- Slider Indicators -->
+      <div class="slider-indicators">
+        <button
+          class="indicator"
+          *ngFor="let slide of getSlideIndicators(); let i = index"
+          [class.active]="i === currentSlide"
+          (click)="goToSlide(i)">
+        </button>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="team-cta">
+      <h2>Rejoignez Notre Équipe</h2>
+      <p>Nous recherchons constamment des talents passionnés pour renforcer notre équipe d'experts.</p>
+      <div class="cta-buttons">
+        <button class="btn btn-primary">
+          <i class="fas fa-briefcase"></i>
+          Voir les Offres
+        </button>
+        <button class="btn btn-outline">
+          <i class="fas fa-paper-plane"></i>
+          Candidature Spontanée
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

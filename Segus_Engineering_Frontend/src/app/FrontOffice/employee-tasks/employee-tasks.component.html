@@ -1,0 +1,204 @@
+<div class="tasks-container">
+  <div class="header-section">
+    <h2><i class="fas fa-list-ul"></i> Mes Sous-tâches</h2>
+    <div class="filter-section">
+      <div class="view-controls">
+        <button class="btn btn-sm" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
+          <i class="fas fa-list"></i> Liste
+        </button>
+        <button class="btn btn-sm" [class.active]="viewMode === 'kanban'" (click)="viewMode = 'kanban'">
+          <i class="fas fa-columns"></i> Kanban
+        </button>
+        <button class="btn btn-sm btn-success" (click)="syncGamificationStats()" [disabled]="isSyncing">
+          <i class="fas fa-sync" [class.fa-spin]="isSyncing"></i> 
+          {{ isSyncing ? 'Synchronisation...' : 'Calculer étoiles' }}
+        </button>
+      </div>
+      <select *ngIf="viewMode === 'list'" [(ngModel)]="selectedCompletionStatus" (change)="filterSubtasks()" class="form-select">
+        <option value="all">Toutes les sous-tâches</option>
+        <option value="completed">Terminées</option>
+        <option value="pending">En cours</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-spinner">
+    <i class="fas fa-spinner fa-spin"></i> Chargement...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+  </div>
+
+  <!-- Section Tâches masquée pour les employés -->
+
+  <!-- Section Sous-tâches - Vue Liste -->
+  <div class="section-card" *ngIf="!isLoading && !error && viewMode === 'list'">
+    <h3><i class="fas fa-list-ul"></i> Sous-tâches Assignées ({{ getFilteredSubtasks().length }})</h3>
+    
+    <div *ngIf="getFilteredSubtasks().length === 0" class="empty-state">
+      <i class="fas fa-tasks"></i>
+      <p>Aucune sous-tâche assignée</p>
+    </div>
+
+    <div class="subtasks-grid" *ngIf="getFilteredSubtasks().length > 0">
+      <div *ngFor="let subtask of getFilteredSubtasks()" class="subtask-card" [ngClass]="{'completed': subtask.is_completed}">
+        <div class="subtask-header">
+          <div class="subtask-info">
+            <h5>{{ subtask.section_name }}</h5>
+            <span class="section-details">
+              <span class="section-number">#{{ subtask.section_number }}</span>
+              <span class="section-id" *ngIf="subtask.section_id">ID: {{ subtask.section_id }}</span>
+            </span>
+          </div>
+          <div class="completion-toggle">
+            <input 
+              type="checkbox" 
+              [checked]="subtask.is_completed" 
+              (change)="toggleSubtaskCompletion(subtask.id)"
+              class="completion-checkbox"
+            >
+            <label class="completion-label">
+              {{ subtask.is_completed ? 'Terminé' : 'En cours' }}
+            </label>
+          </div>
+        </div>
+
+        <div class="subtask-meta">
+          <span class="task-reference">
+            <i class="fas fa-link"></i> Tâche ID: {{ subtask.task }}
+          </span>
+          <span class="kilometrage" *ngIf="subtask.kilometrage">
+            <i class="fas fa-road"></i> {{ subtask.kilometrage }} km
+          </span>
+        </div>
+
+        <div class="assigned-employees" *ngIf="subtask.assigned_employees && subtask.assigned_employees.length > 0">
+          <span class="employees-label">
+            <i class="fas fa-users"></i> Assigné à:
+          </span>
+          <div class="employees-list">
+            <span *ngFor="let employee of subtask.assigned_employees" class="employee-badge">{{ employee.username }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Sous-tâches - Vue Kanban -->
+  <div class="kanban-board" *ngIf="!isLoading && !error && viewMode === 'kanban'">
+    <div class="kanban-columns">
+      <!-- Colonne Backlog -->
+      <div class="kanban-column" 
+           (dragover)="onDragOver($event)" 
+           (drop)="onDrop($event, 'backlog')">
+        <div class="column-header">
+          <h3><i class="fas fa-inbox"></i> Backlog</h3>
+          <span class="task-count">{{ getSubtasksByStatus('backlog').length }}</span>
+        </div>
+        <div class="column-content">
+          <div *ngFor="let subtask of getSubtasksByStatus('backlog')" 
+               class="kanban-card"
+               draggable="true"
+               (dragstart)="onDragStart($event, subtask)">
+            <div class="card-header">
+              <h4>{{ subtask.section_name }}</h4>
+              <span class="section-number">#{{ subtask.section_number }}</span>
+            </div>
+            <div class="card-content">
+              <p class="section-id">{{ subtask.section_id }}</p>
+              <p class="task-info">Tâche ID: {{ subtask.task }}</p>
+              <div class="kilometrage" *ngIf="subtask.kilometrage">
+                <i class="fas fa-road"></i> {{ subtask.kilometrage }} km
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne À faire -->
+      <div class="kanban-column" 
+           (dragover)="onDragOver($event)" 
+           (drop)="onDrop($event, 'todo')">
+        <div class="column-header">
+          <h3><i class="fas fa-clipboard-list"></i> À faire</h3>
+          <span class="task-count">{{ getSubtasksByStatus('todo').length }}</span>
+        </div>
+        <div class="column-content">
+          <div *ngFor="let subtask of getSubtasksByStatus('todo')" 
+               class="kanban-card"
+               draggable="true"
+               (dragstart)="onDragStart($event, subtask)">
+            <div class="card-header">
+              <h4>{{ subtask.section_name }}</h4>
+              <span class="section-number">#{{ subtask.section_number }}</span>
+            </div>
+            <div class="card-content">
+              <p class="section-id">{{ subtask.section_id }}</p>
+              <p class="task-info">Tâche ID: {{ subtask.task }}</p>
+              <div class="kilometrage" *ngIf="subtask.kilometrage">
+                <i class="fas fa-road"></i> {{ subtask.kilometrage }} km
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne En cours -->
+      <div class="kanban-column" 
+           (dragover)="onDragOver($event)" 
+           (drop)="onDrop($event, 'in_progress')">
+        <div class="column-header">
+          <h3><i class="fas fa-play-circle"></i> En cours</h3>
+          <span class="task-count">{{ getSubtasksByStatus('in_progress').length }}</span>
+        </div>
+        <div class="column-content">
+          <div *ngFor="let subtask of getSubtasksByStatus('in_progress')" 
+               class="kanban-card in-progress"
+               draggable="true"
+               (dragstart)="onDragStart($event, subtask)">
+            <div class="card-header">
+              <h4>{{ subtask.section_name }}</h4>
+              <span class="section-number">#{{ subtask.section_number }}</span>
+            </div>
+            <div class="card-content">
+              <p class="section-id">{{ subtask.section_id }}</p>
+              <p class="task-info">Tâche ID: {{ subtask.task }}</p>
+              <div class="kilometrage" *ngIf="subtask.kilometrage">
+                <i class="fas fa-road"></i> {{ subtask.kilometrage }} km
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne Terminé -->
+      <div class="kanban-column" 
+           (dragover)="onDragOver($event)" 
+           (drop)="onDrop($event, 'completed')">
+        <div class="column-header">
+          <h3><i class="fas fa-check-circle"></i> Terminé</h3>
+          <span class="task-count">{{ getSubtasksByStatus('completed').length }}</span>
+        </div>
+        <div class="column-content">
+          <div *ngFor="let subtask of getSubtasksByStatus('completed')" 
+               class="kanban-card completed"
+               draggable="true"
+               (dragstart)="onDragStart($event, subtask)">
+            <div class="card-header">
+              <h4>{{ subtask.section_name }}</h4>
+              <span class="section-number">#{{ subtask.section_number }}</span>
+            </div>
+            <div class="card-content">
+              <p class="section-id">{{ subtask.section_id }}</p>
+              <p class="task-info">Tâche ID: {{ subtask.task }}</p>
+              <div class="kilometrage" *ngIf="subtask.kilometrage">
+                <i class="fas fa-road"></i> {{ subtask.kilometrage }} km
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

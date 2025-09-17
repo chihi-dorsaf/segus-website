@@ -1,0 +1,702 @@
+<div class="admin-subtasks-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="icon-subtasks"></i>
+        Gestion des Sous-tâches
+      </h1>
+      <p class="page-description">
+        Gérez et organisez toutes les sous-tâches de vos projets
+      </p>
+    </div>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-success sync-btn"
+        (click)="forceSyncSubtasks()"
+        [disabled]="loading"
+        title="Synchroniser les sous-tâches terminées par les employés">
+        <i class="fas fa-sync-alt"></i>
+        <span class="sync-text">Synchroniser</span>
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="openCreateSubtaskModal()"
+        [disabled]="loading">
+        <i class="icon-plus"></i>
+        Nouvelle Sous-tâche
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-grid">
+      <!-- Search -->
+      <div class="filter-group">
+        <label for="search">Rechercher</label>
+        <div class="search-input">
+          <i class="icon-search"></i>
+          <input
+            type="text"
+            id="search"
+            placeholder="Rechercher une sous-tâche..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()">
+        </div>
+      </div>
+
+      <!-- Task Filter -->
+      <div class="filter-group">
+        <label for="taskFilter">Tâche</label>
+        <select
+          id="taskFilter"
+          [(ngModel)]="selectedTask"
+          (change)="applyFilters()">
+          <option value="">Toutes les tâches</option>
+          <option *ngFor="let task of tasks" [value]="task.id">
+            {{task.title}}
+          </option>
+        </select>
+      </div>
+
+      <!-- Project Filter -->
+      <div class="filter-group">
+        <label for="projectFilter">Projet</label>
+        <select
+          id="projectFilter"
+          [(ngModel)]="selectedProject"
+          (change)="applyFilters()">
+          <option value="">Tous les projets</option>
+          <option *ngFor="let project of projects" [value]="project.id">
+            {{project.title}}
+          </option>
+        </select>
+      </div>
+
+      <!-- Assignee Filter -->
+      <div class="filter-group">
+        <label for="assigneeFilter">Assigné à</label>
+        <select
+          id="assigneeFilter"
+          [(ngModel)]="selectedAssignee"
+          (change)="applyFilters()">
+          <option value="">Tous les employés</option>
+          <option *ngFor="let employee of employees" [value]="employee.id">
+            {{employee.full_name || employee.username}}
+          </option>
+        </select>
+      </div>
+
+      <!-- Completion Filter -->
+      <div class="filter-group">
+        <label for="completedFilter">Statut</label>
+        <select
+          id="completedFilter"
+          [(ngModel)]="completedFilter"
+          (change)="applyFilters()">
+          <option value="">Tous les statuts</option>
+          <option value="false">En cours</option>
+          <option value="true">Terminées</option>
+        </select>
+      </div>
+
+      <!-- Clear Filters -->
+      <div class="filter-group">
+        <button
+          class="btn btn-secondary btn-sm"
+          (click)="clearFilters()"
+          [disabled]="loading">
+          <i class="icon-refresh"></i>
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Controls -->
+  <div class="view-controls">
+    <div class="view-mode-toggle">
+      <button
+        class="btn btn-sm"
+        [class.active]="viewMode === 'grid'"
+        (click)="viewMode = 'grid'">
+        <i class="icon-grid"></i>
+        Grille
+      </button>
+      <button
+        class="btn btn-sm"
+        [class.active]="viewMode === 'list'"
+        (click)="viewMode = 'list'">
+        <i class="icon-list"></i>
+        Liste
+      </button>
+    </div>
+
+    <div class="results-info">
+      <span>{{totalItems}} sous-tâche(s) trouvée(s)</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Chargement des sous-tâches...</p>
+  </div>
+
+  <!-- Subtasks Grid View -->
+  <div *ngIf="!loading && viewMode === 'grid'" class="subtasks-grid">
+    <div
+      *ngFor="let subtask of filteredSubtasks"
+      class="subtask-card"
+      [class.completed]="subtask.is_completed"
+      (contextmenu)="openSubtaskMenu($event, subtask)">
+
+      <div class="card-header">
+        <div class="completion-checkbox">
+          <input
+            type="checkbox"
+            [checked]="subtask.is_completed"
+            (change)="toggleSubtask(subtask)">
+        </div>
+        <div class="card-menu">
+          <button class="btn-menu" (click)="openSubtaskMenu($event, subtask)">
+            <i class="icon-more"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-content">
+        <h3 class="subtask-name">{{subtask.section_name}}</h3>
+        <div class="subtask-details">
+          <div class="detail-item">
+            <span class="label">Section:</span>
+            <span class="value">{{subtask.section_number}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">ID:</span>
+            <span class="value">{{subtask.section_id}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Kilométrage:</span>
+            <span class="value">{{subtask.kilometrage}} km</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Tâche:</span>
+            <span class="value">{{getTaskTitle(subtask.task)}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Projet:</span>
+            <span class="value">{{getProjectTitle(subtask.task)}}</span>
+          </div>
+        </div>
+
+        <div class="assigned-employees">
+          <div *ngIf="subtask.assigned_employees && subtask.assigned_employees.length > 0" class="employee-avatars">
+            <div
+              *ngFor="let employee of subtask.assigned_employees"
+              class="employee-avatar"
+              [title]="employee.full_name || employee.username">
+              {{(employee.full_name || employee.username || 'U').charAt(0).toUpperCase()}}
+            </div>
+          </div>
+          <div *ngIf="!subtask.assigned_employees || subtask.assigned_employees.length === 0" class="no-employees">
+            <span class="text-muted">Non assigné</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="status-badge" [class.completed]="subtask.is_completed">
+          {{subtask.is_completed ? 'Terminée' : 'En cours'}}
+        </div>
+        <div class="card-actions">
+          <button
+            class="btn btn-sm btn-secondary"
+            (click)="openEditSubtaskModal(subtask)"
+            title="Modifier">
+            <i class="icon-edit"></i>
+          </button>
+          <button
+            class="btn btn-sm btn-primary"
+            (click)="openAssignModal(subtask)"
+            title="Assigner">
+            <i class="icon-users"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtasks List View -->
+  <div *ngIf="!loading && viewMode === 'list'" class="subtasks-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>
+            <input type="checkbox" (change)="selectAll($event)">
+          </th>
+          <th (click)="sortBy('section_name')" class="sortable">
+            Nom de la section
+            <i class="sort-icon" [class]="getSortIcon('section_name')"></i>
+          </th>
+          <th (click)="sortBy('section_number')" class="sortable">
+            Numéro
+            <i class="sort-icon" [class]="getSortIcon('section_number')"></i>
+          </th>
+          <th>ID Section</th>
+          <th (click)="sortBy('kilometrage')" class="sortable">
+            Kilométrage
+            <i class="sort-icon" [class]="getSortIcon('kilometrage')"></i>
+          </th>
+          <th>Tâche</th>
+          <th>Projet</th>
+          <th>Assignés</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let subtask of filteredSubtasks"
+          [class.completed]="subtask.is_completed"
+          (contextmenu)="openSubtaskMenu($event, subtask)">
+
+          <td>
+            <input
+              type="checkbox"
+              [checked]="subtask.is_completed"
+              (change)="toggleSubtask(subtask)">
+          </td>
+
+          <td class="subtask-name">
+            <strong>{{subtask.section_name}}</strong>
+          </td>
+
+          <td>{{subtask.section_number}}</td>
+
+          <td>
+            <code>{{subtask.section_id}}</code>
+          </td>
+
+          <td>{{subtask.kilometrage}} km</td>
+
+          <td>
+            <span class="task-link">{{getTaskTitle(subtask.task)}}</span>
+          </td>
+
+          <td>
+            <span class="project-link">{{getProjectTitle(subtask.task)}}</span>
+          </td>
+
+          <td>
+            <div class="assigned-employees">
+              <div *ngIf="subtask.assigned_employees && subtask.assigned_employees.length > 0" class="employee-avatars">
+                <div
+                  *ngFor="let employee of subtask.assigned_employees"
+                  class="employee-avatar small"
+                  [title]="employee.full_name || employee.username">
+                  {{(employee.full_name || employee.username || 'U').charAt(0).toUpperCase()}}
+                </div>
+              </div>
+              <span *ngIf="!subtask.assigned_employees || subtask.assigned_employees.length === 0" class="text-muted">Non assigné</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="status-badge" [class.completed]="subtask.is_completed">
+              {{subtask.is_completed ? 'Terminée' : 'En cours'}}
+            </div>
+          </td>
+
+          <td>
+            <div class="action-buttons">
+              <button
+                class="btn btn-sm btn-secondary"
+                (click)="openEditSubtaskModal(subtask)"
+                title="Modifier">
+                <i class="icon-edit"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-primary"
+                (click)="openAssignModal(subtask)"
+                title="Assigner">
+                <i class="icon-users"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-danger"
+                (click)="openDeleteModal(subtask)"
+                title="Supprimer">
+                <i class="icon-delete"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredSubtasks.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <i class="icon-subtasks"></i>
+    </div>
+    <h3>Aucune sous-tâche trouvée</h3>
+    <p>Il n'y a pas de sous-tâches correspondant à vos critères de recherche.</p>
+    <button
+      class="btn btn-primary"
+      (click)="openCreateSubtaskModal()">
+      <i class="icon-plus"></i>
+      Créer une sous-tâche
+    </button>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!loading && totalPages > 1" class="pagination-container">
+    <div class="pagination">
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)">
+        <i class="icon-chevron-left"></i>
+      </button>
+
+      <button
+        *ngFor="let page of getPageNumbers()"
+        class="btn btn-sm"
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)">
+        {{page}}
+      </button>
+
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)">
+        <i class="icon-chevron-right"></i>
+      </button>
+    </div>
+
+    <div class="pagination-info">
+      Page {{currentPage}} sur {{totalPages}}
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div
+  *ngIf="showContextMenu"
+  class="context-menu"
+  [style.left.px]="contextMenuX"
+  [style.top.px]="contextMenuY">
+  <button (click)="openEditSubtaskModal(selectedSubtask!); closeContextMenu()">
+    <i class="icon-edit"></i>
+    Modifier
+  </button>
+  <button (click)="openAssignModal(selectedSubtask!); closeContextMenu()">
+    <i class="icon-users"></i>
+    Assigner
+  </button>
+  <button (click)="toggleSubtask(selectedSubtask!); closeContextMenu()">
+    <i class="icon-check"></i>
+    {{selectedSubtask?.is_completed ? 'Marquer en cours' : 'Marquer terminée'}}
+  </button>
+  <hr>
+  <button
+    class="danger"
+    (click)="openDeleteModal(selectedSubtask!); closeContextMenu()">
+    <i class="icon-delete"></i>
+    Supprimer
+  </button>
+</div>
+
+<!-- Create Subtask Modal -->
+<div *ngIf="showCreateSubtaskModal" class="modal-overlay" (click)="closeAllModals()" style="display: flex !important; z-index: 10000 !important;">
+  <div class="modal" (click)="$event.stopPropagation()" style="display: block !important;">
+    <div class="modal-header">
+      <h2>Créer une nouvelle sous-tâche</h2>
+      <button class="btn-close" (click)="showCreateSubtaskModal = false">
+        <i class="icon-close"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form #createForm="ngForm" (ngSubmit)="createSubtask()" novalidate>
+        <div class="form-group">
+          <label for="sectionName">Nom de la section *</label>
+          <input
+            type="text"
+            id="sectionName"
+            [(ngModel)]="createSubtaskForm.section_name"
+            name="sectionName"
+            required
+            placeholder="Entrez le nom de la section">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sectionNumber">Numéro de section *</label>
+            <input
+              type="text"
+              id="sectionNumber"
+              [(ngModel)]="createSubtaskForm.section_number"
+              name="sectionNumber"
+              required
+              placeholder="Ex: S001">
+          </div>
+
+          <div class="form-group">
+            <label for="sectionId">ID de section *</label>
+            <input
+              type="text"
+              id="sectionId"
+              [(ngModel)]="createSubtaskForm.section_id"
+              name="sectionId"
+              required
+              placeholder="Ex: SEC-001">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project">Projet *</label>
+            <select
+              id="project"
+              [(ngModel)]="selectedProjectForTask"
+              name="project"
+              (change)="onProjectChange()"
+              required>
+              <option value="">Sélectionner un projet</option>
+              <option *ngFor="let project of projects" [value]="project.id">
+                {{project.title}}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task">Tâche *</label>
+            <select
+              id="task"
+              [(ngModel)]="createSubtaskForm.task"
+              name="task"
+              required>
+              <option value="">Sélectionner une tâche</option>
+              <option *ngFor="let task of filteredTasksForProject" [value]="task.id">
+                {{task.title}}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="kilometrage">Kilométrage</label>
+          <input
+            type="number"
+            id="kilometrage"
+            [(ngModel)]="createSubtaskForm.kilometrage"
+            name="kilometrage"
+            min="0"
+            step="0.01"
+            placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label for="assignedEmployees">Employés assignés</label>
+          <select
+            id="assignedEmployees"
+            [(ngModel)]="createSubtaskForm.assigned_employee_ids"
+            name="assignedEmployees"
+            multiple>
+            <option *ngFor="let employee of employees" [value]="employee.id">
+              {{employee.full_name || employee.username}}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="showCreateSubtaskModal = false">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading">
+            <i class="icon-plus"></i>
+            Créer la sous-tâche
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Subtask Modal -->
+<div *ngIf="showEditSubtaskModal" class="modal-overlay" (click)="showEditSubtaskModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Modifier la sous-tâche</h2>
+      <button class="btn-close" (click)="showEditSubtaskModal = false">
+        <i class="icon-close"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="editSubtask()">
+        <div class="form-group">
+          <label for="editSectionName">Nom de la section *</label>
+          <input
+            type="text"
+            id="editSectionName"
+            [(ngModel)]="editSubtaskForm.section_name"
+            name="editSectionName"
+            required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editSectionNumber">Numéro de section *</label>
+            <input
+              type="text"
+              id="editSectionNumber"
+              [(ngModel)]="editSubtaskForm.section_number"
+              name="editSectionNumber"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="editSectionId">ID de section *</label>
+            <input
+              type="text"
+              id="editSectionId"
+              [(ngModel)]="editSubtaskForm.section_id"
+              name="editSectionId"
+              required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editKilometrage">Kilométrage</label>
+          <input
+            type="number"
+            id="editKilometrage"
+            [(ngModel)]="editSubtaskForm.kilometrage"
+            name="editKilometrage"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="showEditSubtaskModal = false">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading">
+            <i class="icon-save"></i>
+            Sauvegarder
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Modal -->
+<div *ngIf="showAssignModal" class="modal-overlay" (click)="showAssignModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Assigner des employés</h2>
+      <button class="btn-close" (click)="showAssignModal = false">
+        <i class="icon-close"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Sélectionner les employés à assigner :</label>
+        <div class="employee-list">
+          <div
+            *ngFor="let employee of employees"
+            class="employee-item">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [value]="employee.id"
+                [checked]="editSubtaskForm.assigned_employee_ids?.includes(employee.id)"
+                (change)="toggleEmployeeAssignment(employee.id, $event)">
+              <span class="employee-info">
+                <div class="employee-avatar">
+                  {{(employee.full_name || employee.username || 'U').charAt(0).toUpperCase()}}
+                </div>
+                <div class="employee-details">
+                  <div class="employee-name">{{employee.full_name || employee.username}}</div>
+                  <div class="employee-email">{{employee.email}}</div>
+                </div>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="showAssignModal = false">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="assignEmployees()"
+          [disabled]="loading">
+          <i class="icon-users"></i>
+          Assigner
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div *ngIf="showDeleteModal" class="modal-overlay" (click)="showDeleteModal = false">
+  <div class="modal modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirmer la suppression</h2>
+      <button class="btn-close" (click)="showDeleteModal = false">
+        <i class="icon-close"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p>Êtes-vous sûr de vouloir supprimer cette sous-tâche ?</p>
+      <p class="text-muted">Cette action est irréversible.</p>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="showDeleteModal = false">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="deleteSubtask(selectedSubtask!.id)"
+          [disabled]="loading">
+          <i class="icon-delete"></i>
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

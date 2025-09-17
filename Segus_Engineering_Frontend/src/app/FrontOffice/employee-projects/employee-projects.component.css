@@ -1,0 +1,33 @@
+.projects-container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+  border-top: 4px solid #002552;
+}
+.projects-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.projects-table th, .projects-table td {
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+.projects-table th {
+  background: #f0f4f8;
+  color: #002552;
+}
+.projects-table tr:nth-child(even) {
+  background: #fafafa;
+}
+.projects-table tr:hover {
+  background: #f8fbff;
+}
+.error {
+  color: #c62828;
+  margin-top: 1rem;
+}

@@ -1,0 +1,124 @@
+<header class="admin-header">
+  <div class="header-container">
+    <!-- Logo Section -->
+    <div class="logo-section">
+      <div class="logo">
+        <img src="assets/favicon.ico" alt="Segus Engineering" class="logo-img">
+      </div>
+      <div class="brand-info">
+        <h1>Segus Engineering</h1>
+        <span>Dashboard Administrateur</span>
+      </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="header-actions">
+      <!-- Messages -->
+      <div class="dropdown" [class.active]="showMessages">
+        <button class="action-btn" (click)="toggleMessages()" [class.active]="showMessages">
+          <i class="fas fa-envelope"></i>
+          <span class="notification-badge" *ngIf="getUnreadMessagesCount() > 0">
+            {{ getUnreadMessagesCount() }}
+          </span>
+        </button>
+        <div class="dropdown-menu messages-menu" *ngIf="showMessages">
+          <div class="notifications-header">
+            <h3>Messages</h3>
+            <button class="close-btn" (click)="closeDropdown('messages')">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="notification-list">
+            <div class="message-item"
+                 *ngFor="let message of messages"
+                 [class.unread]="!message.read"
+                 (click)="onMessageClick(message)">
+              <div class="message-avatar">{{ message.initials }}</div>
+              <div class="message-content">
+                <div class="message-sender">{{ message.sender }}</div>
+                <div class="message-text">{{ message.content }}</div>
+                <div class="message-time">{{ message.time }}</div>
+              </div>
+              <div class="message-dot" *ngIf="!message.read"></div>
+            </div>
+            <div *ngIf="messages.length === 0" class="no-items">
+              <p>Aucun message</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="dropdown" [class.active]="showNotifications">
+        <button class="action-btn" (click)="toggleNotifications()" [class.active]="showNotifications">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge" *ngIf="getUnreadNotificationsCount() > 0">
+            {{ getUnreadNotificationsCount() }}
+          </span>
+        </button>
+        <div class="dropdown-menu notifications-menu" *ngIf="showNotifications">
+          <div class="notifications-header">
+            <h3>Notifications</h3>
+            <button class="close-btn" (click)="closeDropdown('notifications')">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="notification-list">
+            <div class="notification-item"
+                 *ngFor="let notification of notifications"
+                 [class.unread]="!notification.read"
+                 (click)="onNotificationClick(notification)">
+              <div class="notification-icon">
+                <i class="fas" [class]="'fas ' + notification.icon"></i>
+              </div>
+              <div class="notification-content">
+                <div class="notification-message">{{ notification.message }}</div>
+                <div class="notification-time">{{ notification.time }}</div>
+              </div>
+              <div class="notification-dot" *ngIf="!notification.read"></div>
+            </div>
+            <div *ngIf="notifications.length === 0" class="no-items">
+              <p>Aucune notification</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Profile -->
+      <div class="dropdown" [class.active]="showUserMenu">
+        <div class="user-profile" (click)="toggleUserMenu()">
+          <div class="user-avatar">
+            <span>{{ getUserInitials() }}</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ getUserFullName() }}</span>
+            <span class="user-role">Administrateur</span>
+          </div>
+          <i class="fas fa-chevron-down dropdown-arrow" 
+             [style.transform]="showUserMenu ? 'rotate(180deg)' : 'rotate(0deg)'"></i>
+        </div>
+        
+        <div class="dropdown-menu" [class.show]="showUserMenu">
+          <div class="dropdown-header">
+            <div class="user-avatar-large">{{ getUserInitials() }}</div>
+            <div class="user-details">
+              <h4>{{ getUserFullName() }}</h4>
+              <p>{{ getUserEmail() }}</p>
+            </div>
+          </div>
+          
+          <div class="menu-section">
+            <button class="menu-item" (click)="onProfile()">
+              <i class="fas fa-user"></i>
+              <span>Mon Profil</span>
+            </button>
+            <button class="menu-item logout-item" (click)="onLogout()">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

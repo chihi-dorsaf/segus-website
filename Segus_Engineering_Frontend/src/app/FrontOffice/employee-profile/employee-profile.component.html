@@ -1,0 +1,84 @@
+<div class="profile-container">
+  <h2>Mon Profil</h2>
+
+  <div class="profile-content">
+    <!-- Section Photo de profil -->
+    <div class="profile-photo-section">
+      <div class="current-photo">
+        <img [src]="previewUrl || 'assets/images/default-avatar.png'" alt="Photo de profil" class="profile-photo" />
+      </div>
+      <div class="photo-upload">
+        <input type="file" id="photoInput" accept="image/*" (change)="onFileSelected($event)" class="file-input" />
+        <label for="photoInput" class="upload-btn">Changer la photo</label>
+        <p class="photo-hint">Formats acceptés: JPG, PNG. Taille max: 5MB</p>
+      </div>
+    </div>
+
+    <!-- Formulaire de profil -->
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="profile-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="first_name">Prénom *</label>
+          <input type="text" id="first_name" formControlName="first_name" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="last_name">Nom *</label>
+          <input type="text" id="last_name" formControlName="last_name" class="form-control" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" id="email" formControlName="email" class="form-control" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Téléphone</label>
+          <input type="tel" id="phone" formControlName="phone" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="birth_date">Date de naissance</label>
+          <input type="date" id="birth_date" formControlName="birth_date" class="form-control" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="gender">Genre</label>
+        <select id="gender" formControlName="gender" class="form-control">
+          <option value="">Sélectionner</option>
+          <option value="M">Masculin</option>
+          <option value="F">Féminin</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="address">Adresse</label>
+        <textarea id="address" formControlName="address" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="emergency_contact">Contact d'urgence</label>
+          <input type="text" id="emergency_contact" formControlName="emergency_contact" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="emergency_phone">Téléphone d'urgence</label>
+          <input type="tel" id="emergency_phone" formControlName="emergency_phone" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Messages d'erreur et de succès -->
+      <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+      <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+
+      <!-- Bouton de soumission -->
+      <div class="form-actions">
+        <button type="submit" [disabled]="!profileForm.valid || loading" class="btn btn-primary">
+          <span *ngIf="loading">Mise à jour...</span>
+          <span *ngIf="!loading">Mettre à jour le profil</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

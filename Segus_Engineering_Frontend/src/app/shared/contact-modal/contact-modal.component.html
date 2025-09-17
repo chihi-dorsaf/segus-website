@@ -1,0 +1,130 @@
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="container-fluid">
+          <div class="row gy-4">
+            <div class="col-lg-4 col-sm-12 bg-cover" style="background-image: url(assets/img/c2.jpg); min-height:300px;">
+              <div class="contact-overlay">
+                <div class="contact-info">
+                  <h3>Contactez-nous</h3>
+                  <p>Segus Engineering</p>
+                  <div class="contact-details">
+                    <div class="contact-item">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span>Tunis, Tunisie</span>
+                    </div>
+                    <div class="contact-item">
+                      <i class="fas fa-envelope"></i>
+                      <span>contact@segus-engineering.com</span>
+                    </div>
+                    <div class="contact-item">
+                      <i class="fas fa-phone"></i>
+                      <span>+216 XX XXX XXX</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-8 col-sm-12 p-lg-5">
+              <div class="form-header">
+                <h1>Entrez en Contact</h1>
+                <p>N'hésitez pas à nous contacter, nous vous répondrons dans les plus brefs délais</p>
+              </div>
+              
+              <!-- Messages de succès et d'erreur -->
+              <div *ngIf="submitSuccess" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.
+                <button type="button" class="btn-close" (click)="submitSuccess = false"></button>
+              </div>
+              
+              <div *ngIf="submitError" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ submitError }}
+                <button type="button" class="btn-close" (click)="submitError = ''"></button>
+              </div>
+              
+              <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="firstName" class="form-label">Prénom *</label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="firstName" 
+                      formControlName="first_name"
+                      placeholder="Jean" 
+                      [class.is-invalid]="isFieldInvalid('first_name')">
+                    <div *ngIf="isFieldInvalid('first_name')" class="invalid-feedback">
+                      {{ getFieldError('first_name') }}
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="lastName" class="form-label">Nom de famille *</label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="lastName" 
+                      formControlName="last_name"
+                      placeholder="Dupont" 
+                      [class.is-invalid]="isFieldInvalid('last_name')">
+                    <div *ngIf="isFieldInvalid('last_name')" class="invalid-feedback">
+                      {{ getFieldError('last_name') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="email" class="form-label">Adresse email *</label>
+                  <input 
+                    type="email" 
+                    class="form-control" 
+                    id="email" 
+                    formControlName="email"
+                    placeholder="jean.dupont@exemple.com" 
+                    [class.is-invalid]="isFieldInvalid('email')">
+                  <div *ngIf="isFieldInvalid('email')" class="invalid-feedback">
+                    {{ getFieldError('email') }}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="subject" class="form-label">Sujet</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="subject" 
+                    formControlName="subject"
+                    placeholder="Demande d'information">
+                </div>
+                <div class="mb-4">
+                  <label for="message" class="form-label">Votre message *</label>
+                  <textarea 
+                    class="form-control" 
+                    id="message" 
+                    rows="5" 
+                    formControlName="message"
+                    placeholder="Décrivez votre projet ou votre demande..." 
+                    [class.is-invalid]="isFieldInvalid('message')"></textarea>
+                  <div *ngIf="isFieldInvalid('message')" class="invalid-feedback">
+                    {{ getFieldError('message') }}
+                  </div>
+                </div>
+                <button 
+                  type="submit" 
+                  class="btn btn-brand" 
+                  [disabled]="isSubmitting">
+                  <i *ngIf="!isSubmitting" class="fas fa-paper-plane"></i>
+                  <i *ngIf="isSubmitting" class="fas fa-spinner fa-spin"></i>
+                  {{ isSubmitting ? 'Envoi en cours...' : 'Envoyer le message' }}
+                </button>
+              </form>
+            </div>  
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

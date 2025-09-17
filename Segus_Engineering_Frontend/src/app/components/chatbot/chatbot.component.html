@@ -1,0 +1,163 @@
+<!-- Bouton flottant du chatbot -->
+<div class="chatbot-toggle" 
+     [class.chatbot-open]="isOpen"
+     (click)="toggleChatbot()">
+  <i class="fas fa-comments" *ngIf="!isOpen"></i>
+  <i class="fas fa-times" *ngIf="isOpen"></i>
+  <span class="chatbot-badge" *ngIf="!isOpen">💬</span>
+</div>
+
+<!-- Interface du chatbot -->
+<div class="chatbot-container" 
+     [class.chatbot-open]="isOpen"
+     [class.chatbot-minimized]="isMinimized">
+  
+  <!-- En-tête du chatbot -->
+  <div class="chatbot-header">
+    <div class="chatbot-header-info">
+      <div class="chatbot-avatar">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="chatbot-title">
+        <h4>Assistant Segus</h4>
+        <span class="chatbot-status" [class.typing]="isTyping">
+          {{ isTyping ? 'En train d\'écrire...' : 'En ligne' }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="chatbot-controls">
+      <button class="btn-control" (click)="startNewConversation()" title="Nouvelle conversation">
+        <i class="fas fa-plus"></i>
+      </button>
+      <button class="btn-control" (click)="toggleMinimize()" title="Minimiser">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="btn-control" (click)="closeChatbot()" title="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Corps du chatbot -->
+  <div class="chatbot-body" *ngIf="!isMinimized">
+    
+    <!-- Liste des conversations (sidebar) -->
+    <div class="conversations-sidebar" *ngIf="conversations.length > 0">
+      <div class="conversations-header">
+        <h5>Conversations</h5>
+      </div>
+      <div class="conversations-list">
+        <div class="conversation-item" 
+             *ngFor="let conversation of conversations"
+             [class.active]="currentConversation?.id === conversation.id"
+             (click)="loadConversation(conversation)">
+          <div class="conversation-title">{{ conversation.title }}</div>
+          <div class="conversation-meta">
+            <span class="conversation-time">{{ formatTime(conversation.updated_at) }}</span>
+            <button class="btn-delete" (click)="deleteConversation(conversation, $event)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone des messages -->
+    <div class="messages-area">
+      <div class="messages-container" #messagesContainer>
+        
+        <!-- Message de bienvenue -->
+        <div class="welcome-message" *ngIf="messages.length === 0">
+          <div class="welcome-avatar">
+            <i class="fas fa-robot"></i>
+          </div>
+          <div class="welcome-content">
+            <h4>👋 Bonjour !</h4>
+            <p>Je suis votre assistant Segus Engineering. Je peux vous aider avec :</p>
+            <ul>
+              <li>📋 Gestion des tâches et projets</li>
+              <li>🧭 Navigation dans l'application</li>
+              <li>👥 Questions sur les employés</li>
+              <li>🔔 Notifications et alertes</li>
+            </ul>
+            <p>Posez-moi une question ou choisissez une suggestion ci-dessous !</p>
+          </div>
+        </div>
+
+        <!-- Messages de conversation -->
+        <div class="message" 
+             *ngFor="let message of messages; trackBy: trackByMessageId"
+             [ngClass]="getMessageClass(message.message_type)">
+          
+          <div class="message-avatar" *ngIf="message.message_type === 'bot'">
+            <i class="fas fa-robot"></i>
+          </div>
+          
+          <div class="message-content">
+            <div class="message-bubble" [innerHTML]="formatMessageContent(message.content)"></div>
+            <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+          </div>
+          
+          <div class="message-avatar" *ngIf="message.message_type === 'user'">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+
+        <!-- Indicateur de frappe -->
+        <div class="typing-indicator" *ngIf="isTyping">
+          <div class="typing-avatar">
+            <i class="fas fa-robot"></i>
+          </div>
+          <div class="typing-bubble">
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggestions rapides -->
+      <div class="quick-suggestions" *ngIf="showSuggestions && quickQuestions.length > 0">
+        <div class="suggestions-header">
+          <span>💡 Questions fréquentes :</span>
+        </div>
+        <div class="suggestions-list">
+          <button class="suggestion-btn" 
+                  *ngFor="let question of quickQuestions"
+                  (click)="sendQuickQuestion(question)">
+            {{ question }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone de saisie -->
+  <div class="chatbot-input" *ngIf="!isMinimized">
+    <div class="input-container">
+      <textarea #messageInput
+                class="message-input"
+                [(ngModel)]="newMessage"
+                [placeholder]="getInputPlaceholder()"
+                [disabled]="isLoading"
+                (keypress)="onKeyPress($event)"
+                rows="1"></textarea>
+      
+      <button class="send-button" 
+              (click)="sendMessage()"
+              [disabled]="!newMessage.trim() || isLoading">
+        <i class="fas fa-paper-plane" *ngIf="!isLoading"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+      </button>
+    </div>
+    
+    <div class="input-footer">
+      <small class="text-muted">
+        Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
+      </small>
+    </div>
+  </div>
+</div>

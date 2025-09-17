@@ -1,0 +1,389 @@
+<div class="admin-job-offers">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="page-title">
+          <i class="fas fa-briefcase"></i>
+          Gestion des Offres d'Emploi
+        </h1>
+        <p class="page-subtitle">Créez et gérez les offres d'emploi de votre entreprise</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="openCreateModal()">
+          <i class="fas fa-plus"></i>
+          Nouvelle Offre
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-briefcase"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.totalOffers }}</div>
+        <div class="stat-label">Total Offres</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon active">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.activeOffers }}</div>
+        <div class="stat-label">Offres Actives</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon applications">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.totalApplications }}</div>
+        <div class="stat-label">Candidatures</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon new">
+        <i class="fas fa-envelope"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.newApplications }}</div>
+        <div class="stat-label">Nouvelles</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Recherche</label>
+      <div class="search-input">
+        <i class="fas fa-search"></i>
+        <input 
+          type="text" 
+          placeholder="Rechercher par titre, lieu..."
+          [(ngModel)]="searchTerm"
+          (input)="onFilterChange()"
+        >
+      </div>
+    </div>
+    
+    <div class="filter-group">
+      <label>Catégorie</label>
+      <select [(ngModel)]="selectedCategory" (change)="onFilterChange()">
+        <option value="">Toutes les catégories</option>
+        <option *ngFor="let category of categories" [value]="category.value">
+          {{ category.label }}
+        </option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label>Type</label>
+      <select [(ngModel)]="selectedType" (change)="onFilterChange()">
+        <option value="">Tous les types</option>
+        <option *ngFor="let type of jobTypes" [value]="type.value">
+          {{ type.label }}
+        </option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label>Statut</label>
+      <select [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+        <option value="">Tous les statuts</option>
+        <option value="active">Actives</option>
+        <option value="inactive">Inactives</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Job Offers Grid -->
+  <div class="offers-grid" *ngIf="!loading">
+    <div 
+      class="offer-card" 
+      *ngFor="let offer of filteredOffers; trackBy: trackByOfferId"
+      [class.inactive]="!offer.isActive"
+    >
+      <div class="offer-header">
+        <div class="offer-title">
+          <i [class]="getCategoryIcon(offer.category)"></i>
+          <h3>{{ offer.title }}</h3>
+          <span class="offer-status" [class.active]="offer.isActive">
+            {{ offer.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="offer-actions">
+          <button class="btn-icon" (click)="openEditModal(offer)" title="Modifier">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button 
+            class="btn-icon" 
+            (click)="toggleOfferStatus(offer)" 
+            [title]="offer.isActive ? 'Désactiver' : 'Activer'"
+          >
+            <i [class]="offer.isActive ? 'fas fa-pause' : 'fas fa-play'"></i>
+          </button>
+          <button class="btn-icon danger" (click)="deleteOffer(offer)" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="offer-meta">
+        <div class="meta-item">
+          <i class="fas fa-tag"></i>
+          <span>{{ getCategoryLabel(offer.category) }}</span>
+        </div>
+        <div class="meta-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>{{ offer.location }}</span>
+        </div>
+        <div class="meta-item">
+          <i class="fas fa-clock"></i>
+          <span>{{ getTypeLabel(offer.type) }}</span>
+        </div>
+        <div class="meta-item" *ngIf="offer.salary">
+          <i class="fas fa-money-bill-wave"></i>
+          <span>{{ offer.salary }}</span>
+        </div>
+      </div>
+
+      <div class="offer-description">
+        <p>{{ offer.description | slice:0:150 }}{{ offer.description.length > 150 ? '...' : '' }}</p>
+      </div>
+
+      <div class="offer-skills">
+        <span class="skill-tag" *ngFor="let skill of offer.skills.slice(0, 4)">
+          {{ skill }}
+        </span>
+        <span class="skill-more" *ngIf="offer.skills.length > 4">
+          +{{ offer.skills.length - 4 }}
+        </span>
+      </div>
+
+      <div class="offer-footer">
+        <div class="offer-date">
+          <i class="fas fa-calendar"></i>
+          Créée le {{ formatDate(offer.createdAt) }}
+        </div>
+        <div class="offer-experience">
+          <i class="fas fa-user-graduate"></i>
+          {{ offer.experience }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des offres...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && filteredOffers.length === 0">
+    <div class="empty-icon">
+      <i class="fas fa-briefcase"></i>
+    </div>
+    <h3>Aucune offre trouvée</h3>
+    <p>{{ jobOffers.length === 0 ? 'Commencez par créer votre première offre d\'emploi' : 'Aucune offre ne correspond à vos critères de recherche' }}</p>
+    <button class="btn btn-primary" (click)="openCreateModal()" *ngIf="jobOffers.length === 0">
+      <i class="fas fa-plus"></i>
+      Créer une offre
+    </button>
+  </div>
+</div>
+
+<!-- Modal for Create/Edit Job Offer -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-briefcase"></i>
+        {{ isEditing ? 'Modifier l\'offre' : 'Nouvelle offre d\'emploi' }}
+      </h2>
+      <button class="btn-close" (click)="closeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="offerForm" (ngSubmit)="onSubmit()" class="modal-content">
+      <div class="form-grid">
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3>Informations générales</h3>
+          
+          <div class="form-group">
+            <label for="title">Titre du poste *</label>
+            <input 
+              id="title"
+              type="text" 
+              formControlName="title"
+              placeholder="Ex: Développeur Full Stack Senior"
+              [class.error]="offerForm.get('title')?.invalid && offerForm.get('title')?.touched"
+            >
+            <div class="error-message" *ngIf="offerForm.get('title')?.invalid && offerForm.get('title')?.touched">
+              Le titre est requis (minimum 3 caractères)
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="category">Catégorie *</label>
+              <select id="category" formControlName="category">
+                <option value="">Sélectionner une catégorie</option>
+                <option *ngFor="let category of categories" [value]="category.value">
+                  {{ category.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="type">Type de contrat *</label>
+              <select id="type" formControlName="type">
+                <option value="">Sélectionner un type</option>
+                <option *ngFor="let type of jobTypes" [value]="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">Lieu *</label>
+              <input 
+                id="location"
+                type="text" 
+                formControlName="location"
+                placeholder="Ex: Tunis / Remote"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="experience">Expérience requise *</label>
+              <select id="experience" formControlName="experience">
+                <option value="">Sélectionner le niveau</option>
+                <option *ngFor="let level of experienceLevels" [value]="level.value">
+                  {{ level.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="salary">Salaire (optionnel)</label>
+            <input 
+              id="salary"
+              type="text" 
+              formControlName="salary"
+              placeholder="Ex: 35000-50000 TND"
+            >
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-section">
+          <h3>Description du poste</h3>
+          
+          <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea 
+              id="description"
+              formControlName="description"
+              rows="4"
+              placeholder="Décrivez le poste, les missions principales, l'environnement de travail..."
+              [class.error]="offerForm.get('description')?.invalid && offerForm.get('description')?.touched"
+            ></textarea>
+            <div class="error-message" *ngIf="offerForm.get('description')?.invalid && offerForm.get('description')?.touched">
+              La description est requise (minimum 50 caractères)
+            </div>
+          </div>
+        </div>
+
+        <!-- Requirements -->
+        <div class="form-section">
+          <h3>Exigences du poste</h3>
+          
+          <div class="dynamic-list">
+            <label>Exigences *</label>
+            <div class="list-items" formArrayName="requirements">
+              <div 
+                class="list-item" 
+                *ngFor="let requirement of requirements.controls; let i = index"
+              >
+                <input 
+                  type="text" 
+                  [formControlName]="i"
+                  placeholder="Ex: Master en informatique ou équivalent"
+                >
+                <button type="button" class="btn-remove" (click)="removeRequirement(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn-add" (click)="addRequirement()">
+              <i class="fas fa-plus"></i>
+              Ajouter une exigence
+            </button>
+          </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="form-section">
+          <h3>Compétences requises</h3>
+          
+          <div class="dynamic-list">
+            <label>Compétences *</label>
+            <div class="list-items" formArrayName="skills">
+              <div 
+                class="list-item" 
+                *ngFor="let skill of skills.controls; let i = index"
+              >
+                <input 
+                  type="text" 
+                  [formControlName]="i"
+                  placeholder="Ex: Angular, Node.js, TypeScript"
+                >
+                <button type="button" class="btn-remove" (click)="removeSkill(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn-add" (click)="addSkill()">
+              <i class="fas fa-plus"></i>
+              Ajouter une compétence
+            </button>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-section">
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive">
+              <span class="checkmark"></span>
+              Offre active (visible sur le site)
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="offerForm.invalid">
+          <i class="fas fa-save"></i>
+          {{ isEditing ? 'Mettre à jour' : 'Créer l\'offre' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

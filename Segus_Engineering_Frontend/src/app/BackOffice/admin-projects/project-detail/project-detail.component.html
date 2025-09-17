@@ -1,0 +1,507 @@
+<div class="project-detail-container">
+  <!-- En-tête du projet -->
+  <div class="project-header">
+    <div class="project-info">
+      <div class="breadcrumb">
+        <a routerLink="/admin/projects">Projets</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>{{ project.title }}</span>
+      </div>
+
+      <h1>{{ project.title }}</h1>
+      <p class="project-description">{{ project.description }}</p>
+
+      <div class="project-meta">
+        <div class="meta-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Début: {{ project.start_date | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="meta-item">
+          <i class="fas fa-flag-checkered"></i>
+          <span>Fin: {{ project.end_date | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="meta-item">
+          <i class="fas fa-users"></i>
+          <span>{{ project.assigned_employees?.length || 0 }} membre(s)</span>
+        </div>
+        <div class="meta-item">
+          <i class="fas fa-tasks"></i>
+          <span>{{ project.total_tasks || 0 }} tâches</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-status-section">
+      <div class="status-badge" [class]="'status-' + project.status">
+        {{ getStatusLabel(project.status) }}
+      </div>
+
+      <div class="project-progress">
+        <div class="progress-info">
+          <span>Progression globale</span>
+          <span>{{ project.progress_percentage || 0 }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="project.progress_percentage || 0"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" (click)="openTaskModal()">
+        <i class="fas fa-plus"></i>
+        Nouvelle Tâche
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation des onglets -->
+  <div class="tabs-navigation">
+    <button class="tab-btn"
+            [class.active]="activeTab === 'overview'"
+            (click)="setActiveTab('overview')">
+      <i class="fas fa-chart-line"></i>
+      Vue d'ensemble
+    </button>
+    <button class="tab-btn"
+            [class.active]="activeTab === 'kanban'"
+            (click)="setActiveTab('kanban')">
+      <i class="fas fa-columns"></i>
+      Kanban
+    </button>
+    <button class="tab-btn"
+            [class.active]="activeTab === 'gantt'"
+            (click)="setActiveTab('gantt')">
+      <i class="fas fa-chart-bar"></i>
+      Gantt
+    </button>
+    <button class="tab-btn"
+            [class.active]="activeTab === 'list'"
+            (click)="setActiveTab('list')">
+      <i class="fas fa-list"></i>
+      Liste
+    </button>
+  </div>
+
+  <!-- Contenu des onglets -->
+  <div class="tab-content">
+
+    <!-- Vue d'ensemble -->
+    <div class="tab-pane" *ngIf="activeTab === 'overview'">
+      <div class="overview-grid">
+        <!-- Statistiques du projet -->
+        <div class="overview-card stats-card">
+          <h3>Statistiques du Projet</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value">{{ project.total_tasks || 0 }}</div>
+              <div class="stat-label">Total Tâches</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ project.completed_tasks || 0 }}</div>
+              <div class="stat-label">Tâches Terminées</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ project.progress_percentage || 0 }}%</div>
+              <div class="stat-label">Progression</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ tasks.filter(t => isTaskOverdue(t)).length }}</div>
+              <div class="stat-label">En Retard</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Équipe du projet -->
+        <div class="overview-card team-card">
+          <h3>Équipe du Projet</h3>
+          <div class="team-members">
+            <div class="team-member" *ngFor="let emp of project.assigned_employees">
+              <div class="member-avatar">
+                {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+              </div>
+              <div class="member-info">
+                <div class="member-name">{{ emp.full_name || emp.username }}</div>
+                <div class="member-role">{{ emp.role }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tâches récentes -->
+        <div class="overview-card recent-tasks-card">
+          <h3>Tâches Récentes</h3>
+          <div class="recent-tasks">
+            <div class="recent-task" *ngFor="let task of tasks.slice(0, 5)">
+              <div class="task-status" [class]="'status-' + task.status"></div>
+              <div class="task-info">
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-meta">
+                  <span class="priority" [style.background-color]="getPriorityColor(task.priority)">
+                    {{ getPriorityLabel(task.priority) }}
+                  </span>
+                  <span class="due-date">{{ task.end_date | date:'dd/MM' }}</span>
+                </div>
+              </div>
+              <div class="task-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="task.progress_percentage || 0"></div>
+                </div>
+                <span class="progress-text">{{ task.progress_percentage || 0 }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendrier des échéances -->
+        <div class="overview-card calendar-card">
+          <h3>Prochaines Échéances</h3>
+          <div class="upcoming-deadlines">
+            <div class="deadline-item" *ngFor="let task of tasks.filter(t => !isTaskOverdue(t) && isTaskDueSoon(t)).slice(0, 5)">
+              <div class="deadline-date">
+                <div class="date-day">{{ task.end_date | date:'dd' }}</div>
+                <div class="date-month">{{ task.end_date | date:'MMM' }}</div>
+              </div>
+              <div class="deadline-info">
+                <div class="deadline-title">{{ task.title }}</div>
+                <div class="deadline-assignee">
+                  Assigné à: {{ task.assigned_employees[0]?.full_name || task.assigned_employees[0]?.username }}
+                </div>
+              </div>
+              <div class="deadline-status" [class]="'status-' + task.status">
+                {{ getStatusLabel(task.status) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue Kanban -->
+    <div class="tab-pane" *ngIf="activeTab === 'kanban'">
+      <div class="kanban-container">
+        <div class="kanban-column" *ngFor="let column of kanbanColumns">
+          <div class="column-header" [style.border-color]="column.color">
+            <h3>{{ column.title }}</h3>
+            <span class="task-count">{{ column.tasks.length }}</span>
+          </div>
+
+          <div class="column-content">
+            <div class="task-card" *ngFor="let task of column.tasks"
+                 [class.overdue]="isTaskOverdue(task)"
+                 [class.due-soon]="isTaskDueSoon(task)">
+
+              <div class="task-header">
+                <div class="task-priority" [style.background-color]="getPriorityColor(task.priority)">
+                  {{ getPriorityLabel(task.priority) }}
+                </div>
+                <div class="task-menu">
+                  <button class="btn-menu" (click)="openTaskModal(task)">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="task-body">
+                <h4 class="task-title">{{ task.title }}</h4>
+                <p class="task-description">{{ task.description | slice:0:80 }}{{ task.description.length > 80 ? '...' : '' }}</p>
+
+                <div class="task-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="task.progress_percentage || 0"></div>
+                  </div>
+                  <span class="progress-text">{{ task.progress_percentage || 0 }}%</span>
+                </div>
+
+                <div class="task-dates">
+                  <span class="due-date">
+                    <i class="fas fa-calendar"></i>
+                    {{ task.end_date | date:'dd/MM' }}
+                  </span>
+                </div>
+
+                <div class="task-assignees">
+                  <div class="assignee-avatar" *ngFor="let emp of task.assigned_employees?.slice(0, 3)"
+                       [title]="emp.full_name || emp.username">
+                    {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="assignee-more" *ngIf="(task.assigned_employees?.length || 0) > 3">
+                    +{{ (task.assigned_employees?.length || 0) - 3 }}
+                  </div>
+                </div>
+
+                <!-- Sous-tâches -->
+                <div class="subtasks" *ngIf="task.subtasks && task.subtasks.length > 0">
+                  <div class="subtask-item" *ngFor="let subtask of task.subtasks">
+                    <label class="subtask-checkbox">
+                      <input type="checkbox"
+                             [checked]="subtask.is_completed"
+                             (change)="toggleSubtask(subtask)">
+                      <span class="checkmark"></span>
+                      {{ subtask.section_name }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue Gantt -->
+    <div class="tab-pane" *ngIf="activeTab === 'gantt'">
+      <div class="gantt-container">
+        <div class="gantt-controls">
+          <div class="scale-controls">
+            <button class="btn btn-outline-secondary"
+                    [class.active]="ganttScale === 'day'"
+                    (click)="ganttScale = 'day'">
+              Jour
+            </button>
+            <button class="btn btn-outline-secondary"
+                    [class.active]="ganttScale === 'week'"
+                    (click)="ganttScale = 'week'">
+              Semaine
+            </button>
+            <button class="btn btn-outline-secondary"
+                    [class.active]="ganttScale === 'month'"
+                    (click)="ganttScale = 'month'">
+              Mois
+            </button>
+          </div>
+
+          <div class="date-range">
+            {{ ganttStartDate | date:'dd/MM/yyyy' }} - {{ ganttEndDate | date:'dd/MM/yyyy' }}
+          </div>
+        </div>
+
+        <div class="gantt-chart">
+          <div class="gantt-header">
+            <div class="gantt-task-column">Tâche</div>
+            <div class="gantt-timeline-column">
+              <div class="timeline-header">
+                <!-- Timeline headers seront générés dynamiquement -->
+                <div class="timeline-cell" *ngFor="let date of getTimelineDates()">
+                  {{ date | date:'dd/MM' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gantt-body">
+            <div class="gantt-row" *ngFor="let task of tasks">
+              <div class="gantt-task-info">
+                <div class="task-name">{{ task.title }}</div>
+                <div class="task-assignee">
+                  {{ task.assigned_employees[0]?.full_name || task.assigned_employees[0]?.username }}
+                </div>
+              </div>
+
+              <div class="gantt-timeline">
+                <div class="gantt-bar"
+                     [style.left.%]="getTaskPosition(task)"
+                     [style.width.%]="getTaskWidth(task)"
+                     [class]="'priority-' + task.priority">
+                  <div class="bar-label">{{ task.title }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue Liste -->
+    <div class="tab-pane" *ngIf="activeTab === 'list'">
+      <div class="list-container">
+        <!-- Filtres -->
+        <div class="list-filters">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text"
+                   placeholder="Rechercher une tâche..."
+                   [(ngModel)]="searchTerm">
+          </div>
+
+          <div class="filter-controls">
+            <select [(ngModel)]="selectedPriority">
+              <option value="">Toutes les priorités</option>
+              <option *ngFor="let priority of ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH']"
+                      [value]="priority">
+                {{ getPriorityLabel(priority) }}
+              </option>
+            </select>
+
+            <select [(ngModel)]="selectedAssignee">
+              <option value="">Tous les assignés</option>
+              <option *ngFor="let emp of employees" [value]="emp.id">
+                {{ emp.full_name || emp.username }}
+              </option>
+            </select>
+
+            <button class="btn btn-outline-secondary" (click)="clearFilters()">
+              <i class="fas fa-times"></i>
+              Effacer
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau des tâches -->
+        <div class="tasks-table">
+          <table class="table">
+            <thead>
+              <tr>
+                <th (click)="sortBy('title')" class="sortable">
+                  Titre <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'title' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'title' && sortDirection === 'desc'"></i>
+                </th>
+                <th (click)="sortBy('status')" class="sortable">
+                  Statut <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'status' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'status' && sortDirection === 'desc'"></i>
+                </th>
+                <th (click)="sortBy('priority')" class="sortable">
+                  Priorité <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'priority' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'priority' && sortDirection === 'desc'"></i>
+                </th>
+                <th (click)="sortBy('end_date')" class="sortable">
+                  Échéance <i class="fas fa-sort" [class.fa-sort-up]="sortField === 'end_date' && sortDirection === 'asc'" [class.fa-sort-down]="sortField === 'end_date' && sortDirection === 'desc'"></i>
+                </th>
+                <th>Assigné à</th>
+                <th>Progression</th>
+                <th>Sous-tâches</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let task of filteredTasks"
+                  [class.overdue]="isTaskOverdue(task)"
+                  [class.due-soon]="isTaskDueSoon(task)">
+                <td>
+                  <div class="task-title-cell">
+                    <strong>{{ task.title }}</strong>
+                    <p class="task-description-small">{{ task.description | slice:0:60 }}{{ task.description.length > 60 ? '...' : '' }}</p>
+                  </div>
+                </td>
+                <td>
+                  <span class="status-badge" [class]="'status-' + task.status">
+                    {{ getStatusLabel(task.status) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="priority-badge" [style.background-color]="getPriorityColor(task.priority)">
+                    {{ getPriorityLabel(task.priority) }}
+                  </span>
+                </td>
+                <td>
+                  <span [class]="{'overdue': isTaskOverdue(task), 'due-soon': isTaskDueSoon(task)}">
+                    {{ task.end_date | date:'dd/MM/yyyy' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="assignee-cell">
+                    <div class="assignee-avatars">
+                      <div class="assignee-avatar" *ngFor="let emp of task.assigned_employees?.slice(0, 2)"
+                           [title]="emp.full_name || emp.username">
+                        {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="assignee-more" *ngIf="(task.assigned_employees?.length || 0) > 2">
+                        +{{ (task.assigned_employees?.length || 0) - 2 }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="progress-cell">
+                    <div class="progress-bar">
+                      <div class="progress-fill" [style.width.%]="task.progress_percentage || 0"></div>
+                    </div>
+                    <span class="progress-text">{{ task.progress_percentage || 0 }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="subtasks-count">
+                    {{ task.completed_subtasks || 0 }}/{{ task.total_subtasks || 0 }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary" (click)="openTaskModal(task)" title="Modifier">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteTask(task.id)" title="Supprimer">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de tâche -->
+<div class="modal-overlay" *ngIf="showTaskModal" (click)="showTaskModal = false">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingTask ? 'Modifier la Tâche' : 'Nouvelle Tâche' }}</h3>
+      <button class="btn-close" (click)="showTaskModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="saveTask()">
+        <div class="form-group">
+          <label>Titre *</label>
+          <input type="text" [(ngModel)]="newTask.title" name="title" required>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="newTask.description" name="description" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date de début</label>
+            <input type="date" [(ngModel)]="newTask.start_date" name="start_date">
+          </div>
+
+          <div class="form-group">
+            <label>Date de fin</label>
+            <input type="date" [(ngModel)]="newTask.end_date" name="end_date">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priorité</label>
+            <select [(ngModel)]="newTask.priority" name="priority">
+              <option *ngFor="let priority of ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH']"
+                      [value]="priority">
+                {{ getPriorityLabel(priority) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Assigné à</label>
+            <select multiple [(ngModel)]="newTask.assigned_employees" name="assigned_employees">
+              <option *ngFor="let emp of employees" [value]="emp.id">
+                {{ emp.full_name || emp.username }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="showTaskModal = false">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            {{ editingTask ? 'Mettre à jour' : 'Créer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

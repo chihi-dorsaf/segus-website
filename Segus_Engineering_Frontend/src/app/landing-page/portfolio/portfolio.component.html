@@ -1,0 +1,86 @@
+<section class="portfolio-section" id="portfolio">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="portfolio-header">
+      <div class="badge">NOS PROJETS</div>
+      <h1 class="section-title">Projets d'Excellence</h1>
+      <p class="section-subtitle">Découvrez nos réalisations techniques et nos solutions innovantes qui ont transformé les défis de nos clients en succès.</p>
+    </div>
+
+    <!-- Projects Slider -->
+    <div class="projects-slider">
+      <div class="slider-container">
+        <div class="slider-track" [style.transform]="'translateX(' + (-currentSlide * 50) + '%)'">
+          <div
+            class="project-slide"
+            *ngFor="let project of projects; let i = index"
+            [class.active]="i === currentSlide">
+            <div class="project-card">
+              <div class="project-image">
+                <img [src]="project.image" [alt]="project.title">
+                <div class="project-overlay">
+                  <div class="project-actions">
+                    <button class="action-btn view-btn" (click)="viewProject(project)">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn link-btn" (click)="openProject(project)">
+                      <i class="fas fa-external-link-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="project-content">
+                <div class="project-category">{{ project.category | titlecase }}</div>
+                <h3 class="project-title">{{ project.title }}</h3>
+                <p class="project-description">{{ project.description }}</p>
+                <div class="project-tech">
+                  <span class="tech-tag" *ngFor="let tech of project.technologies">{{ tech }}</span>
+                </div>
+                <div class="project-meta">
+                  <span class="project-date">
+                    <i class="fas fa-calendar"></i>
+                    {{ project.date }}
+                  </span>
+                  <span class="project-duration">
+                    <i class="fas fa-clock"></i>
+                    {{ project.duration }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Slider Navigation -->
+      <div class="slider-nav">
+        <button class="nav-btn prev-btn" (click)="previousSlide()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="nav-btn next-btn" (click)="nextSlide()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      
+      <!-- Slider Indicators -->
+      <div class="slider-indicators">
+        <button
+          class="indicator"
+          *ngFor="let slide of getSlideIndicators(); let i = index"
+          [class.active]="i === currentSlide"
+          (click)="goToSlide(i)">
+        </button>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="portfolio-cta">
+      <h2>Prêt à Démarrer Votre Projet ?</h2>
+      <p>Contactez-nous pour discuter de vos besoins et découvrir comment nous pouvons vous aider.</p>
+      <div class="cta-buttons">
+        <button class="btn btn-primary">Demander un Devis</button>
+        <button class="btn btn-secondary">Voir Plus de Projets</button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,627 @@
+<div class="work-hours-container">
+  <!-- Enhanced Header -->
+  <div class="modern-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="header-title">
+          <i class="fas fa-users-cog"></i>
+          Dashboard Sessions Employés
+        </h1>
+        <p class="header-subtitle">Supervision en temps réel des sessions de travail</p>
+      </div>
+      <div class="header-stats">
+        <div class="quick-stat">
+          <div class="stat-icon active">
+            <i class="fas fa-play-circle"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ getActiveSessionsCount() }}</span>
+            <span class="stat-label">Sessions Actives</span>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="stat-icon total">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ sessionStats.total_hours.toFixed(1) }}h</span>
+            <span class="stat-label">Total Aujourd'hui</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Control Panel -->
+  <div class="control-panel">
+    <div class="panel-section search-section">
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input 
+          type="text" 
+          class="modern-search" 
+          placeholder="Rechercher un employé par nom, email ou matricule..." 
+          [(ngModel)]="searchTerm" 
+          (input)="applyFilters()">
+        <div class="search-results-count" *ngIf="searchTerm">
+          {{ employeeWorkStats.length }} résultat(s)
+        </div>
+      </div>
+    </div>
+    
+    <div class="panel-section filters-section">
+      <div class="filter-group">
+        <label class="filter-label">Période</label>
+        <div class="period-selector">
+          <button 
+            class="period-btn" 
+            [class.active]="selectedTimePeriod === 'day'"
+            (click)="setTimePeriod('day')">
+            <i class="fas fa-calendar-day"></i>
+            <span>Aujourd'hui</span>
+          </button>
+          <button 
+            class="period-btn" 
+            [class.active]="selectedTimePeriod === 'week'"
+            (click)="setTimePeriod('week')">
+            <i class="fas fa-calendar-week"></i>
+            <span>Cette semaine</span>
+          </button>
+          <button 
+            class="period-btn" 
+            [class.active]="selectedTimePeriod === 'month'"
+            (click)="setTimePeriod('month')">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Ce mois</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">Statut</label>
+        <div class="status-filter">
+          <select class="modern-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+            <option value="all">Tous les statuts</option>
+            <option value="active">🟢 Sessions actives</option>
+            <option value="paused">🟡 En pause</option>
+            <option value="stopped">🔴 Terminées</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="filter-group">
+        <button class="action-btn export" (click)="exportSessions()">
+          <i class="fas fa-download"></i>
+          <span>Exporter</span>
+        </button>
+        <button class="action-btn refresh" (click)="refreshData()">
+          <i class="fas fa-sync-alt"></i>
+          <span>Actualiser</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Analytics Dashboard -->
+  <div class="analytics-dashboard">
+    <div class="dashboard-grid">
+      <div class="metric-card primary">
+        <div class="metric-header">
+          <div class="metric-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="metric-trend positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+12%</span>
+          </div>
+        </div>
+        <div class="metric-content">
+          <h3 class="metric-value">{{ sessionStats.total_hours.toFixed(1) }}h</h3>
+          <p class="metric-label">Heures Travaillées</p>
+          <div class="metric-sublabel">Aujourd'hui</div>
+        </div>
+      </div>
+      
+      <div class="metric-card success">
+        <div class="metric-header">
+          <div class="metric-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="metric-trend positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>{{ getActiveSessionsCount() }}</span>
+          </div>
+        </div>
+        <div class="metric-content">
+          <h3 class="metric-value">{{ employeeWorkStats.length || 0 }}</h3>
+          <p class="metric-label">Employés Connectés</p>
+          <div class="metric-sublabel">{{ getActiveSessionsCount() }} sessions actives</div>
+        </div>
+      </div>
+      
+      <div class="metric-card warning">
+        <div class="metric-header">
+          <div class="metric-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="metric-trend neutral">
+            <i class="fas fa-minus"></i>
+            <span>0%</span>
+          </div>
+        </div>
+        <div class="metric-content">
+          <h3 class="metric-value">{{ sessionStats.efficiency.toFixed(1) }}%</h3>
+          <p class="metric-label">Efficacité Moyenne</p>
+          <div class="metric-sublabel">Objectif: 85%</div>
+        </div>
+      </div>
+      
+      <div class="metric-card info">
+        <div class="metric-header">
+          <div class="metric-icon">
+            <i class="fas fa-pause-circle"></i>
+          </div>
+          <div class="metric-trend negative">
+            <i class="fas fa-arrow-down"></i>
+            <span>-5%</span>
+          </div>
+        </div>
+        <div class="metric-content">
+          <h3 class="metric-value">{{ getPausedSessionsCount() }}</h3>
+          <p class="metric-label">Sessions en Pause</p>
+          <div class="metric-sublabel">Durée moy: 15min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Détails Employé -->
+  <div class="modal-overlay" *ngIf="showEmployeeDetailsModal" (click)="closeEmployeeDetailsModal()">
+    <div class="modal-content employee-details-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-circle"></i> Détails de l'employé</h3>
+        <button class="modal-close" (click)="closeEmployeeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body" *ngIf="selectedEmployeeForDetails">
+        <!-- Informations générales -->
+        <div class="employee-info-section">
+          <div class="employee-header">
+            <div class="employee-avatar-large">{{ getInitials(selectedEmployeeForDetails) }}</div>
+            <div class="employee-main-info">
+              <h4>{{ selectedEmployeeForDetails.employee_name }}</h4>
+              <p class="employee-email">{{ selectedEmployeeForDetails.employee_email }}</p>
+              <p class="employee-matricule">Matricule: {{ selectedEmployeeForDetails.employee_matricule }}</p>
+            </div>
+            <div class="current-status">
+              <span class="status-badge" [ngClass]="getSessionStatusClassFromStats(selectedEmployeeForDetails)">
+                {{ getSessionStatusLabelFromStats(selectedEmployeeForDetails) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques détaillées -->
+        <div class="stats-grid">
+          <div class="stat-card work-hours">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h5>Heures de Travail</h5>
+              <div class="stat-breakdown">
+                <div class="stat-item">
+                  <span class="stat-label">Aujourd'hui:</span>
+                  <span class="stat-value">{{ (selectedEmployeeForDetails.today_worked_hours || 0) | number:'1.1-1' }}h</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Cette semaine:</span>
+                  <span class="stat-value">{{ (selectedEmployeeForDetails.week_worked_hours || 0) | number:'1.1-1' }}h</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Ce mois:</span>
+                  <span class="stat-value">{{ (selectedEmployeeForDetails.month_worked_hours || 0) | number:'1.1-1' }}h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card pause-hours">
+            <div class="stat-icon">
+              <i class="fas fa-pause-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h5>Temps de Pause</h5>
+              <div class="stat-breakdown">
+                <div class="stat-item">
+                  <span class="stat-label">Aujourd'hui:</span>
+                  <span class="stat-value">{{ (selectedEmployeeForDetails.today_pause_hours || 0) | number:'1.1-1' }}h</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Cette semaine:</span>
+                  <span class="stat-value">{{ (selectedEmployeeForDetails.week_pause_hours || 0) | number:'1.1-1' }}h</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Ce mois:</span>
+                  <span class="stat-value">{{ (selectedEmployeeForDetails.month_pause_hours || 0) | number:'1.1-1' }}h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card productivity">
+            <div class="stat-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+              <h5>Productivité</h5>
+              <div class="productivity-info">
+                <div class="progress-today">
+                  <span class="progress-label">Progression du jour</span>
+                  <div class="progress-bar-detailed">
+                    <div class="progress-fill" [style.width.%]="getDailyProgressPercentageFromStats(selectedEmployeeForDetails)"></div>
+                  </div>
+                  <span class="progress-text">{{ getDailyProgressPercentageFromStats(selectedEmployeeForDetails) | number:'1.0-0' }}% de l'objectif quotidien</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeEmployeeDetailsModal()">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+          <button class="btn btn-primary" (click)="exportEmployeeData(selectedEmployeeForDetails)">
+            <i class="fas fa-download"></i> Exporter les données
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Employee Sessions Table -->
+  <div class="sessions-table-container">
+    <div class="table-header">
+      <h2 class="table-title">
+        <i class="fas fa-table"></i>
+        Sessions en Temps Réel
+      </h2>
+      <div class="table-controls">
+        <div class="view-toggle">
+          <button class="toggle-btn active" data-view="table">
+            <i class="fas fa-table"></i>
+            <span>Tableau</span>
+          </button>
+          <button class="toggle-btn" data-view="cards">
+            <i class="fas fa-th-large"></i>
+            <span>Cartes</span>
+          </button>
+        </div>
+        <div class="table-info">
+          <span class="info-text">{{ employeeWorkStats.length }} employé(s)</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="table-wrapper">
+      <table class="modern-table" *ngIf="employeeWorkStats.length > 0 && !isLoading">
+        <thead>
+          <tr>
+            <th class="col-employee">
+              <div class="th-content">
+                <i class="fas fa-user"></i>
+                <span>Employé</span>
+              </div>
+            </th>
+            <th class="col-progress">
+              <div class="th-content">
+                <i class="fas fa-chart-pie"></i>
+                <span>Progression</span>
+              </div>
+            </th>
+            <th class="col-hours">
+              <div class="th-content">
+                <i class="fas fa-clock"></i>
+                <span>Temps Travaillé</span>
+              </div>
+            </th>
+            <th class="col-pause">
+              <div class="th-content">
+                <i class="fas fa-pause"></i>
+                <span>Pauses</span>
+              </div>
+            </th>
+            <th class="col-status">
+              <div class="th-content">
+                <i class="fas fa-signal"></i>
+                <span>Statut</span>
+              </div>
+            </th>
+            <th class="col-actions">
+              <div class="th-content">
+                <i class="fas fa-cogs"></i>
+                <span>Actions</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let stats of employeeWorkStats; trackBy: trackByEmployeeStats" 
+              class="table-row" 
+              [class.row-active]="stats.current_session_status === 'active'"
+              [class.row-paused]="stats.current_session_status === 'paused'">
+            
+            <!-- Employee Info -->
+            <td class="employee-cell">
+              <div class="employee-card">
+                <div class="employee-avatar-container">
+                  <div class="employee-avatar">{{ getInitials(stats) }}</div>
+                  <div class="status-indicator" [ngClass]="getSessionStatusClassFromStats(stats)"></div>
+                </div>
+                <div class="employee-info">
+                  <div class="employee-name">{{ stats.employee_name }}</div>
+                  <div class="employee-meta">
+                    <span class="employee-email">{{ stats.employee_email }}</span>
+                    <span class="employee-id">#{{ stats.employee_matricule }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Progress -->
+            <td class="progress-cell">
+              <div class="progress-widget">
+                <div class="progress-header">
+                  <span class="progress-time">{{ formatHoursMinutes(stats.today_worked_hours || stats.total_hours_today || 0) }}</span>
+                  <span class="progress-target">/ 8h</span>
+                  <span class="progress-percent">{{ getDailyProgressPercentageFromStats(stats) | number:'1.0-0' }}%</span>
+                </div>
+                <div class="progress-bar-modern">
+                  <div class="progress-track">
+                    <div class="progress-fill-modern" 
+                         [style.width.%]="getDailyProgressPercentageFromStats(stats)"
+                         [class.progress-complete]="getDailyProgressPercentageFromStats(stats) >= 100">
+                    </div>
+                  </div>
+                </div>
+                <div class="progress-footer">
+                  <small class="efficiency-badge">Efficacité: {{ getEfficiencyPercentage(stats) }}%</small>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Work Hours -->
+            <td class="hours-cell">
+              <div class="time-summary">
+                <div class="time-item primary">
+                  <span class="time-label">Aujourd'hui</span>
+                  <span class="time-value">{{ formatHoursMinutes(stats.today_worked_hours || stats.total_hours_today || 0) }}</span>
+                </div>
+                <div class="time-item secondary">
+                  <span class="time-label">Cette semaine</span>
+                  <span class="time-value">{{ formatHoursMinutes(stats.week_worked_hours || stats.total_hours_week || 0) }}</span>
+                </div>
+                <div class="time-item tertiary">
+                  <span class="time-label">Ce mois</span>
+                  <span class="time-value">{{ formatHoursMinutes(stats.month_worked_hours || stats.total_hours_month || 0) }}</span>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Pause Time -->
+            <td class="pause-cell">
+              <div class="pause-summary">
+                <div class="pause-item">
+                  <i class="fas fa-coffee pause-icon"></i>
+                  <div class="pause-details">
+                    <span class="pause-today">{{ formatHoursMinutes(stats.today_pause_hours || stats.total_pause_today || 0) }}</span>
+                    <small class="pause-label">aujourd'hui</small>
+                  </div>
+                </div>
+                <div class="pause-breakdown-mini">
+                  <div class="pause-mini-item">
+                    <span>Semaine: {{ formatHoursMinutes(stats.week_pause_hours || stats.total_pause_week || 0) }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Status -->
+            <td class="status-cell">
+              <div class="status-container">
+                <div class="status-badge-modern" [ngClass]="getSessionStatusClassFromStats(stats)">
+                  <div class="status-dot"></div>
+                  <span class="status-text">{{ getSessionStatusLabelFromStats(stats) }}</span>
+                </div>
+                <div class="status-time" *ngIf="stats.current_session_status === 'active'">
+                  <small>Depuis {{ getCurrentSessionDuration(stats) }}</small>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Actions -->
+            <td class="actions-cell">
+              <div class="action-menu">
+                <button class="action-btn primary" (click)="viewEmployeeDetails(stats)" 
+                        title="Voir les détails">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn secondary" (click)="exportEmployeeData(stats)" 
+                        title="Exporter">
+                  <i class="fas fa-download"></i>
+                </button>
+                <div class="action-dropdown">
+                  <button class="action-btn dropdown-toggle" title="Plus d'actions">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <!-- Enhanced Empty State -->
+      <div *ngIf="employeeWorkStats.length === 0 && !isLoading" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-users-slash"></i>
+        </div>
+        <h3 class="empty-title">Aucune session active</h3>
+        <p class="empty-description">
+          Les sessions de travail des employés apparaîtront ici en temps réel.
+        </p>
+        <button class="empty-action" (click)="refreshData()">
+          <i class="fas fa-sync-alt"></i>
+          Actualiser
+        </button>
+      </div>
+
+      <!-- Enhanced Loading State -->
+      <div *ngIf="isLoading" class="loading-state-modern">
+        <div class="loading-animation">
+          <div class="loading-spinner"></div>
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        <p class="loading-text">Synchronisation des données...</p>
+      </div>
+    </div>
+  </div>
+
+<!-- Loading Spinner -->
+<div class="loading-overlay" *ngIf="isLoading">
+  <div class="spinner-container">
+    <div class="spinner"></div>
+    <p>Chargement en cours...</p>
+  </div>
+</div>
+
+<!-- Session Modal -->
+<div class="modal-overlay" *ngIf="showSessionModal" (click)="closeSessionModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="material-icons">play_circle</i> Démarrer une Session</h3>
+      <button class="modal-close" (click)="closeSessionModal()">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="sessionForm" (ngSubmit)="startSession()">
+        <div class="form-group">
+          <label for="notes">Notes (optionnel)</label>
+          <textarea
+            id="notes"
+            class="form-control"
+            formControlName="notes"
+            placeholder="Décrivez ce que vous allez faire..."
+            rows="3"
+          ></textarea>
+          <small class="form-text text-muted">
+            {{ sessionForm.get('notes')?.value?.length || 0 }}/500 caractères
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="project">Projet (optionnel)</label>
+          <input
+            type="text"
+            id="project"
+            class="form-control"
+            formControlName="project"
+            placeholder="Nom du projet"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="task">Tâche (optionnel)</label>
+          <input
+            type="text"
+            id="task"
+            class="form-control"
+            formControlName="task"
+            placeholder="Description de la tâche"
+          >
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeSessionModal()">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!sessionForm.valid || isLoading"
+          >
+            <i class="material-icons" *ngIf="!isLoading">play_arrow</i>
+            <div class="spinner-border spinner-border-sm" *ngIf="isLoading"></div>
+            Démarrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Pause Modal -->
+<div class="modal-overlay" *ngIf="showPauseModal" (click)="closePauseModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="material-icons">pause_circle</i> Mettre en Pause</h3>
+      <button class="modal-close" (click)="closePauseModal()">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="pauseForm" (ngSubmit)="pauseSession()">
+        <div class="form-group">
+          <label for="reason">Raison de la pause *</label>
+          <select id="reason" class="form-control" formControlName="reason">
+            <option value="">Sélectionnez une raison</option>
+            <option value="pause_dejeuner">Pause déjeuner</option>
+            <option value="pause_cafe">Pause café</option>
+            <option value="reunion">Réunion</option>
+            <option value="appel_telephonique">Appel téléphonique</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="estimated_duration">Durée estimée (minutes)</label>
+          <input
+            type="number"
+            id="estimated_duration"
+            class="form-control"
+            formControlName="estimated_duration"
+            min="1"
+            max="120"
+          >
+          <small class="form-text text-muted">Entre 1 et 120 minutes</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closePauseModal()">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn btn-warning"
+            [disabled]="!pauseForm.valid || isLoading"
+          >
+            <i class="material-icons" *ngIf="!isLoading">pause</i>
+            <div class="spinner-border spinner-border-sm" *ngIf="isLoading"></div>
+            Mettre en Pause
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,93 @@
+<footer class="footer-container">
+  <div class="floating-elements" #floatingElements></div>
+
+  <div class="footer-content">
+    <div class="container">
+      <div class="footer-main">
+        <div class="brand-section">
+          <h2 class="brand-logo">Segus Engineering<span class="dot">.</span></h2>
+          <p class="brand-tagline">
+            Pionnier de l'avenir avec des solutions IA de pointe et des services d'ingénierie innovants qui transforment les possibilités en réalité.
+          </p>
+          <div class="social-icons">
+            <a href="#" class="social-icon" data-platform="facebook" (click)="onSocialClick($event, 'facebook')" aria-label="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="social-icon" data-platform="twitter" (click)="onSocialClick($event, 'twitter')" aria-label="Twitter">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="social-icon" data-platform="linkedin" (click)="onSocialClick($event, 'linkedin')" aria-label="LinkedIn">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a href="#" class="social-icon" data-platform="instagram" (click)="onSocialClick($event, 'instagram')" aria-label="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="social-icon" data-platform="github" (click)="onSocialClick($event, 'github')" aria-label="GitHub">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h4>Services</h4>
+          <ul class="footer-links">
+            <li><a href="#" (click)="onNavigate($event, '/services/ai-development')">Développement IA</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/services/machine-learning')">Machine Learning</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/services/data-analytics')">Analyse de Données</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/services/cloud-solutions')">Solutions Cloud</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/services/automation')">Automatisation</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/services/consulting')">Consulting</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Entreprise</h4>
+          <ul class="footer-links">
+            <li><a href="#" (click)="onNavigate($event, '/about')">À propos</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/team')">Notre équipe</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/careers')">Carrières</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/portfolio')">Portfolio</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/news')">Actualités</a></li>
+            <li><a href="#" (click)="onNavigate($event, '/contact')">Contact</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section newsletter-section">
+          <h4>Newsletter</h4>
+          <p>Restez informé des dernières innovations en IA et des avancées technologiques de notre équipe.</p>
+          <form class="newsletter-form" (ngSubmit)="onNewsletterSubmit()" #newsletterForm="ngForm">
+            <input
+              type="email"
+              class="newsletter-input"
+              placeholder="votre@email.com"
+              [(ngModel)]="email"
+              name="email"
+              required
+              #emailInput="ngModel"
+            >
+            <button type="submit" class="newsletter-btn" [disabled]="!newsletterForm.valid">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="footer-bottom-content">
+        <div class="copyright">
+          <span>© 2025 Segus Engineering. Tous droits réservés.</span>
+          <span>Créé avec <i class="fas fa-heart" style="color: #4299e1;"></i> pour l'innovation</span>
+        </div>
+        <nav class="footer-nav">
+          <a href="#" (click)="onNavigate($event, '/privacy')">Confidentialité</a>
+          <a href="#" (click)="onNavigate($event, '/terms')">Conditions</a>
+          <a href="#" (click)="onNavigate($event, '/cookies')">Cookies</a>
+          <a href="#" (click)="onNavigate($event, '/sitemap')">Plan du site</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+</footer>

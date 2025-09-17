@@ -1,0 +1,122 @@
+<div class="content-section">
+  <div class="page-header">
+    <h2>📊 Rapports et Exports</h2>
+    <p>Générez et téléchargez des rapports Excel professionnels avec formatage avancé</p>
+    
+    <div *ngIf="loading" class="loading-indicator">
+      <i class="fas fa-spinner fa-spin"></i> 
+      Chargement des données...
+    </div>
+  </div>
+
+  <div class="reports-grid">
+    <!-- Rapport des Tâches -->
+    <div class="report-card featured">
+      <div class="report-icon">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <h3>Rapport des Tâches</h3>
+      <p>Export détaillé de toutes les tâches avec statuts et assignations colorées</p>
+      <ul class="report-features">
+        <li><i class="fas fa-check"></i> Tâches et sous-tâches</li>
+        <li><i class="fas fa-check"></i> Statuts colorés</li>
+        <li><i class="fas fa-check"></i> Assignations employés</li>
+      </ul>
+      <button class="btn btn-warning" (click)="generateTaskReport()" [disabled]="loading">
+        <i class="fas fa-download"></i>
+        Télécharger Tâches
+      </button>
+    </div>
+
+    <!-- Rapport Complet -->
+    <div class="report-card">
+      <div class="report-icon">
+        <i class="fas fa-file-excel"></i>
+      </div>
+      <h3>Rapport Complet</h3>
+      <p>Rapport multi-onglets avec projets, tâches, employés et statistiques</p>
+      <ul class="report-features">
+        <li><i class="fas fa-check"></i> Multi-onglets Excel</li>
+        <li><i class="fas fa-check"></i> Données complètes</li>
+        <li><i class="fas fa-check"></i> Statistiques avancées</li>
+      </ul>
+      <button class="btn btn-success" (click)="generateCompleteReport()" [disabled]="loading">
+        <i class="fas fa-download"></i>
+        Télécharger Complet
+      </button>
+    </div>
+
+    <!-- Résumé des Projets -->
+    <div class="report-card">
+      <div class="report-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <h3>Résumé des Projets</h3>
+      <p>Vue d'ensemble des projets avec statistiques et pourcentages</p>
+      <ul class="report-features">
+        <li><i class="fas fa-check"></i> Statistiques projets</li>
+        <li><i class="fas fa-check"></i> Pourcentages d'avancement</li>
+        <li><i class="fas fa-check"></i> Résumé exécutif</li>
+      </ul>
+      <button class="btn btn-primary" (click)="generateProjectSummary()" [disabled]="loading">
+        <i class="fas fa-download"></i>
+        Télécharger Résumé
+      </button>
+    </div>
+
+    <!-- Rapport des Employés -->
+    <div class="report-card">
+      <div class="report-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <h3>Rapport des Employés</h3>
+      <p>Performance et charge de travail des employés</p>
+      <ul class="report-features">
+        <li><i class="fas fa-check"></i> Charge de travail</li>
+        <li><i class="fas fa-check"></i> Taux de completion</li>
+        <li><i class="fas fa-check"></i> Performance individuelle</li>
+      </ul>
+      <button class="btn btn-info" (click)="generateEmployeeReport()" [disabled]="loading">
+        <i class="fas fa-download"></i>
+        Télécharger Employés
+      </button>
+    </div>
+
+    <!-- Rapport Simple -->
+    <div class="report-card">
+      <div class="report-icon">
+        <i class="fas fa-table"></i>
+      </div>
+      <h3>Rapport Simple</h3>
+      <p>Export basique des projets avec formatage standard</p>
+      <ul class="report-features">
+        <li><i class="fas fa-check"></i> Format simple</li>
+        <li><i class="fas fa-check"></i> Données essentielles</li>
+        <li><i class="fas fa-check"></i> Export rapide</li>
+      </ul>
+      <button class="btn btn-primary" (click)="generateSimpleReport()" [disabled]="loading">
+        <i class="fas fa-download"></i>
+        Télécharger Simple
+      </button>
+    </div>
+
+    <!-- Suivi des Temps -->
+    <div class="report-card">
+      <div class="report-icon">
+        <i class="fas fa-stopwatch"></i>
+      </div>
+      <h3>Suivi des Temps</h3>
+      <p>Analyse des durées planifiées vs réelles et des retards</p>
+      <ul class="report-features">
+        <li><i class="fas fa-check"></i> Durées planifiées/réelles</li>
+        <li><i class="fas fa-check"></i> Calcul des retards</li>
+        <li><i class="fas fa-check"></i> Suivi par employé</li>
+      </ul>
+      <button class="btn btn-info" (click)="generateTimeTrackingReport()" [disabled]="loading">
+        <i class="fas fa-stopwatch"></i>
+        Télécharger Suivi
+      </button>
+    </div>
+  </div>
+
+</div>

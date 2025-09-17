@@ -1,0 +1,48 @@
+.dashboard-container {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main"
+    "footer footer";
+  grid-template-rows: 70px 1fr auto; /* Header fixe, main flexible, footer auto */
+  grid-template-columns: 280px 1fr; /* Sidebar fixe, main flexible */
+  height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+  grid-area: main;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  background: #fafbfc;
+}
+
+.admin-sidebar {
+  grid-area: sidebar;
+  background: #f1f5f9; /* Fond visible pour débogage */
+}
+
+.dashboard-header {
+  grid-area: header;
+}
+
+.dashboard-footer {
+  grid-area: footer;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-areas:
+      "header"
+      "main"
+      "footer";
+    grid-template-columns: 1fr;
+    grid-template-rows: 70px 1fr auto;
+  }
+
+  .admin-sidebar {
+    display: none; /* Masque la sidebar sur mobile */
+  }
+}

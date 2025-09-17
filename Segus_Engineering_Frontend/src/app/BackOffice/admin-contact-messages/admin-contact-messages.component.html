@@ -1,0 +1,341 @@
+<div class="contact-messages-container">
+  <!-- Modern Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-info">
+        <div class="page-badge">GESTION</div>
+        <h1>Messages de Contact</h1>
+        <p>Gérez et suivez tous les messages reçus via le formulaire de contact</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-modern btn-primary" (click)="refreshMessages()" [disabled]="loading">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+          <span>Actualiser</span>
+        </button>
+        <button class="btn-modern btn-secondary" (click)="exportMessages()">
+          <i class="fas fa-download"></i>
+          <span>Exporter CSV</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Stats Cards -->
+  <div class="stats-section" *ngIf="stats">
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <div class="stat-trend positive">+12%</div>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.total_messages }}</h3>
+          <p>Total Messages</p>
+          <span class="stat-subtitle">Tous les messages reçus</span>
+        </div>
+      </div>
+      <div class="stat-card unread">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-envelope-open"></i>
+          </div>
+          <div class="stat-indicator" [class.active]="stats.unread_messages > 0"></div>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.unread_messages }}</h3>
+          <p>Non Lus</p>
+          <span class="stat-subtitle">Nécessitent votre attention</span>
+        </div>
+      </div>
+      <div class="stat-card recent">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-badge">7j</div>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.recent_messages }}</h3>
+          <p>Cette Semaine</p>
+          <span class="stat-subtitle">Messages récents</span>
+        </div>
+      </div>
+      <div class="stat-card replied">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-reply"></i>
+          </div>
+          <div class="stat-progress">
+            <div class="progress-bar" [style.width.%]="getRepliedPercentage()"></div>
+          </div>
+        </div>
+        <div class="stat-content">
+          <h3>{{ getRepliedCount() }}</h3>
+          <p>Répondus</p>
+          <span class="stat-subtitle">Taux de réponse</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Filters -->
+  <div class="filters-section">
+    <div class="filters-container">
+      <div class="filters-header">
+        <h3><i class="fas fa-filter"></i> Filtres et Recherche</h3>
+        <button class="btn-reset" (click)="selectedStatus=''; selectedPriority=''; searchTerm=''; applyFilters()">
+          <i class="fas fa-times"></i> Réinitialiser
+        </button>
+      </div>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label><i class="fas fa-flag"></i> Statut</label>
+          <select class="form-select modern" [(ngModel)]="selectedStatus" (change)="applyFilters()">
+            <option value="">Tous les statuts</option>
+            <option value="unread">📩 Non lu</option>
+            <option value="read">👁️ Lu</option>
+            <option value="replied">✅ Répondu</option>
+            <option value="archived">📁 Archivé</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label><i class="fas fa-exclamation-triangle"></i> Priorité</label>
+          <select class="form-select modern" [(ngModel)]="selectedPriority" (change)="applyFilters()">
+            <option value="">Toutes les priorités</option>
+            <option value="low">🟢 Faible</option>
+            <option value="medium">🟡 Moyenne</option>
+            <option value="high">🟠 Élevée</option>
+            <option value="urgent">🔴 Urgente</option>
+          </select>
+        </div>
+        <div class="filter-group search-group">
+          <label><i class="fas fa-search"></i> Recherche</label>
+          <div class="search-input-container">
+            <input type="text" class="form-control modern search-input" 
+                   placeholder="Rechercher par nom, email, sujet..." 
+                   [(ngModel)]="searchTerm" (input)="applyFilters()">
+            <i class="fas fa-search search-icon"></i>
+          </div>
+        </div>
+      </div>
+      <div class="results-info" *ngIf="filteredMessages.length !== messages.length">
+        <span class="results-count">{{ filteredMessages.length }} résultat(s) sur {{ messages.length }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Messages Table -->
+  <div class="messages-section">
+    <div class="section-header">
+      <h3><i class="fas fa-list"></i> Liste des Messages</h3>
+      <div class="view-options">
+        <button class="view-btn active" title="Vue tableau">
+          <i class="fas fa-table"></i>
+        </button>
+        <button class="view-btn" title="Vue cartes">
+          <i class="fas fa-th-large"></i>
+        </button>
+      </div>
+    </div>
+    <div class="table-container">
+      <div class="table-responsive">
+        <table class="table modern-table">
+          <thead>
+            <tr>
+              <th><i class="fas fa-user"></i> Expéditeur</th>
+              <th><i class="fas fa-envelope"></i> Contact</th>
+              <th><i class="fas fa-comment"></i> Sujet</th>
+              <th><i class="fas fa-flag"></i> Statut</th>
+              <th><i class="fas fa-exclamation"></i> Priorité</th>
+              <th><i class="fas fa-calendar"></i> Date</th>
+              <th><i class="fas fa-cog"></i> Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let message of filteredMessages; trackBy: trackByMessageId" 
+                class="message-row"
+                [class.unread]="message.status === 'unread'"
+                [class.urgent]="message.priority === 'urgent'"
+                [class.recent]="message.is_recent">
+              <td>
+                <div class="sender-info">
+                  <div class="sender-avatar" [style.background]="getAvatarColor(message.first_name)">
+                    {{ getInitials(message.first_name, message.last_name) }}
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="message-sender">
+                  <strong>{{ message.first_name }} {{ message.last_name }}</strong>
+                  <small>{{ message.email }}</small>
+                </div>
+              </td>
+              <td>
+                <div class="message-subject">
+                  <span class="subject-text">{{ message.subject || 'Pas de sujet' }}</span>
+                  <small class="message-preview">{{ message.message | slice:0:50 }}...</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="'badge-' + message.status">
+                  <i class="fas" [ngClass]="getStatusIcon(message.status)"></i>
+                  {{ message.status === 'unread' ? 'Non lu' : message.status === 'read' ? 'Lu' : message.status === 'replied' ? 'Répondu' : 'Archivé' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="'badge-priority-' + message.priority">
+                  <i class="fas" [ngClass]="getPriorityIcon(message.priority)"></i>
+                  {{ message.priority === 'low' ? 'Faible' : message.priority === 'medium' ? 'Moyenne' : message.priority === 'high' ? 'Élevée' : 'Urgente' }}
+                </span>
+              </td>
+              <td>
+                <div class="message-date">
+                  <span>{{ formatDateShort(message.created_at) }}</span>
+                  <small>{{ getRelativeTime(message.created_at) }}</small>
+                </div>
+              </td>
+              <td>
+                <div class="message-actions">
+                  <button class="btn btn-sm btn-outline-primary" (click)="viewMessage(message)" title="Voir le message">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-success" *ngIf="message.status !== 'replied'" (click)="markAsReplied(message.id!)" title="Marquer comme répondu">
+                    <i class="fas fa-reply"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteMessage(message.id!)" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredMessages.length === 0" class="no-results-row">
+              <td colspan="7">
+                <div class="no-messages">
+                  <div class="no-messages-icon">
+                    <i class="fas fa-inbox"></i>
+                  </div>
+                  <h4>Aucun message trouvé</h4>
+                  <p *ngIf="searchTerm || selectedStatus || selectedPriority">Essayez de modifier vos filtres de recherche</p>
+                  <p *ngIf="!searchTerm && !selectedStatus && !selectedPriority">Aucun message de contact n'a encore été reçu</p>
+                  <button class="btn-modern btn-primary" (click)="refreshMessages()" *ngIf="!searchTerm && !selectedStatus && !selectedPriority">
+                    <i class="fas fa-sync-alt"></i> Actualiser
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modern Message Detail Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content modern-modal" *ngIf="selectedMessage">
+      <div class="modal-header modern">
+        <div class="modal-title-section">
+          <div class="sender-avatar large" [style.background]="getAvatarColor(selectedMessage.first_name)">
+            {{ getInitials(selectedMessage.first_name, selectedMessage.last_name) }}
+          </div>
+          <div class="title-info">
+            <h5 class="modal-title">{{ selectedMessage.full_name }}</h5>
+            <p class="modal-subtitle">{{ selectedMessage.email }}</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close modern" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body modern">
+        <div class="message-details-grid">
+          <div class="details-section">
+            <div class="section-header">
+              <h6><i class="fas fa-info-circle"></i> Informations</h6>
+            </div>
+            <div class="detail-cards">
+              <div class="detail-card">
+                <div class="detail-icon"><i class="fas fa-tag"></i></div>
+                <div class="detail-content">
+                  <label>Sujet</label>
+                  <span>{{ selectedMessage.subject || 'Sans sujet' }}</span>
+                </div>
+              </div>
+              <div class="detail-card">
+                <div class="detail-icon"><i class="fas fa-calendar"></i></div>
+                <div class="detail-content">
+                  <label>Date de réception</label>
+                  <span>{{ formatDate(selectedMessage.created_at!) }}</span>
+                </div>
+              </div>
+              <div class="detail-card">
+                <div class="detail-icon"><i class="fas fa-flag"></i></div>
+                <div class="detail-content">
+                  <label>Statut</label>
+                  <span class="status-badge modern" [attr.data-status]="selectedMessage.status">
+                    <i class="fas" [class]="getStatusIcon(selectedMessage.status!)"></i>
+                    {{ getStatusLabel(selectedMessage.status!) }}
+                  </span>
+                </div>
+              </div>
+              <div class="detail-card">
+                <div class="detail-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="detail-content">
+                  <label>Priorité</label>
+                  <span class="priority-badge modern" [attr.data-priority]="selectedMessage.priority">
+                    <i class="fas" [class]="getPriorityIcon(selectedMessage.priority!)"></i>
+                    {{ getPriorityLabel(selectedMessage.priority!) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="message-section">
+            <div class="section-header">
+              <h6><i class="fas fa-comment"></i> Message</h6>
+            </div>
+            <div class="message-content-card">
+              <div class="message-text">{{ selectedMessage.message }}</div>
+            </div>
+          </div>
+          
+          <div class="admin-section" *ngIf="selectedMessage.admin_notes">
+            <div class="section-header">
+              <h6><i class="fas fa-sticky-note"></i> Notes Administrateur</h6>
+            </div>
+            <div class="notes-card">
+              <div class="notes-text">{{ selectedMessage.admin_notes }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer modern">
+        <div class="footer-actions">
+          <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+          <div class="action-group">
+            <button type="button" class="btn-modern btn-success" 
+                    *ngIf="selectedMessage.status === 'unread'"
+                    (click)="markAsRead(selectedMessage)">
+              <i class="fas fa-check"></i> Marquer comme lu
+            </button>
+            <button type="button" class="btn-modern btn-info" 
+                    *ngIf="selectedMessage.status !== 'replied'"
+                    (click)="markAsReplied(selectedMessage.id!)">
+              <i class="fas fa-reply"></i> Marquer comme répondu
+            </button>
+            <button type="button" class="btn-modern btn-danger" 
+                    (click)="deleteMessage(selectedMessage.id!)">
+              <i class="fas fa-trash"></i> Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,114 @@
+<!-- Hero Section avec Slider -->
+<div class="hero-section">
+  <!-- Slider d'images de fond -->
+  <div class="hero-slider">
+    <div class="slide" [class.active]="currentSlide === 0"
+         style="background-image: url('assets/img/bg_banner1.jpg'), linear-gradient(rgba(187, 192, 197, 0.7), rgba(0, 37, 82, 0.7))">
+    </div>
+    <div class="slide" [class.active]="currentSlide === 1"
+         style="background-image: url('assets/img/bg_banner2.jpg'), linear-gradient(rgba(138, 141, 145, 0.7), rgba(0, 37, 82, 0.7))">
+    </div>
+
+  </div>
+
+  <!-- Navigation du slider -->
+  <div class="slider-nav">
+    <button class="nav-btn prev" (click)="previousSlide()">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="nav-btn next" (click)="nextSlide()">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <!-- Indicateurs du slider -->
+  <div class="slider-indicators">
+    <button *ngFor="let slide of slides; let i = index"
+            class="indicator"
+            [class.active]="currentSlide === i"
+            (click)="goToSlide(i)">
+    </button>
+  </div>
+
+  <div class="hero-content">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 text-center text-white">
+          <div class="hero-badge">
+            <i class="fas fa-rocket"></i>
+            <span>SEGUS ENGINEERING</span>
+          </div>
+          <h1 class="hero-title">{{ slides[currentSlide].title }}</h1>
+          <p class="hero-subtitle">{{ slides[currentSlide].subtitle }}</p>
+          <div class="hero-actions">
+            <a href="#services" class="btn btn-primary-custom">
+              <i class="fas fa-play"></i>
+              <span>Découvrir nos services</span>
+            </a>
+            <a href="#portfolio" class="btn btn-outline-custom">
+              <i class="fas fa-briefcase"></i>
+              <span>Voir nos projets</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Particules d'arrière-plan -->
+  <div class="hero-particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="scroll-indicator">
+    <div class="scroll-arrow">
+      <i class="fas fa-chevron-down"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Section Services -->
+<section id="services" class="services-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center mb-5">
+        <h2 class="section-title">Nos Services d'Excellence</h2>
+        <p class="section-subtitle">Des solutions techniques innovantes adaptées à vos besoins</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <h3>Ingénierie Mécanique</h3>
+          <p>Conception et développement de systèmes mécaniques innovants</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-microchip"></i>
+          </div>
+          <h3>Solutions Électroniques</h3>
+          <p>Développement de circuits et systèmes électroniques avancés</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-laptop-code"></i>
+          </div>
+          <h3>Développement Logiciel</h3>
+          <p>Applications et systèmes logiciels sur mesure</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

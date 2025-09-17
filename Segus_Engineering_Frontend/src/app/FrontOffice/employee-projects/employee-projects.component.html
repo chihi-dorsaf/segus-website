@@ -1,0 +1,26 @@
+<div class="projects-container">
+  <h2>Mes Projets Associés</h2>
+  <div *ngIf="loading">Chargement...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <table *ngIf="!loading && projects.length" class="projects-table">
+    <thead>
+      <tr>
+        <th>Titre</th>
+        <th>Description</th>
+        <th>Statut</th>
+        <th>Date début</th>
+        <th>Date fin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let project of projects">
+        <td>{{ project.title }}</td>
+        <td>{{ project.description }}</td>
+        <td>{{ project.status }}</td>
+        <td>{{ project.start_date }}</td>
+        <td>{{ project.end_date }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && !projects.length">Aucun projet trouvé.</div>
+</div>

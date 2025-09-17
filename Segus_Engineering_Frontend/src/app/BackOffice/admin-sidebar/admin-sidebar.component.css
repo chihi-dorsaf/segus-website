@@ -1,0 +1,59 @@
+/* Styles spécifiques à la sidebar */
+.sidebar {
+  grid-area: sidebar;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  padding: 24px 0;
+  overflow-y: auto;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.nav-section {
+  padding: 0 24px;
+}
+
+.nav-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #475569;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background-color: #f1f5f9;
+  color: #002552;
+}
+
+.nav-item.active {
+  background-color: #002552;
+  color: white;
+}
+
+/* Icons placeholders */
+.icon-dashboard::before { content: "📊"; }
+.icon-users::before { content: "👥"; }
+.icon-project::before { content: "📁"; }
+.icon-tasks::before { content: "📋"; }
+.icon-subtasks::before { content: "📝"; }
+.icon-web::before { content: "🌐"; }
+.icon-report::before { content: "📊"; }

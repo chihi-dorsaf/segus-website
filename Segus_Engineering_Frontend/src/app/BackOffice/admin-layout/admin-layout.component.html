@@ -1,0 +1,14 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <app-admin-header (logout)="onLogout()"></app-admin-header>
+  </header>
+  <aside class="admin-sidebar">
+    <app-admin-sidebar></app-admin-sidebar>
+  </aside>
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+  <footer class="dashboard-footer">
+    <app-admin-footer></app-admin-footer>
+  </footer>
+</div>

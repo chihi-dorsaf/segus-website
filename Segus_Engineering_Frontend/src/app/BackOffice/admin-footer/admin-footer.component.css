@@ -1,0 +1,9 @@
+/* Styles spécifiques au footer */
+.dashboard-footer {
+  grid-area: footer;
+  background: #f8fafc;
+  padding: 16px;
+  text-align: center;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+}

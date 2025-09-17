@@ -1,0 +1,203 @@
+/* Barre de contact compacte pour le site vitrine */
+.contact-bar {
+  background: #002552;
+  color: #e0e3e6;
+  padding: 2px 0;
+  box-shadow: 0 1px 2px rgba(0, 37, 82, 0.08);
+  border-bottom: 1px solid #ff6b35;
+  opacity: 0;
+  animation: slideDown 0.6s ease-out forwards;
+  font-size: 0.75rem;
+}
+
+/* Animation d'entrée */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section marque */
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.brand-text {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #f0f3f7;
+  margin-bottom: 1px;
+  letter-spacing: 0.3px;
+}
+
+.tagline {
+  font-size: 0.65rem;
+  color: #b8c4d0;
+  font-style: italic;
+}
+
+/* Détails de contact */
+.contact-details {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+}
+
+.contact-item i {
+  color: #ff6b35;
+  font-size: 1rem;
+}
+
+.contact-item a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.contact-item a:hover {
+  color: #ff6b35;
+  text-decoration: underline;
+}
+
+/* Section réseaux sociaux */
+.social-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.social-label {
+  font-size: 0.75rem;
+  color: #b8c4d0;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.social-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.social-link.facebook:hover {
+  background: #1877f2;
+  color: #ffffff;
+}
+
+.social-link.linkedin:hover {
+  background: #0077b5;
+  color: #ffffff;
+}
+
+.social-link.twitter:hover {
+  background: #1da1f2;
+  color: #ffffff;
+}
+
+.social-link.instagram:hover {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: #ffffff;
+}
+
+.social-link.pinterest:hover {
+  background: #bd081c;
+  color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .contact-details {
+    gap: 15px;
+  }
+
+  .social-section {
+    align-items: center;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-bar {
+    padding: 10px 0;
+  }
+
+  .contact-bar .row {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+
+  .brand-section,
+  .contact-details {
+    justify-content: center;
+  }
+
+  .contact-details {
+    gap: 10px;
+  }
+
+  .social-section {
+    align-items: center;
+  }
+
+  .social-icons {
+    gap: 10px;
+  }
+
+  .social-link {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .contact-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contact-item {
+    justify-content: center;
+  }
+
+  .brand-text {
+    font-size: 1.1rem;
+  }
+
+  .tagline {
+    font-size: 0.8rem;
+  }
+}

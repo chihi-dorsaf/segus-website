@@ -1,0 +1,77 @@
+<section id="services" class="services-section">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="services-header">
+      <div class="header-badge">
+        <i class="fas fa-cogs"></i>
+        <span>NOS SERVICES</span>
+      </div>
+      <h1 class="services-title">Solutions d'Ingénierie Complètes</h1>
+      <p class="services-subtitle">
+        Segus Engineering propose des solutions innovantes et personnalisées pour répondre à tous vos défis techniques avec excellence et expertise.
+      </p>
+    </div>
+
+    <!-- Services Grid -->
+    <div class="services-grid">
+      <div class="service-card" *ngFor="let service of services; let i = index">
+        <div class="service-number">0{{ i + 1 }}</div>
+        <div class="service-icon">
+          <i [class]="service.icon"></i>
+        </div>
+        <div class="service-content">
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+          <div class="service-features">
+            <div class="feature" *ngFor="let feature of service.features">
+              <i class="fas fa-check"></i>
+              <span>{{ feature }}</span>
+            </div>
+          </div>
+          <div class="service-action">
+            <button class="btn-service">
+              <span>En savoir plus</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+        <div class="service-overlay"></div>
+      </div>
+    </div>
+
+    <!-- Process Section -->
+    <div class="process-section">
+      <h2 class="process-title">
+        <span class="title-accent">Notre</span> Processus
+      </h2>
+      <div class="process-steps">
+        <div class="step" *ngFor="let step of processSteps; let i = index">
+          <div class="step-number">{{ i + 1 }}</div>
+          <div class="step-icon">
+            <i [class]="step.icon"></i>
+          </div>
+          <h4>{{ step.title }}</h4>
+          <p>{{ step.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="services-cta">
+      <div class="cta-content">
+        <h2>Besoin d'une solution sur mesure ?</h2>
+        <p>Contactez nos experts pour discuter de votre projet et obtenir un devis personnalisé.</p>
+        <div class="cta-buttons">
+          <button class="btn btn-primary">
+            <i class="fas fa-phone"></i>
+            <span>Nous appeler</span>
+          </button>
+          <button class="btn btn-outline">
+            <i class="fas fa-envelope"></i>
+            <span>Demander un devis</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

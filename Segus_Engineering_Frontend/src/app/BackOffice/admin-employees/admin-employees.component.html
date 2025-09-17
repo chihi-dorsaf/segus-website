@@ -1,0 +1,686 @@
+  <!-- Header avec titre -->
+  <div class="header-section">
+    <div class="title-section">
+      <h1><i class="fas fa-users"></i> Gestion des Employés</h1>
+      <p>Gérez vos employés, leurs informations et leurs statuts</p>
+    </div>
+  </div>
+<div class="admin-employees-container">
+  <!-- Messages de notification -->
+  <div class="notifications">
+    <div *ngIf="successMessage" class="alert alert-success">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Statistiques en haut -->
+  <div class="stats-section" *ngIf="stats">
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{{ stats?.total_employees || 0 }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+      </div>
+
+      <div class="stat-card active">
+        <div class="stat-icon">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{{ stats?.active_employees || 0 }}</span>
+          <span class="stat-label">Actifs</span>
+        </div>
+      </div>
+
+      <div class="stat-card inactive">
+        <div class="stat-icon">
+          <i class="fas fa-user-times"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{{ stats?.inactive_employees || 0 }}</span>
+          <span class="stat-label">Inactifs</span>
+        </div>
+      </div>
+
+      <div class="stat-card" *ngIf="stats?.average_salary">
+        <div class="stat-icon">
+          <i class="fas fa-euro-sign"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{{ stats?.average_salary | number:'1.0-0' }} TND</span>
+          <span class="stat-label">Salaire Moyen (TND)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Actions principales -->
+  <div class="actions-section">
+    <div class="actions-left">
+      <button class="btn btn-primary" (click)="openCreateForm()">
+        <i class="fas fa-plus"></i> Nouvel Employé
+      </button>
+      <button class="btn btn-secondary" (click)="exportEmployees()">
+        <i class="fas fa-download"></i> Exporter CSV
+      </button>
+      <button class="btn btn-secondary" (click)="openImportModal()">
+        <i class="fas fa-upload"></i> Importer CSV
+      </button>
+    </div>
+
+    <div class="actions-right">
+      <button class="btn btn-outline" (click)="clearFilters()">
+        <i class="fas fa-filter"></i> Effacer Filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        placeholder="Rechercher par nom, email, ID employé..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filters-row">
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+        <option value="">Tous les statuts</option>
+        <option value="true">Actif</option>
+        <option value="false">Inactif</option>
+      </select>
+
+      <select [(ngModel)]="ordering" (change)="onFilterChange()" class="filter-select">
+        <option value="-created_at">Plus récents</option>
+        <option value="created_at">Plus anciens</option>
+        <option value="position">Poste A-Z</option>
+        <option value="-position">Poste Z-A</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tableau des employés -->
+  <div class="table-section">
+    <div class="table-header">
+      <h3>Liste des Employés ({{ safeFilteredEmployees.length }})</h3>
+      <div class="table-actions">
+        <span *ngIf="isLoading" class="loading">
+          <i class="fas fa-spinner fa-spin"></i> Chargement...
+        </span>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" *ngIf="safeFilteredEmployees.length > 0 && !isLoading">
+        <thead>
+          <tr>
+            <th>Employé</th>
+            <th>Matricule</th>
+            <th>Poste</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of safeFilteredEmployees; trackBy: trackByEmployeeId" class="employee-row">
+            <td class="employee-info">
+              <div class="employee-avatar">
+                {{ getInitials(employee) }}
+              </div>
+              <div class="employee-details">
+                <div class="employee-name">{{ employee.full_name }}</div>
+                <div class="employee-email">{{ employee.email }}</div>
+
+              </div>
+            </td>
+
+            <td class="employee-id">
+                              <span class="employee-id-badge">{{ employee.matricule }}</span>
+            </td>
+
+            <td class="position">
+              <span class="position-text">{{ employee.position || 'Non défini' }}</span>
+            </td>
+
+            <td class="status">
+              <span class="status-badge" [ngClass]="getActiveStatusClass(employee.is_active)">
+                {{ getActiveStatusLabel(employee.is_active) }}
+              </span>
+            </td>
+
+            <td class="actions">
+              <div class="action-buttons">
+                <button class="btn-icon" (click)="openDetailsModal(employee)" title="Voir détails">
+                  <i class="fas fa-eye"></i>
+                </button>
+
+                <button class="btn-icon" (click)="openEditForm(employee)" title="Modifier">
+                  <i class="fas fa-edit"></i>
+                </button>
+
+                <button class="btn-icon btn-warning" (click)="openObjectivesModal(employee)" title="Objectifs Gamification">
+                  <i class="fas fa-target"></i>
+                </button>
+
+                <button
+                  class="btn-icon"
+                  [ngClass]="employee.is_active ? 'btn-danger' : 'btn-success'"
+                  (click)="toggleEmployeeStatus(employee)"
+                  [title]="employee.is_active ? 'Désactiver' : 'Activer'"
+                >
+                  <i class="fas" [ngClass]="employee.is_active ? 'fa-user-times' : 'fa-user-check'"></i>
+                </button>
+
+                <button class="btn-icon btn-danger" (click)="deleteEmployee(employee)" title="Supprimer">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- État vide -->
+      <div *ngIf="safeFilteredEmployees.length === 0 && !isLoading" class="empty-state">
+        <i class="fas fa-users"></i>
+        <h3>Aucun employé trouvé</h3>
+        <p *ngIf="searchTerm || statusFilter || positionFilter">
+          Aucun employé ne correspond aux critères de recherche.
+          <button class="btn btn-link" (click)="clearFilters()">Effacer les filtres</button>
+        </p>
+        <p *ngIf="!searchTerm && !statusFilter && !positionFilter">
+          Aucun employé n'a été ajouté pour le moment.
+        </p>
+        <button class="btn btn-primary" (click)="openCreateForm()">
+          <i class="fas fa-plus"></i> Ajouter le premier employé
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="loading-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des employés...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de création/édition -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode ? 'Modifier' : 'Nouvel' }} Employé</h2>
+        <button class="btn-icon" (click)="closeForm()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="employeeForm" (ngSubmit)="isEditMode ? updateEmployee() : createEmployee()" class="modal-body">
+        <div class="form-grid">
+          <!-- Informations de base -->
+          <div class="form-section">
+            <h3>Informations de base</h3>
+
+            <div class="form-row">
+              <!-- Email -->
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" formControlName="email" class="form-control" required>
+                <div *ngIf="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched" class="error-message">
+                  <span *ngIf="employeeForm.get('email')?.errors?.['required']">L'email est requis</span>
+                  <span *ngIf="employeeForm.get('email')?.errors?.['email']">Format d'email invalide</span>
+                </div>
+              </div>
+
+              <!-- Prénom -->
+              <div class="form-group">
+                <label for="first_name">Prénom</label>
+                <input type="text" id="first_name" formControlName="first_name" class="form-control">
+              </div>
+
+              <!-- Nom -->
+              <div class="form-group">
+                <label for="last_name">Nom</label>
+                <input type="text" id="last_name" formControlName="last_name" class="form-control">
+              </div>
+
+              <!-- Générer mot de passe -->
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="generate_password">
+                  <span class="checkmark"></span>
+                  Générer automatiquement un mot de passe sécurisé
+                </label>
+                <small class="form-text text-muted">
+                  Si activé, un mot de passe sécurisé sera généré et envoyé par email à l'employé.
+                </small>
+              </div>
+            </div>
+
+
+          </div>
+
+          <!-- Informations professionnelles -->
+          <div class="form-section">
+            <h3>Informations professionnelles</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="position">Poste *</label>
+                <input
+                  type="text"
+                  id="position"
+                  formControlName="position"
+                  placeholder="Développeur, Manager, etc."
+                />
+                <div class="error" *ngIf="employeeForm.get('position')?.invalid && employeeForm.get('position')?.touched">
+                  Poste requis
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="phone">Téléphone</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  formControlName="phone"
+                  placeholder="+33 1 23 45 67 89"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="birth_date">Date de naissance</label>
+                <input
+                  type="date"
+                  id="birth_date"
+                  formControlName="birth_date"
+                />
+              </div>
+
+
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="matricule">Matricule</label>
+                <input
+                  type="text"
+                  id="matricule"
+                  value="Généré automatiquement"
+                  placeholder="Généré automatiquement"
+                  readonly
+                  disabled
+                  class="form-control"
+                />
+                <small class="form-text">Le matricule sera généré automatiquement par le système lors de la création</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="hire_date">Date d'embauche</label>
+                <input
+                  type="date"
+                  id="hire_date"
+                  formControlName="hire_date"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="salary">Salaire (TND)</label>
+                <input
+                  type="number"
+                  id="salary"
+                  formControlName="salary"
+                  placeholder="0.000"
+                  step="0.001"
+                />
+                <small class="form-text">Montant en dinars tunisiens (TND)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="employeeForm.invalid || isSubmitting">
+            <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+            {{ isEditMode ? 'Modifier' : 'Créer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal d'import -->
+  <div *ngIf="showImportModal" class="modal-overlay" (click)="closeImportModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Importer des Employés</h2>
+        <button class="btn-icon" (click)="closeImportModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="importForm" (ngSubmit)="importEmployees()" class="modal-body">
+        <div class="import-instructions">
+          <h3>Instructions d'import</h3>
+          <p>Le fichier CSV doit contenir les colonnes suivantes :</p>
+          <ul>
+            <li><strong>username</strong> : Nom d'utilisateur (obligatoire)</li>
+            <li><strong>email</strong> : Adresse email (obligatoire)</li>
+
+            <li><strong>first_name</strong> : Prénom</li>
+            <li><strong>last_name</strong> : Nom</li>
+            <li><strong>position</strong> : Poste (obligatoire)</li>
+            <li><strong>phone</strong> : Téléphone</li>
+            <li><strong>matricule</strong> : Matricule (généré automatiquement si vide)</li>
+            <li><strong>hire_date</strong> : Date d'embauche (YYYY-MM-DD)</li>
+            <li><strong>salary</strong> : Salaire en dinars tunisiens (TND) - nombre décimal</li>
+          </ul>
+        </div>
+
+        <div class="form-group">
+          <label for="import-file">Fichier CSV</label>
+          <input
+            type="file"
+            id="import-file"
+            formControlName="file"
+            (change)="onFileSelected($event)"
+            accept=".csv"
+            #fileInput
+          />
+          <div class="error" *ngIf="importForm.get('file')?.invalid && importForm.get('file')?.touched">
+            Fichier CSV requis
+          </div>
+        </div>
+
+        <!-- Résultats d'import -->
+        <div *ngIf="importResult" class="import-results">
+          <div class="import-success">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ importResult.imported_count }} employés importés avec succès</span>
+          </div>
+
+          <div *ngIf="importResult.errors.length > 0" class="import-errors">
+            <h4>Erreurs d'import :</h4>
+            <ul>
+              <li *ngFor="let error of importResult.errors">{{ error }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeImportModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="importForm.invalid || isSubmitting">
+            <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+            Importer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de détails -->
+  <div *ngIf="showDetailsModal && selectedEmployee" class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Détails de l'Employé</h2>
+        <button class="btn-icon" (click)="closeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="employee-details-grid">
+          <div class="detail-section">
+            <h3>Informations personnelles</h3>
+            <div class="detail-row">
+              <span class="detail-label">Nom complet :</span>
+              <span class="detail-value">{{ selectedEmployee.full_name }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Email :</span>
+              <span class="detail-value">{{ selectedEmployee.email }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Poste :</span>
+              <span class="detail-value">{{ selectedEmployee.position || 'Non renseigné' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Informations professionnelles</h3>
+            <div class="detail-row">
+              <span class="detail-label">Matricule :</span>
+              <span class="detail-value">{{ selectedEmployee.matricule }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Poste :</span>
+              <span class="detail-value">{{ selectedEmployee.position }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Date d'embauche :</span>
+              <span class="detail-value">{{ selectedEmployee.hire_date ? formatDate(selectedEmployee.hire_date) : 'Non renseignée' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Salaire :</span>
+              <span class="detail-value">{{ formatSalary(selectedEmployee.salary) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Statut :</span>
+              <span class="detail-value">
+                <span class="status-badge" [ngClass]="getActiveStatusClass(selectedEmployee.is_active)">
+                  {{ getActiveStatusLabel(selectedEmployee.is_active) }}
+                </span>
+              </span>
+            </div>
+          </div>
+
+
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeDetailsModal()">
+            Fermer
+          </button>
+          <button class="btn btn-primary" (click)="openEditForm(selectedEmployee); closeDetailsModal()">
+            <i class="fas fa-edit"></i> Modifier
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Objectifs Gamification -->
+<div *ngIf="showObjectivesModal" class="modal-overlay" (click)="closeObjectivesModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-target"></i>
+        Objectifs Gamification - {{ selectedEmployee?.full_name }}
+      </h2>
+      <button class="btn-icon" (click)="closeObjectivesModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="objectivesForm" (ngSubmit)="saveObjectives()" class="objectives-form">
+        <!-- Objectifs Quotidiens -->
+        <div class="form-section">
+          <h3>
+            <i class="fas fa-calendar-day"></i>
+            Objectifs Quotidiens
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="target_subtasks">
+                <i class="fas fa-tasks"></i>
+                Nombre de sous-tâches quotidiennes *
+              </label>
+              <input 
+                type="number" 
+                id="target_subtasks" 
+                formControlName="target_subtasks" 
+                class="form-control"
+                placeholder="Ex: 200"
+                min="1"
+                max="1000"
+              >
+              <small class="form-text">
+                Nombre de sous-tâches que l'employé doit accomplir chaque jour
+              </small>
+              <div *ngIf="objectivesForm.get('target_subtasks')?.invalid && objectivesForm.get('target_subtasks')?.touched" class="error-message">
+                Le nombre de sous-tâches est requis (entre 1 et 1000)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="target_hours">
+                <i class="fas fa-clock"></i>
+                Heures de travail quotidiennes *
+              </label>
+              <input 
+                type="number" 
+                id="target_hours" 
+                formControlName="target_hours" 
+                class="form-control"
+                placeholder="Ex: 8.0"
+                min="1"
+                max="24"
+                step="0.5"
+              >
+              <small class="form-text">
+                Nombre d'heures de travail prévues par jour
+              </small>
+              <div *ngIf="objectivesForm.get('target_hours')?.invalid && objectivesForm.get('target_hours')?.touched" class="error-message">
+                Le nombre d'heures est requis (entre 1 et 24)
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="objective_date">
+              <i class="fas fa-calendar"></i>
+              Date de l'objectif
+            </label>
+            <input 
+              type="date" 
+              id="objective_date" 
+              formControlName="objective_date" 
+              class="form-control"
+            >
+            <small class="form-text">
+              Laissez vide pour appliquer à partir d'aujourd'hui
+            </small>
+          </div>
+        </div>
+
+        <!-- Aperçu des Récompenses -->
+        <div class="rewards-preview">
+          <h3>
+            <i class="fas fa-gift"></i>
+            Système de Récompenses
+          </h3>
+          
+          <div class="reward-cards">
+            <div class="reward-card">
+              <div class="reward-icon">
+                <i class="fas fa-star"></i>
+              </div>
+              <div class="reward-content">
+                <h4>¼ étoile quotidienne</h4>
+                <p>Si tous les objectifs sont atteints</p>
+              </div>
+            </div>
+
+            <div class="reward-card">
+              <div class="reward-icon">
+                <i class="fas fa-coins"></i>
+              </div>
+              <div class="reward-content">
+                <h4>Points bonus</h4>
+                <p>1 point/sous-tâche + 10 points/heure sup</p>
+              </div>
+            </div>
+
+            <div class="reward-card">
+              <div class="reward-icon">
+                <i class="fas fa-trophy"></i>
+              </div>
+              <div class="reward-content">
+                <h4>½ étoile mensuelle</h4>
+                <p>Si > 32 heures supplémentaires/mois</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques Actuelles -->
+        <div class="current-stats" *ngIf="selectedEmployeeStats">
+          <h3>
+            <i class="fas fa-chart-line"></i>
+            Statistiques Actuelles
+          </h3>
+          
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Étoiles totales:</span>
+              <span class="stat-value">{{ selectedEmployeeStats.total_stars || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Points totaux:</span>
+              <span class="stat-value">{{ selectedEmployeeStats.total_points || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Niveau actuel:</span>
+              <span class="stat-value">{{ selectedEmployeeStats.current_level || 'Débutant' }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Badges obtenus:</span>
+              <span class="stat-value">{{ selectedEmployeeStats.total_badges || 0 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeObjectivesModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="objectivesForm.invalid || isSubmittingObjectives">
+            <i class="fas fa-save"></i>
+            <span *ngIf="!isSubmittingObjectives">Enregistrer les Objectifs</span>
+            <span *ngIf="isSubmittingObjectives">
+              <i class="fas fa-spinner fa-spin"></i> Enregistrement...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

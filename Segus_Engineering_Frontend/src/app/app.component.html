@@ -1,0 +1,26 @@
+<app-top-nav></app-top-nav>
+<div class="app-container">
+  <!-- Header global (front-office ou admin selon la route) -->
+  <header *ngIf="isAdminRoute">
+    <app-admin-header (logout)="onLogout()"></app-admin-header>
+  </header>
+  <header *ngIf="!isAdminRoute">
+    <app-header></app-header>
+  </header>
+
+  <!-- Contenu principal -->
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer global -->
+  <footer>
+    <app-footer *ngIf="!isAdminRoute"></app-footer>
+    <app-admin-footer *ngIf="isAdminRoute"></app-admin-footer>
+  </footer>
+
+  <app-contact-modal *ngIf="!isAdminRoute"></app-contact-modal>
+
+  <!-- Chatbot (disponible partout) -->
+  <app-chatbot></app-chatbot>
+</div>
