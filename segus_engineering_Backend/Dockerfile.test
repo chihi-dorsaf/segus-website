@@ -1,0 +1,15 @@
+# Minimal Dockerfile for running backend unit tests
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Copy only requirements to leverage Docker layer caching when possible
+COPY requirements.txt ./
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Default command: run Django tests
+CMD ["python", "manage.py", "test"]
