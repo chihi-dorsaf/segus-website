@@ -16,46 +16,105 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='ChatbotKnowledge',
+            name="ChatbotKnowledge",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('question_keywords', models.TextField(help_text='Mots-clés de la question (séparés par des virgules)')),
-                ('question_pattern', models.CharField(help_text='Pattern de la question', max_length=500)),
-                ('answer', models.TextField(help_text='Réponse du chatbot')),
-                ('category', models.CharField(default='general', max_length=100)),
-                ('is_active', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "question_keywords",
+                    models.TextField(
+                        help_text="Mots-clés de la question (séparés par des virgules)"
+                    ),
+                ),
+                (
+                    "question_pattern",
+                    models.CharField(help_text="Pattern de la question", max_length=500),
+                ),
+                ("answer", models.TextField(help_text="Réponse du chatbot")),
+                ("category", models.CharField(default="general", max_length=100)),
+                ("is_active", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
             ],
             options={
-                'ordering': ['category', 'question_pattern'],
+                "ordering": ["category", "question_pattern"],
             },
         ),
         migrations.CreateModel(
-            name='ChatConversation',
+            name="ChatConversation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(default='Nouvelle conversation', max_length=200)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chat_conversations', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "title",
+                    models.CharField(default="Nouvelle conversation", max_length=200),
+                ),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_active", models.BooleanField(default=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="chat_conversations",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-updated_at'],
+                "ordering": ["-updated_at"],
             },
         ),
         migrations.CreateModel(
-            name='ChatMessage',
+            name="ChatMessage",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('message_type', models.CharField(choices=[('user', 'User'), ('bot', 'Bot'), ('system', 'System')], max_length=10)),
-                ('content', models.TextField()),
-                ('timestamp', models.DateTimeField(default=django.utils.timezone.now)),
-                ('is_helpful', models.BooleanField(blank=True, null=True)),
-                ('conversation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='messages', to='chatbot.chatconversation')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "message_type",
+                    models.CharField(
+                        choices=[
+                            ("user", "User"),
+                            ("bot", "Bot"),
+                            ("system", "System"),
+                        ],
+                        max_length=10,
+                    ),
+                ),
+                ("content", models.TextField()),
+                ("timestamp", models.DateTimeField(default=django.utils.timezone.now)),
+                ("is_helpful", models.BooleanField(blank=True, null=True)),
+                (
+                    "conversation",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="messages",
+                        to="chatbot.chatconversation",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['timestamp'],
+                "ordering": ["timestamp"],
             },
         ),
     ]

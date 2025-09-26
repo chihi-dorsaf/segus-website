@@ -9,30 +9,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0001_initial'),
+        ("employees", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='employee',
-            name='date_joined',
+            model_name="employee",
+            name="date_joined",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='matricule',
+            model_name="employee",
+            name="matricule",
             field=models.CharField(max_length=50, unique=True),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='position',
+            model_name="employee",
+            name="position",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='user',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='employee_profile', to=settings.AUTH_USER_MODEL),
+            model_name="employee",
+            name="user",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="employee_profile",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

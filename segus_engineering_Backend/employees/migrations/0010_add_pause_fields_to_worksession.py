@@ -7,23 +7,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0009_update_salary_to_tnd'),
+        ("employees", "0009_update_salary_to_tnd"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='worksession',
-            name='pause_start_time',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='Début de pause'),
+            model_name="worksession",
+            name="pause_start_time",
+            field=models.DateTimeField(blank=True, null=True, verbose_name="Début de pause"),
         ),
         migrations.AddField(
-            model_name='worksession',
-            name='total_pause_time',
-            field=models.DurationField(blank=True, default=datetime.timedelta(0), null=True, verbose_name='Temps total de pause'),
+            model_name="worksession",
+            name="total_pause_time",
+            field=models.DurationField(
+                blank=True,
+                default=datetime.timedelta(0),
+                null=True,
+                verbose_name="Temps total de pause",
+            ),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='matricule',
-            field=models.CharField(blank=True, max_length=20, null=True, unique=True, verbose_name='Matricule'),
+            model_name="employee",
+            name="matricule",
+            field=models.CharField(
+                blank=True,
+                max_length=20,
+                null=True,
+                unique=True,
+                verbose_name="Matricule",
+            ),
         ),
     ]

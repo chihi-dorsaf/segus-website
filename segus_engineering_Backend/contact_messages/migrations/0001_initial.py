@@ -16,27 +16,105 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='ContactMessage',
+            name="ContactMessage",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('first_name', models.CharField(max_length=100, verbose_name='Prénom')),
-                ('last_name', models.CharField(max_length=100, verbose_name='Nom de famille')),
-                ('email', models.EmailField(max_length=254, verbose_name='Adresse email')),
-                ('subject', models.CharField(blank=True, max_length=200, verbose_name='Sujet')),
-                ('message', models.TextField(verbose_name='Message')),
-                ('status', models.CharField(choices=[('unread', 'Non lu'), ('read', 'Lu'), ('replied', 'Répondu'), ('archived', 'Archivé')], default='unread', max_length=20, verbose_name='Statut')),
-                ('priority', models.CharField(choices=[('low', 'Faible'), ('medium', 'Moyenne'), ('high', 'Élevée'), ('urgent', 'Urgente')], default='medium', max_length=20, verbose_name='Priorité')),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now, verbose_name='Date de création')),
-                ('read_at', models.DateTimeField(blank=True, null=True, verbose_name='Date de lecture')),
-                ('replied_at', models.DateTimeField(blank=True, null=True, verbose_name='Date de réponse')),
-                ('admin_notes', models.TextField(blank=True, verbose_name='Notes administrateur')),
-                ('handled_by', models.ForeignKey(blank=True, limit_choices_to={'role': 'ADMIN'}, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='Traité par')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("first_name", models.CharField(max_length=100, verbose_name="Prénom")),
+                (
+                    "last_name",
+                    models.CharField(max_length=100, verbose_name="Nom de famille"),
+                ),
+                (
+                    "email",
+                    models.EmailField(max_length=254, verbose_name="Adresse email"),
+                ),
+                (
+                    "subject",
+                    models.CharField(blank=True, max_length=200, verbose_name="Sujet"),
+                ),
+                ("message", models.TextField(verbose_name="Message")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("unread", "Non lu"),
+                            ("read", "Lu"),
+                            ("replied", "Répondu"),
+                            ("archived", "Archivé"),
+                        ],
+                        default="unread",
+                        max_length=20,
+                        verbose_name="Statut",
+                    ),
+                ),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[
+                            ("low", "Faible"),
+                            ("medium", "Moyenne"),
+                            ("high", "Élevée"),
+                            ("urgent", "Urgente"),
+                        ],
+                        default="medium",
+                        max_length=20,
+                        verbose_name="Priorité",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now,
+                        verbose_name="Date de création",
+                    ),
+                ),
+                (
+                    "read_at",
+                    models.DateTimeField(blank=True, null=True, verbose_name="Date de lecture"),
+                ),
+                (
+                    "replied_at",
+                    models.DateTimeField(blank=True, null=True, verbose_name="Date de réponse"),
+                ),
+                (
+                    "admin_notes",
+                    models.TextField(blank=True, verbose_name="Notes administrateur"),
+                ),
+                (
+                    "handled_by",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={"role": "ADMIN"},
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Traité par",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Message de contact',
-                'verbose_name_plural': 'Messages de contact',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['status', 'created_at'], name='contact_mes_status_f6da03_idx'), models.Index(fields=['email'], name='contact_mes_email_5e74b6_idx'), models.Index(fields=['priority', 'status'], name='contact_mes_priorit_608862_idx')],
+                "verbose_name": "Message de contact",
+                "verbose_name_plural": "Messages de contact",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["status", "created_at"],
+                        name="contact_mes_status_f6da03_idx",
+                    ),
+                    models.Index(fields=["email"], name="contact_mes_email_5e74b6_idx"),
+                    models.Index(
+                        fields=["priority", "status"],
+                        name="contact_mes_priorit_608862_idx",
+                    ),
+                ],
             },
         ),
     ]

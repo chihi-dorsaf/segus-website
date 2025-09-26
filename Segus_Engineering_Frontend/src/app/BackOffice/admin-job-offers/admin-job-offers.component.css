@@ -77,7 +77,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .form-group {
@@ -316,34 +316,34 @@
   .admin-job-offers {
     padding: 1rem;
   }
-  
+
   .page-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .filter-row {
     grid-template-columns: 1fr;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .table {
     font-size: 0.75rem;
   }
-  
+
   .table th,
   .table td {
     padding: 0.5rem;
   }
-  
+
   .btn-group {
     flex-direction: column;
   }

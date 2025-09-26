@@ -6,16 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0004_alter_employee_options_employee_address_and_more'),
+        ("employees", "0004_alter_employee_options_employee_address_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='employee',
-            name='department',
+            model_name="employee",
+            name="department",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='manager',
+            model_name="employee",
+            name="manager",
         ),
     ]

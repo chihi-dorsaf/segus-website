@@ -8,112 +8,178 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0006_employee_profile_photo'),
+        ("employees", "0006_employee_profile_photo"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='employee',
-            options={'ordering': ['user__last_name', 'user__first_name'], 'verbose_name': 'Employé', 'verbose_name_plural': 'Employés'},
+            name="employee",
+            options={
+                "ordering": ["user__last_name", "user__first_name"],
+                "verbose_name": "Employé",
+                "verbose_name_plural": "Employés",
+            },
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='address',
+            model_name="employee",
+            name="address",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='birth_date',
+            model_name="employee",
+            name="birth_date",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='date_joined',
+            model_name="employee",
+            name="date_joined",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='emergency_contact',
+            model_name="employee",
+            name="emergency_contact",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='emergency_phone',
+            model_name="employee",
+            name="emergency_phone",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='gender',
+            model_name="employee",
+            name="gender",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='matricule',
+            model_name="employee",
+            name="matricule",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='notes',
+            model_name="employee",
+            name="notes",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='phone',
+            model_name="employee",
+            name="phone",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='status',
+            model_name="employee",
+            name="status",
         ),
         migrations.AddField(
-            model_name='employee',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now, verbose_name='Date de création'),
+            model_name="employee",
+            name="created_at",
+            field=models.DateTimeField(
+                auto_now_add=True,
+                default=django.utils.timezone.now,
+                verbose_name="Date de création",
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='employee',
-            name='department',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Département'),
+            model_name="employee",
+            name="department",
+            field=models.CharField(
+                blank=True, max_length=100, null=True, verbose_name="Département"
+            ),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='employee_id',
-            field=models.CharField(blank=True, max_length=20, null=True, unique=True, verbose_name='ID Employé'),
+            model_name="employee",
+            name="employee_id",
+            field=models.CharField(
+                blank=True,
+                max_length=20,
+                null=True,
+                unique=True,
+                verbose_name="ID Employé",
+            ),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='is_active',
-            field=models.BooleanField(default=True, verbose_name='Actif'),
+            model_name="employee",
+            name="is_active",
+            field=models.BooleanField(default=True, verbose_name="Actif"),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='hire_date',
+            model_name="employee",
+            name="hire_date",
             field=models.DateField(blank=True, null=True, verbose_name="Date d'embauche"),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='position',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Poste'),
+            model_name="employee",
+            name="position",
+            field=models.CharField(blank=True, max_length=100, null=True, verbose_name="Poste"),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='salary',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Salaire'),
+            model_name="employee",
+            name="salary",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                max_digits=10,
+                null=True,
+                verbose_name="Salaire",
+            ),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True, verbose_name='Dernière modification'),
+            model_name="employee",
+            name="updated_at",
+            field=models.DateTimeField(auto_now=True, verbose_name="Dernière modification"),
         ),
         migrations.CreateModel(
-            name='WorkSession',
+            name="WorkSession",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('start_time', models.DateTimeField(auto_now_add=True, verbose_name='Heure de début')),
-                ('end_time', models.DateTimeField(blank=True, null=True, verbose_name='Heure de fin')),
-                ('total_work_time', models.DurationField(blank=True, null=True, verbose_name='Temps total de travail')),
-                ('status', models.CharField(choices=[('active', 'En cours'), ('paused', 'En pause'), ('completed', 'Terminée')], default='active', max_length=20, verbose_name='Statut')),
-                ('notes', models.TextField(blank=True, verbose_name='Notes')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Dernière modification')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='work_sessions', to='employees.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "start_time",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Heure de début"),
+                ),
+                (
+                    "end_time",
+                    models.DateTimeField(blank=True, null=True, verbose_name="Heure de fin"),
+                ),
+                (
+                    "total_work_time",
+                    models.DurationField(
+                        blank=True, null=True, verbose_name="Temps total de travail"
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "En cours"),
+                            ("paused", "En pause"),
+                            ("completed", "Terminée"),
+                        ],
+                        default="active",
+                        max_length=20,
+                        verbose_name="Statut",
+                    ),
+                ),
+                ("notes", models.TextField(blank=True, verbose_name="Notes")),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Date de création"),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(auto_now=True, verbose_name="Dernière modification"),
+                ),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="work_sessions",
+                        to="employees.employee",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Session de travail',
-                'verbose_name_plural': 'Sessions de travail',
-                'ordering': ['-start_time'],
+                "verbose_name": "Session de travail",
+                "verbose_name_plural": "Sessions de travail",
+                "ordering": ["-start_time"],
             },
         ),
     ]

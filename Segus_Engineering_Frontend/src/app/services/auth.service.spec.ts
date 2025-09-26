@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { AuthService, AuthResponse, User, LoginCredentials } from './auth.service';
+import { of } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 describe('AuthService', () => {
@@ -39,7 +40,6 @@ describe('AuthService', () => {
     httpMock = TestBed.inject(HttpTestingController);
     routerSpy = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
-    // Clear localStorage before each test
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -49,6 +49,13 @@ describe('AuthService', () => {
     localStorage.clear();
     sessionStorage.clear();
   });
+
+  function makeValidJwt(expiresInSeconds: number = 3600): string {
+    const header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+    const payloadObj = { exp: Math.floor(Date.now() / 1000) + expiresInSeconds } as any;
+    const payload = btoa(JSON.stringify(payloadObj));
+    return `${header}.${payload}.signature`;
+  }
 
   it('should be created', () => {
     expect(service).toBeTruthy();
@@ -61,15 +68,19 @@ describe('AuthService', () => {
         password: 'password123'
       };
 
-      service.login(credentials).subscribe(response => {
-        expect(response).toEqual(mockAuthResponse);
+      service.login(credentials.email, credentials.password).subscribe(response => {
+        expect(response).toEqual(jasmine.objectContaining({ access: jasmine.any(String), refresh: jasmine.any(String) }));
         expect(service.isAuthenticated()).toBeTruthy();
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/jwt/create-with-email/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/jwt/create-with-email/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(credentials);
-      req.flush(mockAuthResponse);
+      req.flush({ access: makeValidJwt(), refresh: 'mock-refresh-token' } as AuthResponse);
+
+      // loadUserProfile GET triggered after storing tokens
+      const me = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
+      me.flush(mockUser);
     });
 
     it('should handle login error', () => {
@@ -78,14 +89,14 @@ describe('AuthService', () => {
         password: 'wrongpassword'
       };
 
-      service.login(credentials).subscribe({
+      service.login(credentials.email, credentials.password).subscribe({
         next: () => fail('should have failed'),
         error: (error) => {
           expect(error.status).toBe(400);
         }
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/jwt/create-with-email/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/jwt/create-with-email/`);
       req.flush({ error: 'Invalid credentials' }, { status: 400, statusText: 'Bad Request' });
     });
 
@@ -95,13 +106,17 @@ describe('AuthService', () => {
         password: 'password123'
       };
 
-      service.login(credentials, true).subscribe();
+      service.login(credentials.email, credentials.password, true).subscribe();
 
-      const req = httpMock.expectOne(`${environment.authUrl}/jwt/create-with-email/`);
-      req.flush(mockAuthResponse);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/jwt/create-with-email/`);
+      req.flush({ access: makeValidJwt(), refresh: 'mock-refresh-token' } as AuthResponse);
 
-      expect(localStorage.getItem('access_token')).toBe(mockAuthResponse.access);
-      expect(localStorage.getItem('refresh_token')).toBe(mockAuthResponse.refresh);
+      // loadUserProfile GET
+      const me = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
+      me.flush(mockUser);
+
+      expect(localStorage.getItem('auth_token')).toBeTruthy();
+      expect(localStorage.getItem('refresh_token')).toBe('mock-refresh-token');
     });
 
     it('should store tokens in session storage without remember me', () => {
@@ -110,35 +125,38 @@ describe('AuthService', () => {
         password: 'password123'
       };
 
-      service.login(credentials, false).subscribe();
+      service.login(credentials.email, credentials.password, false).subscribe();
 
-      const req = httpMock.expectOne(`${environment.authUrl}/jwt/create-with-email/`);
-      req.flush(mockAuthResponse);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/jwt/create-with-email/`);
+      req.flush({ access: makeValidJwt(), refresh: 'mock-refresh-token' } as AuthResponse);
 
-      expect(sessionStorage.getItem('access_token')).toBe(mockAuthResponse.access);
-      expect(sessionStorage.getItem('refresh_token')).toBe(mockAuthResponse.refresh);
+      // loadUserProfile GET
+      const me = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
+      me.flush(mockUser);
+
+      expect(sessionStorage.getItem('auth_token')).toBeTruthy();
+      expect(sessionStorage.getItem('refresh_token')).toBe('mock-refresh-token');
     });
   });
 
   describe('logout', () => {
     it('should logout user and clear tokens', () => {
-      // Set up authenticated state
-      localStorage.setItem('access_token', 'token');
+      localStorage.setItem('auth_token', makeValidJwt());
       localStorage.setItem('refresh_token', 'refresh');
 
       service.logout();
 
-      expect(localStorage.getItem('access_token')).toBeNull();
+      expect(localStorage.getItem('auth_token')).toBeNull();
       expect(localStorage.getItem('refresh_token')).toBeNull();
-      expect(sessionStorage.getItem('access_token')).toBeNull();
+      expect(sessionStorage.getItem('auth_token')).toBeNull();
       expect(sessionStorage.getItem('refresh_token')).toBeNull();
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/sign-in']);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
     });
   });
 
   describe('isAuthenticated', () => {
     it('should return true when access token exists', () => {
-      localStorage.setItem('access_token', 'valid-token');
+      localStorage.setItem('auth_token', makeValidJwt());
       expect(service.isAuthenticated()).toBeTruthy();
     });
 
@@ -147,20 +165,22 @@ describe('AuthService', () => {
     });
 
     it('should check both localStorage and sessionStorage', () => {
-      sessionStorage.setItem('access_token', 'session-token');
+      sessionStorage.setItem('auth_token', makeValidJwt());
       expect(service.isAuthenticated()).toBeTruthy();
     });
   });
 
   describe('getToken', () => {
     it('should return token from localStorage', () => {
-      localStorage.setItem('access_token', 'local-token');
-      expect(service.getToken()).toBe('local-token');
+      const token = makeValidJwt();
+      localStorage.setItem('auth_token', token);
+      expect(service.getToken()).toBe(token);
     });
 
     it('should return token from sessionStorage if not in localStorage', () => {
-      sessionStorage.setItem('access_token', 'session-token');
-      expect(service.getToken()).toBe('session-token');
+      const token = makeValidJwt();
+      sessionStorage.setItem('auth_token', token);
+      expect(service.getToken()).toBe(token);
     });
 
     it('should return null if no token exists', () => {
@@ -170,29 +190,29 @@ describe('AuthService', () => {
 
   describe('getCurrentUser', () => {
     it('should return current user', () => {
-      localStorage.setItem('access_token', 'valid-token');
-
-      service.getCurrentUser().subscribe(user => {
+      const token = makeValidJwt();
+      localStorage.setItem('auth_token', token);
+      service.fetchCurrentUser().subscribe(user => {
         expect(user).toEqual(mockUser);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/users/me/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
       expect(req.request.method).toBe('GET');
-      expect(req.request.headers.get('Authorization')).toBe('Bearer valid-token');
+      expect(req.request.headers.get('Authorization')).toContain('Bearer ');
       req.flush(mockUser);
     });
 
     it('should handle error when getting current user', () => {
-      localStorage.setItem('access_token', 'invalid-token');
+      localStorage.setItem('auth_token', makeValidJwt());
 
-      service.getCurrentUser().subscribe({
+      service.fetchCurrentUser().subscribe({
         next: () => fail('should have failed'),
         error: (error) => {
           expect(error.status).toBe(401);
         }
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/users/me/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
       req.flush({ error: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
     });
   });
@@ -200,15 +220,17 @@ describe('AuthService', () => {
   describe('refreshToken', () => {
     it('should refresh access token', () => {
       localStorage.setItem('refresh_token', 'valid-refresh-token');
+      // simulate remember me OFF (default): token goes to sessionStorage
+      localStorage.removeItem('remember_me');
 
-      const newTokenResponse = { access: 'new-access-token' };
+      const newTokenResponse = { access: 'new-access-token', refresh: 'valid-refresh-token' } as AuthResponse;
 
-      service.refreshToken().subscribe(response => {
-        expect(response).toEqual(newTokenResponse);
-        expect(localStorage.getItem('access_token')).toBe('new-access-token');
+      service.refreshToken().subscribe(success => {
+        expect(success).toBeTrue();
+        expect(sessionStorage.getItem('auth_token')).toBe('new-access-token');
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/jwt/refresh/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/jwt/refresh/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ refresh: 'valid-refresh-token' });
       req.flush(newTokenResponse);
@@ -217,21 +239,18 @@ describe('AuthService', () => {
     it('should handle refresh token error', () => {
       localStorage.setItem('refresh_token', 'invalid-refresh-token');
 
-      service.refreshToken().subscribe({
-        next: () => fail('should have failed'),
-        error: (error) => {
-          expect(error.status).toBe(401);
-        }
+      service.refreshToken().subscribe(success => {
+        expect(success).toBeFalse();
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/jwt/refresh/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/jwt/refresh/`);
       req.flush({ error: 'Token is invalid or expired' }, { status: 401, statusText: 'Unauthorized' });
     });
   });
 
   describe('updateProfile', () => {
     it('should update user profile', () => {
-      localStorage.setItem('access_token', 'valid-token');
+      localStorage.setItem('auth_token', makeValidJwt());
 
       const updateData = {
         first_name: 'Updated',
@@ -244,7 +263,12 @@ describe('AuthService', () => {
         expect(user).toEqual(updatedUser);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/users/me/`);
+      // ensureAuthenticated triggers a GET to /api/auth/users/me/ first
+      const meReq = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
+      expect(meReq.request.method).toBe('GET');
+      meReq.flush(mockUser);
+
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual(updateData);
       req.flush(updatedUser);
@@ -253,7 +277,7 @@ describe('AuthService', () => {
 
   describe('changePassword', () => {
     it('should change user password', () => {
-      localStorage.setItem('access_token', 'valid-token');
+      localStorage.setItem('auth_token', makeValidJwt());
 
       const passwordData = {
         current_password: 'oldpass',
@@ -264,7 +288,12 @@ describe('AuthService', () => {
         expect(response).toBeDefined();
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/users/set_password/`);
+      // ensureAuthenticated triggers a GET to /api/auth/users/me/ first
+      const meReq = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/me/`);
+      expect(meReq.request.method).toBe('GET');
+      meReq.flush(mockUser);
+
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/users/set_password/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(passwordData);
       req.flush({ message: 'Password changed successfully' });
@@ -275,11 +304,11 @@ describe('AuthService', () => {
     it('should request password reset', () => {
       const email = 'test@example.com';
 
-      service.requestPasswordReset(email).subscribe(response => {
+      service.requestPasswordResetCode(email).subscribe(response => {
         expect(response).toBeDefined();
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/password-reset-code/request/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/users/password-reset/request-code/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ email });
       req.flush({ message: 'Reset code sent' });
@@ -291,11 +320,11 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const code = '123456';
 
-      service.verifyResetCode(email, code).subscribe(response => {
+      service.verifyPasswordResetCode(email, code).subscribe(response => {
         expect(response).toBeDefined();
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/password-reset-code/verify/`);
+const req = httpMock.expectOne(`${environment.apiUrl}/api/users/password-reset/verify-code/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ email, code });
       req.flush({ message: 'Code verified' });
@@ -310,11 +339,11 @@ describe('AuthService', () => {
         new_password: 'newpass123'
       };
 
-      service.confirmPasswordReset(resetData.email, resetData.code, resetData.new_password).subscribe(response => {
+      service.confirmPasswordResetWithCode(resetData.email, resetData.code, resetData.new_password).subscribe(response => {
         expect(response).toBeDefined();
       });
 
-      const req = httpMock.expectOne(`${environment.authUrl}/password-reset-code/confirm/`);
+const req = httpMock.expectOne(`${environment.apiUrl}/api/users/password-reset/confirm/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(resetData);
       req.flush({ message: 'Password reset successfully' });
@@ -323,38 +352,26 @@ describe('AuthService', () => {
 
   describe('hasRole', () => {
     it('should return true for correct role', () => {
-      spyOn(service, 'getCurrentUser').and.returnValue(of(mockUser));
-      
-      service.hasRole('EMPLOYE').subscribe(hasRole => {
-        expect(hasRole).toBeTruthy();
-      });
+      service['currentUserSubject'].next(mockUser);
+      expect(service.hasRole('EMPLOYE' as any)).toBeTrue();
     });
 
     it('should return false for incorrect role', () => {
-      spyOn(service, 'getCurrentUser').and.returnValue(of(mockUser));
-      
-      service.hasRole('ADMIN').subscribe(hasRole => {
-        expect(hasRole).toBeFalsy();
-      });
+      service['currentUserSubject'].next(mockUser);
+      expect(service.hasRole('ADMIN' as any)).toBeFalse();
     });
   });
 
   describe('isAdmin', () => {
     it('should return true for admin user', () => {
       const adminUser = { ...mockUser, role: 'ADMIN' };
-      spyOn(service, 'getCurrentUser').and.returnValue(of(adminUser));
-      
-      service.isAdmin().subscribe(isAdmin => {
-        expect(isAdmin).toBeTruthy();
-      });
+      service['currentUserSubject'].next(adminUser);
+      expect(service.isAdmin()).toBeTrue();
     });
 
     it('should return false for non-admin user', () => {
-      spyOn(service, 'getCurrentUser').and.returnValue(of(mockUser));
-      
-      service.isAdmin().subscribe(isAdmin => {
-        expect(isAdmin).toBeFalsy();
-      });
+      service['currentUserSubject'].next(mockUser);
+      expect(service.isAdmin()).toBeFalse();
     });
   });
 });

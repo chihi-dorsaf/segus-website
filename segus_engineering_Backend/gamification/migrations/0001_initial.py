@@ -11,144 +11,374 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('employees', '0012_alter_worksession_notes'),
+        ("employees", "0012_alter_worksession_notes"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Badge',
+            name="Badge",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('description', models.TextField()),
-                ('badge_type', models.CharField(choices=[('performance', 'Performance'), ('regularity', 'Régularité'), ('overtime', 'Heures supplémentaires'), ('prestige', 'Prestige'), ('special', 'Spécial')], max_length=20)),
-                ('icon', models.CharField(help_text="Nom de l'icône (ex: star, trophy, medal)", max_length=50)),
-                ('color', models.CharField(default='#FFD700', help_text='Couleur hexadécimale', max_length=7)),
-                ('required_stars', models.DecimalField(decimal_places=2, default=0.0, max_digits=5)),
-                ('required_points', models.IntegerField(default=0)),
-                ('required_months', models.IntegerField(default=0, help_text='Nombre de mois de performance requis')),
-                ('salary_increase_percentage', models.DecimalField(decimal_places=2, default=0.0, max_digits=4)),
-                ('is_active', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("description", models.TextField()),
+                (
+                    "badge_type",
+                    models.CharField(
+                        choices=[
+                            ("performance", "Performance"),
+                            ("regularity", "Régularité"),
+                            ("overtime", "Heures supplémentaires"),
+                            ("prestige", "Prestige"),
+                            ("special", "Spécial"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "icon",
+                    models.CharField(
+                        help_text="Nom de l'icône (ex: star, trophy, medal)",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "color",
+                    models.CharField(
+                        default="#FFD700",
+                        help_text="Couleur hexadécimale",
+                        max_length=7,
+                    ),
+                ),
+                (
+                    "required_stars",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=5),
+                ),
+                ("required_points", models.IntegerField(default=0)),
+                (
+                    "required_months",
+                    models.IntegerField(
+                        default=0, help_text="Nombre de mois de performance requis"
+                    ),
+                ),
+                (
+                    "salary_increase_percentage",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=4),
+                ),
+                ("is_active", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'ordering': ['required_stars', 'required_points'],
+                "ordering": ["required_stars", "required_points"],
             },
         ),
         migrations.CreateModel(
-            name='DailyObjective',
+            name="DailyObjective",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField(default=datetime.date.today)),
-                ('target_subtasks', models.IntegerField(default=0, help_text='Nombre de sous-tâches à accomplir')),
-                ('target_hours', models.DecimalField(decimal_places=2, default=8.0, help_text="Nombre d'heures de travail prévues", max_digits=4)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='created_gamification_objectives', to=settings.AUTH_USER_MODEL)),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='daily_objectives', to='employees.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField(default=datetime.date.today)),
+                (
+                    "target_subtasks",
+                    models.IntegerField(default=0, help_text="Nombre de sous-tâches à accomplir"),
+                ),
+                (
+                    "target_hours",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=8.0,
+                        help_text="Nombre d'heures de travail prévues",
+                        max_digits=4,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="created_gamification_objectives",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="daily_objectives",
+                        to="employees.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-date'],
-                'unique_together': {('employee', 'date')},
+                "ordering": ["-date"],
+                "unique_together": {("employee", "date")},
             },
         ),
         migrations.CreateModel(
-            name='EmployeeStats',
+            name="EmployeeStats",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('total_stars', models.DecimalField(decimal_places=2, default=0.0, max_digits=6)),
-                ('total_points', models.IntegerField(default=0)),
-                ('total_badges', models.IntegerField(default=0)),
-                ('total_completed_subtasks', models.IntegerField(default=0)),
-                ('total_worked_hours', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
-                ('total_overtime_hours', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
-                ('current_rank', models.IntegerField(default=0)),
-                ('current_level', models.CharField(default='Débutant', max_length=50)),
-                ('total_salary_increase', models.DecimalField(decimal_places=2, default=0.0, max_digits=5)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
-                ('employee', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='gamification_stats', to='employees.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "total_stars",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=6),
+                ),
+                ("total_points", models.IntegerField(default=0)),
+                ("total_badges", models.IntegerField(default=0)),
+                ("total_completed_subtasks", models.IntegerField(default=0)),
+                (
+                    "total_worked_hours",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=8),
+                ),
+                (
+                    "total_overtime_hours",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=8),
+                ),
+                ("current_rank", models.IntegerField(default=0)),
+                ("current_level", models.CharField(default="Débutant", max_length=50)),
+                (
+                    "total_salary_increase",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=5),
+                ),
+                ("last_updated", models.DateTimeField(auto_now=True)),
+                (
+                    "employee",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="gamification_stats",
+                        to="employees.employee",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='SubTask',
+            name="SubTask",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('pending', 'En attente'), ('in_progress', 'En cours'), ('completed', 'Terminée'), ('cancelled', 'Annulée')], default='pending', max_length=20)),
-                ('assigned_date', models.DateField(default=datetime.date.today)),
-                ('completed_date', models.DateTimeField(blank=True, null=True)),
-                ('estimated_duration', models.DurationField(blank=True, help_text='Durée estimée', null=True)),
-                ('actual_duration', models.DurationField(blank=True, help_text='Durée réelle', null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='created_gamification_subtasks', to=settings.AUTH_USER_MODEL)),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='gamification_subtasks', to='employees.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "En attente"),
+                            ("in_progress", "En cours"),
+                            ("completed", "Terminée"),
+                            ("cancelled", "Annulée"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                ("assigned_date", models.DateField(default=datetime.date.today)),
+                ("completed_date", models.DateTimeField(blank=True, null=True)),
+                (
+                    "estimated_duration",
+                    models.DurationField(blank=True, help_text="Durée estimée", null=True),
+                ),
+                (
+                    "actual_duration",
+                    models.DurationField(blank=True, help_text="Durée réelle", null=True),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="created_gamification_subtasks",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="gamification_subtasks",
+                        to="employees.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-assigned_date', '-created_at'],
+                "ordering": ["-assigned_date", "-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='DailyPerformance',
+            name="DailyPerformance",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField(default=datetime.date.today)),
-                ('completed_subtasks', models.IntegerField(default=0)),
-                ('worked_hours', models.DecimalField(decimal_places=2, default=0.0, max_digits=4)),
-                ('overtime_hours', models.DecimalField(decimal_places=2, default=0.0, max_digits=4)),
-                ('subtasks_goal_achieved', models.BooleanField(default=False)),
-                ('hours_goal_achieved', models.BooleanField(default=False)),
-                ('all_goals_achieved', models.BooleanField(default=False)),
-                ('daily_stars_earned', models.DecimalField(decimal_places=2, default=0.0, max_digits=3)),
-                ('bonus_points', models.IntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='daily_performances', to='employees.employee')),
-                ('objective', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='gamification.dailyobjective')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField(default=datetime.date.today)),
+                ("completed_subtasks", models.IntegerField(default=0)),
+                (
+                    "worked_hours",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=4),
+                ),
+                (
+                    "overtime_hours",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=4),
+                ),
+                ("subtasks_goal_achieved", models.BooleanField(default=False)),
+                ("hours_goal_achieved", models.BooleanField(default=False)),
+                ("all_goals_achieved", models.BooleanField(default=False)),
+                (
+                    "daily_stars_earned",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=3),
+                ),
+                ("bonus_points", models.IntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="daily_performances",
+                        to="employees.employee",
+                    ),
+                ),
+                (
+                    "objective",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="gamification.dailyobjective",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-date'],
-                'unique_together': {('employee', 'date')},
+                "ordering": ["-date"],
+                "unique_together": {("employee", "date")},
             },
         ),
         migrations.CreateModel(
-            name='EmployeeBadge',
+            name="EmployeeBadge",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('earned_date', models.DateTimeField(auto_now_add=True)),
-                ('stars_at_earning', models.DecimalField(decimal_places=2, max_digits=5)),
-                ('points_at_earning', models.IntegerField()),
-                ('badge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gamification.badge')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='badges', to='employees.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("earned_date", models.DateTimeField(auto_now_add=True)),
+                (
+                    "stars_at_earning",
+                    models.DecimalField(decimal_places=2, max_digits=5),
+                ),
+                ("points_at_earning", models.IntegerField()),
+                (
+                    "badge",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="gamification.badge",
+                    ),
+                ),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="badges",
+                        to="employees.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-earned_date'],
-                'unique_together': {('employee', 'badge')},
+                "ordering": ["-earned_date"],
+                "unique_together": {("employee", "badge")},
             },
         ),
         migrations.CreateModel(
-            name='MonthlyPerformance',
+            name="MonthlyPerformance",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('year', models.IntegerField()),
-                ('month', models.IntegerField()),
-                ('total_worked_hours', models.DecimalField(decimal_places=2, default=0.0, max_digits=6)),
-                ('total_overtime_hours', models.DecimalField(decimal_places=2, default=0.0, max_digits=6)),
-                ('total_completed_subtasks', models.IntegerField(default=0)),
-                ('days_with_all_goals', models.IntegerField(default=0)),
-                ('regularity_stars', models.DecimalField(decimal_places=2, default=0.0, max_digits=4)),
-                ('overtime_bonus_stars', models.DecimalField(decimal_places=2, default=0.0, max_digits=3)),
-                ('total_monthly_stars', models.DecimalField(decimal_places=2, default=0.0, max_digits=4)),
-                ('total_monthly_points', models.IntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='monthly_performances', to='employees.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("year", models.IntegerField()),
+                ("month", models.IntegerField()),
+                (
+                    "total_worked_hours",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=6),
+                ),
+                (
+                    "total_overtime_hours",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=6),
+                ),
+                ("total_completed_subtasks", models.IntegerField(default=0)),
+                ("days_with_all_goals", models.IntegerField(default=0)),
+                (
+                    "regularity_stars",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=4),
+                ),
+                (
+                    "overtime_bonus_stars",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=3),
+                ),
+                (
+                    "total_monthly_stars",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=4),
+                ),
+                ("total_monthly_points", models.IntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="monthly_performances",
+                        to="employees.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-year', '-month'],
-                'unique_together': {('employee', 'year', 'month')},
+                "ordering": ["-year", "-month"],
+                "unique_together": {("employee", "year", "month")},
             },
         ),
     ]

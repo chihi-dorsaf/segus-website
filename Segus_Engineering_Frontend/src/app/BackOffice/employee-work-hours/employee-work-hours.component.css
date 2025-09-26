@@ -1809,7 +1809,7 @@ th:hover::after {
 .filters-section {
   display: flex;
   gap: 32px;
-  align-items: end;
+  align-items: flex-end;
   flex-wrap: wrap;
 }
 

@@ -1,12 +1,12 @@
-from djoser.email import PasswordResetEmail
-from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from djoser.email import PasswordResetEmail
 
 
 class CustomPasswordResetEmail(PasswordResetEmail):
-    template_name = 'emails/password_reset_email.html'
-    subject = 'Réinitialisation du mot de passe'
+    template_name = "emails/password_reset_email.html"
+    subject = "Réinitialisation du mot de passe"
 
     def get_subject(self):
         return self.subject
@@ -29,5 +29,3 @@ class CustomPasswordResetEmail(PasswordResetEmail):
         message.attach_alternative(html_body, "text/html")
         message.send()
         return html_body
-
-

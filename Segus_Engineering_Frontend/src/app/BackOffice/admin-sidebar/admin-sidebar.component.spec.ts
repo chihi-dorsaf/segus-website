@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { AdminSidebarComponent } from './admin-sidebar.component';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('AdminSidebarComponent', () => {
   let component: AdminSidebarComponent;
@@ -8,7 +8,7 @@ describe('AdminSidebarComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AdminSidebarComponent]
+      imports: [RouterTestingModule, AdminSidebarComponent]
     });
     fixture = TestBed.createComponent(AdminSidebarComponent);
     component = fixture.componentInstance;

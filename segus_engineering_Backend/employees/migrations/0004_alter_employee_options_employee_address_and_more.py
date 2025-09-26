@@ -9,88 +9,112 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0003_alter_employee_position_alter_employee_user'),
+        ("employees", "0003_alter_employee_position_alter_employee_user"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='employee',
-            options={'ordering': ['-date_joined'], 'verbose_name': 'Employé', 'verbose_name_plural': 'Employés'},
+            name="employee",
+            options={
+                "ordering": ["-date_joined"],
+                "verbose_name": "Employé",
+                "verbose_name_plural": "Employés",
+            },
         ),
         migrations.AddField(
-            model_name='employee',
-            name='address',
+            model_name="employee",
+            name="address",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='birth_date',
+            model_name="employee",
+            name="birth_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='department',
+            model_name="employee",
+            name="department",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='emergency_contact',
+            model_name="employee",
+            name="emergency_contact",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='emergency_phone',
+            model_name="employee",
+            name="emergency_phone",
             field=models.CharField(blank=True, max_length=20),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='gender',
-            field=models.CharField(blank=True, choices=[('M', 'Masculin'), ('F', 'Féminin')], max_length=1),
+            model_name="employee",
+            name="gender",
+            field=models.CharField(
+                blank=True, choices=[("M", "Masculin"), ("F", "Féminin")], max_length=1
+            ),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='hire_date',
+            model_name="employee",
+            name="hire_date",
             field=models.DateField(default=django.utils.timezone.now),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='manager',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='subordinates', to='employees.employee'),
+            model_name="employee",
+            name="manager",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="subordinates",
+                to="employees.employee",
+            ),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='notes',
+            model_name="employee",
+            name="notes",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='phone',
+            model_name="employee",
+            name="phone",
             field=models.CharField(blank=True, max_length=20),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='salary',
+            model_name="employee",
+            name="salary",
             field=models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='status',
-            field=models.CharField(choices=[('ACTIVE', 'Actif'), ('INACTIVE', 'Inactif'), ('SUSPENDED', 'Suspendu')], default='ACTIVE', max_length=20),
+            model_name="employee",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("ACTIVE", "Actif"),
+                    ("INACTIVE", "Inactif"),
+                    ("SUSPENDED", "Suspendu"),
+                ],
+                default="ACTIVE",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='employee',
-            name='updated_at',
+            model_name="employee",
+            name="updated_at",
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='matricule',
+            model_name="employee",
+            name="matricule",
             field=models.CharField(blank=True, max_length=20, unique=True),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='user',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='employee_profile', to=settings.AUTH_USER_MODEL),
+            model_name="employee",
+            name="user",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="employee_profile",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

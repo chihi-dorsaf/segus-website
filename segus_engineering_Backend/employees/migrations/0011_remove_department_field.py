@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0010_add_pause_fields_to_worksession'),
+        ("employees", "0010_add_pause_fields_to_worksession"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='employee',
-            name='department',
+            model_name="employee",
+            name="department",
         ),
     ]

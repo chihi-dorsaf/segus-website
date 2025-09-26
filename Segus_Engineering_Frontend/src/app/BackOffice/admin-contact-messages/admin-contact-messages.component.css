@@ -12,7 +12,7 @@ html, body,
 .admin-contact-messages .messages-grid, .admin-contact-messages .message-card,
 .admin-contact-messages .modal, .admin-contact-messages .modal-content,
 .admin-contact-messages div, .admin-contact-messages section, .admin-contact-messages article,
-.admin-contact-messages p, .admin-contact-messages span, .admin-contact-messages h1, 
+.admin-contact-messages p, .admin-contact-messages span, .admin-contact-messages h1,
 .admin-contact-messages h2, .admin-contact-messages h3, .admin-contact-messages h4,
 .admin-contact-messages input, .admin-contact-messages select, .admin-contact-messages button,
 .mat-app-background, .mat-sidenav-container, .mat-drawer-container,
@@ -54,21 +54,21 @@ body.dark-mode .admin-contact-messages, body.dark-mode .admin-contact-messages *
   --primary: #002552;
   --secondary: #1a73c1;
   --accent: #ff6b35;
-  
+
   /* Couleurs de texte */
   --text-primary: #2d3748;
   --text-secondary: #4a5568;
   --text-muted: #718096;
   --text-light: #a0aec0;
   --text-white: #ffffff;
-  
+
   /* Couleurs de fond */
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-accent: #f1f5f9;
   --bg-light: #fafbfc;
   --bg-dark: var(--primary);
-  
+
   /* Espacement */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
@@ -77,20 +77,20 @@ body.dark-mode .admin-contact-messages, body.dark-mode .admin-contact-messages *
   --space-xl: 2rem;
   --space-2xl: 3rem;
   --space-3xl: 4rem;
-  
+
   /* Bordures */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  
+
   /* Ombres */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.04);
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
@@ -340,7 +340,7 @@ body.dark-mode .admin-contact-messages, body.dark-mode .admin-contact-messages *
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--space-lg);
-  align-items: end;
+  align-items: flex-end;
 }
 
 .filter-group {
@@ -844,36 +844,36 @@ body.dark-mode .admin-contact-messages, body.dark-mode .admin-contact-messages *
   .page-header {
     padding: var(--space-lg);
   }
-  
+
   .stats-section {
     padding: var(--space-lg);
   }
-  
+
   .filters-section {
     padding: var(--space-lg);
   }
-  
+
   .header-content {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .filters-row {
     grid-template-columns: 1fr;
   }
-  
+
   .table-responsive {
     font-size: 0.85rem;
   }
-  
+
   .action-buttons {
     flex-direction: column;
   }
-  
+
   .sender-info {
     flex-direction: column;
     text-align: center;
@@ -884,25 +884,25 @@ body.dark-mode .admin-contact-messages, body.dark-mode .admin-contact-messages *
   .page-header {
     padding: var(--space-lg);
   }
-  
+
   .stat-card {
     padding: var(--space-lg);
   }
-  
+
   .stat-icon {
     width: 50px;
     height: 50px;
     font-size: 1.2rem;
   }
-  
+
   .stat-content h3 {
     font-size: 1.5rem;
   }
-  
+
   .table thead {
     display: none;
   }
-  
+
   .table tbody tr {
     display: block;
     border: 1px solid rgba(0, 37, 82, 0.1);
@@ -910,13 +910,13 @@ body.dark-mode .admin-contact-messages, body.dark-mode .admin-contact-messages *
     margin-bottom: var(--space-md);
     padding: var(--space-md);
   }
-  
+
   .table tbody td {
     display: block;
     padding: var(--space-sm) 0;
     border: none;
   }
-  
+
   .table tbody td::before {
     content: attr(data-label) ": ";
     font-weight: 600;

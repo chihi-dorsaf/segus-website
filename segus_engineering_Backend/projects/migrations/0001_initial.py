@@ -8,20 +8,30 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('employees', '0001_initial'),
+        ("employees", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('titre', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('statut', models.CharField(choices=[('ACTIVE', 'Actif'), ('INACTIVE', 'Inactif')], default='ACTIVE', max_length=10)),
-                ('date_debut', models.DateField()),
-                ('date_fin', models.DateField(blank=True, null=True)),
-                ('employes', models.ManyToManyField(related_name='projets', to='employees.employee')),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("titre", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "statut",
+                    models.CharField(
+                        choices=[("ACTIVE", "Actif"), ("INACTIVE", "Inactif")],
+                        default="ACTIVE",
+                        max_length=10,
+                    ),
+                ),
+                ("date_debut", models.DateField()),
+                ("date_fin", models.DateField(blank=True, null=True)),
+                (
+                    "employes",
+                    models.ManyToManyField(related_name="projets", to="employees.employee"),
+                ),
             ],
         ),
     ]

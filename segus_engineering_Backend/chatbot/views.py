@@ -1,24 +1,23 @@
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Q
-import re
-from .models import ChatConversation, ChatMessage, ChatbotKnowledge
+
+from .models import ChatConversation, ChatMessage
 from .serializers import ChatConversationSerializer, ChatMessageSerializer
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def send_message(request):
     """Envoyer un message au chatbot et recevoir une réponse"""
     try:
-        user_message = request.data.get('message', '').strip()
-        conversation_id = request.data.get('conversation_id')
-        
+        user_message = request.data.get("message", "").strip()
+        conversation_id = request.data.get("conversation_id")
+
         if not user_message:
-            return Response({'error': 'Message vide'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"error": "Message vide"}, status=status.HTTP_400_BAD_REQUEST)
+
         # Créer ou récupérer la conversation
         if conversation_id:
             try:
@@ -27,47 +26,46 @@ def send_message(request):
                 conversation = ChatConversation.objects.create(user=request.user)
         else:
             conversation = ChatConversation.objects.create(user=request.user)
-        
+
         # Sauvegarder le message utilisateur
         user_msg = ChatMessage.objects.create(
-            conversation=conversation,
-            message_type='user',
-            content=user_message
+            conversation=conversation, message_type="user", content=user_message
         )
-        
+
         # Générer la réponse du bot
         bot_response = generate_bot_response(user_message, request.user)
-        
+
         # Sauvegarder la réponse du bot
         bot_msg = ChatMessage.objects.create(
-            conversation=conversation,
-            message_type='bot',
-            content=bot_response
+            conversation=conversation, message_type="bot", content=bot_response
         )
-        
+
         # Mettre à jour le titre de la conversation si c'est le premier message
         if conversation.messages.count() == 2:  # user + bot message
-            conversation.title = user_message[:50] + ('...' if len(user_message) > 50 else '')
+            conversation.title = user_message[:50] + ("..." if len(user_message) > 50 else "")
             conversation.save()
-        
-        return Response({
-            'conversation_id': conversation.id,
-            'user_message': {
-                'id': user_msg.id,
-                'content': user_msg.content,
-                'timestamp': user_msg.timestamp
-            },
-            'bot_response': {
-                'id': bot_msg.id,
-                'content': bot_msg.content,
-                'timestamp': bot_msg.timestamp
-            }
-        })
-        
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(['GET'])
+        return Response(
+            {
+                "conversation_id": conversation.id,
+                "user_message": {
+                    "id": user_msg.id,
+                    "content": user_msg.content,
+                    "timestamp": user_msg.timestamp,
+                },
+                "bot_response": {
+                    "id": bot_msg.id,
+                    "content": bot_msg.content,
+                    "timestamp": bot_msg.timestamp,
+                },
+            }
+        )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_conversations(request):
     """Récupérer toutes les conversations de l'utilisateur"""
@@ -75,7 +73,8 @@ def get_conversations(request):
     serializer = ChatConversationSerializer(conversations, many=True)
     return Response(serializer.data)
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_conversation_messages(request, conversation_id):
     """Récupérer tous les messages d'une conversation"""
@@ -85,9 +84,10 @@ def get_conversation_messages(request, conversation_id):
         serializer = ChatMessageSerializer(messages, many=True)
         return Response(serializer.data)
     except ChatConversation.DoesNotExist:
-        return Response({'error': 'Conversation non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Conversation non trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
-@api_view(['DELETE'])
+
+@api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_conversation(request, conversation_id):
     """Supprimer une conversation"""
@@ -95,17 +95,18 @@ def delete_conversation(request, conversation_id):
         conversation = ChatConversation.objects.get(id=conversation_id, user=request.user)
         conversation.is_active = False
         conversation.save()
-        return Response({'message': 'Conversation supprimée'})
+        return Response({"message": "Conversation supprimée"})
     except ChatConversation.DoesNotExist:
-        return Response({'error': 'Conversation non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Conversation non trouvée"}, status=status.HTTP_404_NOT_FOUND)
+
 
 def generate_bot_response(user_message, user):
     """Générer une réponse du chatbot basée sur le message utilisateur"""
     user_message_lower = user_message.lower()
-    
+
     # Réponses pour les questions sur les tâches
-    if any(keyword in user_message_lower for keyword in ['tâche', 'taches', 'task', 'travail']):
-        if any(word in user_message_lower for word in ['voir', 'afficher', 'consulter', 'comment']):
+    if any(keyword in user_message_lower for keyword in ["tâche", "taches", "task", "travail"]):
+        if any(word in user_message_lower for word in ["voir", "afficher", "consulter", "comment"]):
             return """📋 **Comment voir vos tâches :**
 
 1. **Dans l'espace Admin :**
@@ -118,8 +119,8 @@ def generate_bot_response(user_message, user):
    • Tableau de bord personnel
 
 🔗 **Raccourci :** Cliquez sur votre nom d'utilisateur → "Mes Tâches" """
-        
-        elif any(word in user_message_lower for word in ['créer', 'ajouter', 'nouvelle']):
+
+        elif any(word in user_message_lower for word in ["créer", "ajouter", "nouvelle"]):
             return """➕ **Créer une nouvelle tâche :**
 
 1. Sélectionnez un projet
@@ -132,10 +133,10 @@ def generate_bot_response(user_message, user):
 4. Sauvegardez
 
 🔗 **Raccourci :** Bouton "+" dans la vue projet"""
-    
+
     # Réponses pour les questions sur les projets
-    elif any(keyword in user_message_lower for keyword in ['projet', 'project']):
-        if any(word in user_message_lower for word in ['voir', 'afficher', 'consulter']):
+    elif any(keyword in user_message_lower for keyword in ["projet", "project"]):
+        if any(word in user_message_lower for word in ["voir", "afficher", "consulter"]):
             return """📁 **Comment voir vos projets :**
 
 1. **Menu principal :** Onglet "Projets"
@@ -149,8 +150,8 @@ def generate_bot_response(user_message, user):
    • Liste (tableau)
 
 🔗 **Raccourci :** Ctrl+P pour accès rapide"""
-        
-        elif any(word in user_message_lower for word in ['créer', 'nouveau']):
+
+        elif any(word in user_message_lower for word in ["créer", "nouveau"]):
             return """🆕 **Créer un nouveau projet :**
 
 1. Cliquez sur "Nouveau Projet"
@@ -162,9 +163,11 @@ def generate_bot_response(user_message, user):
 4. Sauvegardez
 
 🔗 **Raccourci :** Bouton "+" en haut à droite"""
-    
+
     # Questions sur la navigation
-    elif any(keyword in user_message_lower for keyword in ['navigation', 'menu', 'aller', 'accéder']):
+    elif any(
+        keyword in user_message_lower for keyword in ["navigation", "menu", "aller", "accéder"]
+    ):
         return """🧭 **Navigation dans l'application :**
 
 **Menu principal :**
@@ -185,9 +188,11 @@ def generate_bot_response(user_message, user):
 • Mes tâches
 • Notifications
 • Déconnexion"""
-    
+
     # Questions sur les employés
-    elif any(keyword in user_message_lower for keyword in ['employé', 'employe', 'utilisateur', 'user']):
+    elif any(
+        keyword in user_message_lower for keyword in ["employé", "employe", "utilisateur", "user"]
+    ):
         return """👥 **Gestion des employés :**
 
 **Voir les employés :**
@@ -202,9 +207,9 @@ def generate_bot_response(user_message, user):
 • Voir les statistiques
 
 🔗 **Raccourci :** Ctrl+E"""
-    
+
     # Questions sur les notifications
-    elif any(keyword in user_message_lower for keyword in ['notification', 'alerte', 'message']):
+    elif any(keyword in user_message_lower for keyword in ["notification", "alerte", "message"]):
         return """🔔 **Notifications :**
 
 **Types de notifications :**
@@ -219,9 +224,9 @@ def generate_bot_response(user_message, user):
 • Tableau de bord
 
 🔗 **Raccourci :** Cliquez sur l'icône 🔔"""
-    
+
     # Questions sur les rapports
-    elif any(keyword in user_message_lower for keyword in ['rapport', 'statistique', 'analytics']):
+    elif any(keyword in user_message_lower for keyword in ["rapport", "statistique", "analytics"]):
         return """📊 **Rapports et statistiques :**
 
 **Rapports disponibles :**
@@ -236,9 +241,9 @@ def generate_bot_response(user_message, user):
 • Export Excel/PDF
 
 🔗 **Raccourci :** Menu → Rapports"""
-    
+
     # Salutations
-    elif any(keyword in user_message_lower for keyword in ['bonjour', 'salut', 'hello', 'hi']):
+    elif any(keyword in user_message_lower for keyword in ["bonjour", "salut", "hello", "hi"]):
         return f"""👋 Bonjour {user.first_name or user.username} !
 
 Je suis votre assistant Segus Engineering. Je peux vous aider avec :
@@ -255,9 +260,9 @@ Je suis votre assistant Segus Engineering. Je peux vous aider avec :
 • "Où sont les notifications ?"
 
 Que puis-je faire pour vous ?"""
-    
+
     # Aide générale
-    elif any(keyword in user_message_lower for keyword in ['aide', 'help', 'comment']):
+    elif any(keyword in user_message_lower for keyword in ["aide", "help", "comment"]):
         return """❓ **Aide - Segus Engineering**
 
 **Questions fréquentes :**
@@ -278,7 +283,7 @@ Que puis-je faire pour vous ?"""
 • Filtres dans chaque section
 
 Posez-moi une question spécifique !"""
-    
+
     # Réponse par défaut
     else:
         return """🤔 Je ne suis pas sûr de comprendre votre question.

@@ -6,43 +6,43 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('jobs', '0001_initial'),
+        ("jobs", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='jobapplication',
-            new_name='job_applica_status_4768a2_idx',
-            old_name='job_applica_status_5e2f3b_idx',
+            model_name="jobapplication",
+            new_name="job_applica_status_4768a2_idx",
+            old_name="job_applica_status_5e2f3b_idx",
         ),
         migrations.RenameIndex(
-            model_name='jobapplication',
-            new_name='job_applica_job_off_5623ab_idx',
-            old_name='job_applica_job_off_8c4d1a_idx',
+            model_name="jobapplication",
+            new_name="job_applica_job_off_5623ab_idx",
+            old_name="job_applica_job_off_8c4d1a_idx",
         ),
         migrations.RenameIndex(
-            model_name='jobapplication',
-            new_name='job_applica_is_spon_e65a3b_idx',
-            old_name='job_applica_is_spon_9a6e2f_idx',
+            model_name="jobapplication",
+            new_name="job_applica_is_spon_e65a3b_idx",
+            old_name="job_applica_is_spon_9a6e2f_idx",
         ),
         migrations.RenameIndex(
-            model_name='jobapplication',
-            new_name='job_applica_email_ac334c_idx',
-            old_name='job_applica_email_7b3c4d_idx',
+            model_name="jobapplication",
+            new_name="job_applica_email_ac334c_idx",
+            old_name="job_applica_email_7b3c4d_idx",
         ),
         migrations.RenameIndex(
-            model_name='joboffer',
-            new_name='job_offers_is_acti_8c9832_idx',
-            old_name='job_offers_is_acti_4f0e4c_idx',
+            model_name="joboffer",
+            new_name="job_offers_is_acti_8c9832_idx",
+            old_name="job_offers_is_acti_4f0e4c_idx",
         ),
         migrations.RenameIndex(
-            model_name='joboffer',
-            new_name='job_offers_categor_0fb08e_idx',
-            old_name='job_offers_categor_9f7b4a_idx',
+            model_name="joboffer",
+            new_name="job_offers_categor_0fb08e_idx",
+            old_name="job_offers_categor_9f7b4a_idx",
         ),
         migrations.RenameIndex(
-            model_name='joboffer',
-            new_name='job_offers_job_typ_370873_idx',
-            old_name='job_offers_job_typ_d8a1c2_idx',
+            model_name="joboffer",
+            new_name="job_offers_job_typ_370873_idx",
+            old_name="job_offers_job_typ_d8a1c2_idx",
         ),
     ]

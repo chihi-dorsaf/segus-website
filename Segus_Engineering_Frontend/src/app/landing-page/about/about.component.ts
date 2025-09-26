@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { trigger, style, animate, transition, stagger, query } from '@angular/animations';
 
 interface Service {
@@ -45,7 +45,7 @@ interface StatData {
     ])
   ]
 })
-export class AboutComponent implements OnInit {
+export class AboutComponent {
   services: Service[] = [
     {
       id: 1,
@@ -71,7 +71,7 @@ export class AboutComponent implements OnInit {
       description: 'Bénéficiez d’une gestion experte de vos projets informatiques pour gagner en productivité.',
       icon: 'fas fa-server'
     },
- 
+
   ];
 
   values: Value[] = [
@@ -101,8 +101,6 @@ export class AboutComponent implements OnInit {
     { key: 'experience', label: 'Années d’expérience', value: 5, unit: '+' },
     { key: 'support', label: 'Support technique', value: 24, unit: 'h' }
   ];
-
-  ngOnInit(): void {}
 
   trackByServiceId(index: number, service: Service): number {
     return service.id;

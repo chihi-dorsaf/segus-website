@@ -8,19 +8,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0002_employee_date_joined_alter_employee_matricule_and_more'),
+        ("employees", "0002_employee_date_joined_alter_employee_matricule_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='employee',
-            name='position',
+            model_name="employee",
+            name="position",
             field=models.CharField(max_length=100),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='user',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="employee",
+            name="user",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+            ),
         ),
     ]

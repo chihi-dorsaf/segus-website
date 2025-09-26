@@ -1,8 +1,10 @@
 import os
+
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'segus_engineering_Backend.settings')
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "segus_engineering_Backend.settings")
 django.setup()
-from users.models import User
+from users.models import User  # noqa: E402
 
 email = "admin@segus-engineering.com"
 password = "admin123"
@@ -13,8 +15,8 @@ if not User.objects.filter(email=email).exists():
         password=password,
         first_name="Admin",
         last_name="Segus",
-        role="ADMIN"
+        role="ADMIN",
     )
     print("✅ Admin créé :", email, password)
 else:
-    print("⚠️ Admin existe déjà :", email) 
+    print("⚠️ Admin existe déjà :", email)

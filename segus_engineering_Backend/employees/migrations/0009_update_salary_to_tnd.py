@@ -6,32 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employees', '0008_restore_phone_address_birth_date_matricule'),
+        ("employees", "0008_restore_phone_address_birth_date_matricule"),
     ]
 
     operations = [
         # Mettre à jour le champ salary pour utiliser TND
         migrations.AlterField(
-            model_name='employee',
-            name='salary',
+            model_name="employee",
+            name="salary",
             field=models.DecimalField(
                 blank=True,
                 decimal_places=3,
-                help_text='Salaire en dinars tunisiens (TND)',
+                help_text="Salaire en dinars tunisiens (TND)",
                 max_digits=10,
                 null=True,
-                verbose_name='Salaire (TND)'
+                verbose_name="Salaire (TND)",
             ),
         ),
     ]
-
-
-
-
-
-
-
-
 
 
 

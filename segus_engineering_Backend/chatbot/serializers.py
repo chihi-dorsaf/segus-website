@@ -1,10 +1,13 @@
 from rest_framework import serializers
-from .models import ChatConversation, ChatMessage, ChatbotKnowledge
+
+from .models import ChatbotKnowledge, ChatConversation, ChatMessage
+
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
-        fields = ['id', 'message_type', 'content', 'timestamp', 'is_helpful']
+        fields = ["id", "message_type", "content", "timestamp", "is_helpful"]
+
 
 class ChatConversationSerializer(serializers.ModelSerializer):
     messages = ChatMessageSerializer(many=True, read_only=True)
@@ -13,7 +16,16 @@ class ChatConversationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatConversation
-        fields = ['id', 'title', 'created_at', 'updated_at', 'is_active', 'messages', 'message_count', 'last_message']
+        fields = [
+            "id",
+            "title",
+            "created_at",
+            "updated_at",
+            "is_active",
+            "messages",
+            "message_count",
+            "last_message",
+        ]
 
     def get_message_count(self, obj):
         return obj.messages.count()
@@ -22,13 +34,21 @@ class ChatConversationSerializer(serializers.ModelSerializer):
         last_msg = obj.messages.last()
         if last_msg:
             return {
-                'content': last_msg.content[:100] + ('...' if len(last_msg.content) > 100 else ''),
-                'timestamp': last_msg.timestamp,
-                'message_type': last_msg.message_type
+                "content": last_msg.content[:100] + ("..." if len(last_msg.content) > 100 else ""),
+                "timestamp": last_msg.timestamp,
+                "message_type": last_msg.message_type,
             }
         return None
+
 
 class ChatbotKnowledgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatbotKnowledge
-        fields = ['id', 'question_keywords', 'question_pattern', 'answer', 'category', 'is_active']
+        fields = [
+            "id",
+            "question_keywords",
+            "question_pattern",
+            "answer",
+            "category",
+            "is_active",
+        ]

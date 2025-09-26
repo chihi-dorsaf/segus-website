@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 import os
-import sys
+
 import django
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'segus_engineering_Backend.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "segus_engineering_Backend.settings")
 django.setup()
 
-from django.db import connection
+from django.db import connection  # noqa: E402
+
 
 def create_gamification_tables():
     cursor = connection.cursor()
-    
+
     # Create EmployeeStats table
-    cursor.execute('''
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS gamification_employeestats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             total_stars DECIMAL(6,2) DEFAULT 0.00,
@@ -28,10 +30,12 @@ def create_gamification_tables():
             last_updated DATETIME,
             employee_id INTEGER UNIQUE REFERENCES employees_employee(id)
         )
-    ''')
-    
+    """
+    )
+
     # Create DailyObjective table
-    cursor.execute('''
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS gamification_dailyobjective (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date DATE DEFAULT CURRENT_DATE,
@@ -43,10 +47,12 @@ def create_gamification_tables():
             employee_id INTEGER REFERENCES employees_employee(id),
             UNIQUE(employee_id, date)
         )
-    ''')
-    
+    """
+    )
+
     # Create SubTask table
-    cursor.execute('''
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS gamification_subtask (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title VARCHAR(200),
@@ -61,10 +67,12 @@ def create_gamification_tables():
             created_by_id INTEGER REFERENCES auth_user(id),
             employee_id INTEGER REFERENCES employees_employee(id)
         )
-    ''')
-    
+    """
+    )
+
     # Create DailyPerformance table
-    cursor.execute('''
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS gamification_dailyperformance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date DATE DEFAULT CURRENT_DATE,
@@ -82,10 +90,12 @@ def create_gamification_tables():
             objective_id INTEGER REFERENCES gamification_dailyobjective(id),
             UNIQUE(employee_id, date)
         )
-    ''')
-    
+    """
+    )
+
     # Create MonthlyPerformance table
-    cursor.execute('''
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS gamification_monthlyperformance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             year INTEGER,
@@ -103,10 +113,12 @@ def create_gamification_tables():
             employee_id INTEGER REFERENCES employees_employee(id),
             UNIQUE(employee_id, year, month)
         )
-    ''')
-    
+    """
+    )
+
     # Create EmployeeBadge table
-    cursor.execute('''
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS gamification_employeebadge (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             earned_date DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -116,9 +128,11 @@ def create_gamification_tables():
             employee_id INTEGER REFERENCES employees_employee(id),
             UNIQUE(employee_id, badge_id)
         )
-    ''')
-    
+    """
+    )
+
     print("All gamification tables created successfully!")
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     create_gamification_tables()

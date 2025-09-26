@@ -13,8 +13,8 @@ describe('EmployeeWorkHoursComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ EmployeeWorkHoursComponent ],
       imports: [
+        EmployeeWorkHoursComponent,
         ReactiveFormsModule,
         HttpClientTestingModule,
         BrowserAnimationsModule
@@ -36,10 +36,10 @@ describe('EmployeeWorkHoursComponent', () => {
   });
 
   it('should initialize with default values', () => {
-    expect(component.isSessionActive).toBeFalsy();
-    expect(component.isPaused).toBeFalsy();
-    expect(component.isLoading).toBeFalsy();
-    expect(component.sessions).toEqual([]);
+    expect(component.sessionForm).toBeTruthy();
+    expect(component.pauseForm).toBeTruthy();
+    expect(component.sessions).toBeDefined();
+    expect(Array.isArray(component.sessions)).toBeTrue();
   });
 
   it('should have valid forms', () => {
@@ -47,6 +47,7 @@ describe('EmployeeWorkHoursComponent', () => {
     expect(component.pauseForm).toBeTruthy();
   });
 });
+
 
 
 

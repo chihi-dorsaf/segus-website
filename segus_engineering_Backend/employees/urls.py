@@ -1,14 +1,13 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import (
-    EmployeeViewSet, WorkSessionViewSet, EmployeeWorkStatsViewSet
-)
+
+from .views import EmployeeViewSet, EmployeeWorkStatsViewSet, WorkSessionViewSet
 
 router = DefaultRouter()
-router.register(r'employees', EmployeeViewSet)
-router.register(r'work-sessions', WorkSessionViewSet, basename='worksession')
-router.register(r'work-stats', EmployeeWorkStatsViewSet, basename='workstats')
+router.register(r"", EmployeeViewSet)
+router.register(r"work-sessions", WorkSessionViewSet, basename="worksession")
+router.register(r"work-stats", EmployeeWorkStatsViewSet, basename="workstats")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

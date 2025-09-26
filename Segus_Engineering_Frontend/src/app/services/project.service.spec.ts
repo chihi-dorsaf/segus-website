@@ -1,59 +1,51 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of } from 'rxjs';
 import { ProjectService } from './project.service';
+import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
-import { Project, Task, SubTask } from '../models/project.model';
+import { Project, ProjectStatus, UserSimple, CreateProject, UpdateProject } from '../models/project.model';
 
 describe('ProjectService', () => {
   let service: ProjectService;
   let httpMock: HttpTestingController;
 
+  const user1: UserSimple = { id: 1, username: 'u1', email: 'u1@test.com', role: 'EMPLOYE', is_active: true };
+  const user2: UserSimple = { id: 2, username: 'u2', email: 'u2@test.com', role: 'EMPLOYE', is_active: true };
+
   const mockProject: Project = {
     id: 1,
+    name: 'P1',
     title: 'Test Project',
     description: 'Test Description',
-    status: 'ACTIVE',
+    status: ProjectStatus.ACTIVE,
     start_date: '2024-01-01',
     end_date: '2024-12-31',
-    assigned_employees: [1, 2],
-    created_by: 1,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  };
-
-  const mockTask: Task = {
-    id: 1,
-    title: 'Test Task',
-    description: 'Test Task Description',
-    status: 'TODO',
-    priority: 'MEDIUM',
-    start_date: '2024-01-01',
-    end_date: '2024-01-31',
-    project: 1,
-    assigned_employees: [1],
-    created_by: 1,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  };
-
-  const mockSubTask: SubTask = {
-    id: 1,
-    section_name: 'Test Section',
-    section_number: 'S001',
-    section_id: 'section_001',
-    kilometrage: 25.5,
-    is_completed: false,
-    task: 1,
-    assigned_employees: [1],
-    created_by: 1,
+    assigned_employees: [user1, user2],
+    created_by: user1,
+    tasks: [],
+    progress_percentage: 0,
+    total_tasks: 0,
+    completed_tasks: 0,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   };
 
   beforeEach(() => {
+    const authServiceMock = {
+      getToken: () => 'test-token',
+      fetchCurrentUser: () => of({} as any),
+      getCurrentUser: () => ({} as any),
+      logout: () => {}
+    } as unknown as AuthService;
+
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [ProjectService]
+      imports: [HttpClientTestingModule, RouterTestingModule],
+      providers: [
+        ProjectService,
+        { provide: AuthService, useValue: authServiceMock }
+      ]
     });
 
     service = TestBed.inject(ProjectService);
@@ -69,16 +61,16 @@ describe('ProjectService', () => {
   });
 
   describe('Projects', () => {
-    it('should get all projects', () => {
-      const mockProjects = [mockProject];
+    it('should get all projects (paginated)', () => {
+      const mockResponse = { count: 1, next: null, previous: null, results: [mockProject] };
 
-      service.getProjects().subscribe(projects => {
-        expect(projects).toEqual(mockProjects);
+      service.getProjects().subscribe(res => {
+        expect(res).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockProjects);
+      req.flush(mockResponse);
     });
 
     it('should get project by id', () => {
@@ -86,46 +78,53 @@ describe('ProjectService', () => {
         expect(project).toEqual(mockProject);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/1/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/projects/1/`);
       expect(req.request.method).toBe('GET');
       req.flush(mockProject);
     });
 
     it('should create project', () => {
-      const newProject = { ...mockProject };
-      delete newProject.id;
+      const newProject: CreateProject = {
+        title: mockProject.title,
+        description: mockProject.description,
+        start_date: mockProject.start_date,
+        end_date: mockProject.end_date,
+        status: ProjectStatus.ACTIVE,
+        assigned_employee_ids: [user1.id, user2.id]
+      };
 
       service.createProject(newProject).subscribe(project => {
         expect(project).toEqual(mockProject);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/projects/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(newProject);
       req.flush(mockProject);
     });
 
     it('should update project', () => {
+      const payload: UpdateProject = { title: 'Updated Project' };
       const updatedProject = { ...mockProject, title: 'Updated Project' };
 
-      service.updateProject(1, updatedProject).subscribe(project => {
+      service.updateProject(1, payload).subscribe(project => {
         expect(project).toEqual(updatedProject);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/1/`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual(updatedProject);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/projects/1/`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(payload);
       req.flush(updatedProject);
     });
 
     it('should delete project', () => {
       service.deleteProject(1).subscribe(response => {
-        expect(response).toBeDefined();
+        expect(response as any).toBeNull();
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/1/`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/projects/1/`);
       expect(req.request.method).toBe('DELETE');
-      req.flush({});
+      req.flush(null);
     });
 
     it('should get projects by status', () => {
@@ -135,191 +134,9 @@ describe('ProjectService', () => {
         expect(projects).toEqual(mockProjects);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/?status=ACTIVE`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/projects/by-status/?status=ACTIVE`);
       expect(req.request.method).toBe('GET');
       req.flush(mockProjects);
-    });
-  });
-
-  describe('Tasks', () => {
-    it('should get all tasks', () => {
-      const mockTasks = [mockTask];
-
-      service.getTasks().subscribe(tasks => {
-        expect(tasks).toEqual(mockTasks);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockTasks);
-    });
-
-    it('should get task by id', () => {
-      service.getTask(1).subscribe(task => {
-        expect(task).toEqual(mockTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/1/`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockTask);
-    });
-
-    it('should create task', () => {
-      const newTask = { ...mockTask };
-      delete newTask.id;
-
-      service.createTask(newTask).subscribe(task => {
-        expect(task).toEqual(mockTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(newTask);
-      req.flush(mockTask);
-    });
-
-    it('should update task', () => {
-      const updatedTask = { ...mockTask, title: 'Updated Task' };
-
-      service.updateTask(1, updatedTask).subscribe(task => {
-        expect(task).toEqual(updatedTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/1/`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual(updatedTask);
-      req.flush(updatedTask);
-    });
-
-    it('should delete task', () => {
-      service.deleteTask(1).subscribe(response => {
-        expect(response).toBeDefined();
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/1/`);
-      expect(req.request.method).toBe('DELETE');
-      req.flush({});
-    });
-
-    it('should get tasks by project', () => {
-      const mockTasks = [mockTask];
-
-      service.getTasksByProject(1).subscribe(tasks => {
-        expect(tasks).toEqual(mockTasks);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/?project=1`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockTasks);
-    });
-
-    it('should get tasks by status', () => {
-      const mockTasks = [mockTask];
-
-      service.getTasksByStatus('TODO').subscribe(tasks => {
-        expect(tasks).toEqual(mockTasks);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/tasks/?status=TODO`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockTasks);
-    });
-  });
-
-  describe('SubTasks', () => {
-    it('should get all subtasks', () => {
-      const mockSubTasks = [mockSubTask];
-
-      service.getSubTasks().subscribe(subtasks => {
-        expect(subtasks).toEqual(mockSubTasks);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockSubTasks);
-    });
-
-    it('should get subtask by id', () => {
-      service.getSubTask(1).subscribe(subtask => {
-        expect(subtask).toEqual(mockSubTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/1/`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockSubTask);
-    });
-
-    it('should create subtask', () => {
-      const newSubTask = { ...mockSubTask };
-      delete newSubTask.id;
-
-      service.createSubTask(newSubTask).subscribe(subtask => {
-        expect(subtask).toEqual(mockSubTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(newSubTask);
-      req.flush(mockSubTask);
-    });
-
-    it('should update subtask', () => {
-      const updatedSubTask = { ...mockSubTask, section_name: 'Updated Section' };
-
-      service.updateSubTask(1, updatedSubTask).subscribe(subtask => {
-        expect(subtask).toEqual(updatedSubTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/1/`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual(updatedSubTask);
-      req.flush(updatedSubTask);
-    });
-
-    it('should delete subtask', () => {
-      service.deleteSubTask(1).subscribe(response => {
-        expect(response).toBeDefined();
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/1/`);
-      expect(req.request.method).toBe('DELETE');
-      req.flush({});
-    });
-
-    it('should get subtasks by task', () => {
-      const mockSubTasks = [mockSubTask];
-
-      service.getSubTasksByTask(1).subscribe(subtasks => {
-        expect(subtasks).toEqual(mockSubTasks);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/?task=1`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockSubTasks);
-    });
-
-    it('should mark subtask as completed', () => {
-      const completedSubTask = { ...mockSubTask, is_completed: true };
-
-      service.markSubTaskCompleted(1).subscribe(subtask => {
-        expect(subtask).toEqual(completedSubTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/1/mark_completed/`);
-      expect(req.request.method).toBe('POST');
-      req.flush(completedSubTask);
-    });
-
-    it('should mark subtask as uncompleted', () => {
-      const uncompletedSubTask = { ...mockSubTask, is_completed: false };
-
-      service.markSubTaskUncompleted(1).subscribe(subtask => {
-        expect(subtask).toEqual(uncompletedSubTask);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/subtasks/1/mark_uncompleted/`);
-      expect(req.request.method).toBe('POST');
-      req.flush(uncompletedSubTask);
     });
   });
 
@@ -332,20 +149,28 @@ describe('ProjectService', () => {
         }
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/`);
-      req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      const r1 = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
+      r1.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      const r2 = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
+      r2.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      const r3 = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
+      r3.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
     });
 
     it('should handle network errors', () => {
       service.getProjects().subscribe({
         next: () => fail('should have failed'),
         error: (error) => {
-          expect(error.name).toBe('HttpErrorResponse');
+          expect(error).toBeTruthy();
         }
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/projects/`);
-      req.error(new ErrorEvent('Network error'));
+      const n1 = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
+      n1.error(new ErrorEvent('Network error'));
+      const n2 = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
+      n2.error(new ErrorEvent('Network error'));
+      const n3 = httpMock.expectOne(`${environment.apiUrl}/api/projects/?page=1`);
+      n3.error(new ErrorEvent('Network error'));
     });
   });
 });

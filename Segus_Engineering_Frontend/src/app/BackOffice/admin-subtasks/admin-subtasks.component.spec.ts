@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { AdminSubtasksComponent } from './admin-subtasks.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('AdminSubtasksComponent', () => {
   let component: AdminSubtasksComponent;
@@ -8,7 +8,7 @@ describe('AdminSubtasksComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminSubtasksComponent]
+      imports: [HttpClientTestingModule, AdminSubtasksComponent]
     })
     .compileComponents();
 
