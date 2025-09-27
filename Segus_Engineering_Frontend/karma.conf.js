@@ -47,10 +47,25 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['Chrome'],
-    singleRun: false,
+    browsers: ['ChromeHeadless'],
+    singleRun: true,
     restartOnFileChange: true,
     customLaunchers: {
+      ChromeHeadless: {
+        base: 'Chrome',
+        flags: [
+          '--headless',
+          '--no-sandbox',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--remote-debugging-port=9222',
+          '--disable-dev-shm-usage',
+          '--disable-extensions',
+          '--no-first-run',
+          '--disable-default-apps'
+        ]
+      },
       ChromeHeadlessCI: {
         base: 'ChromeHeadless',
         flags: ['--no-sandbox', '--disable-web-security', '--disable-gpu', '--remote-debugging-port=9222']
