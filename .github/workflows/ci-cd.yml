@@ -52,9 +52,10 @@ jobs:
       - name: Run tests
         env:
           CI: true
+          CHROME_BIN: /usr/bin/google-chrome
         run: |
           cd Segus_Engineering_Frontend
-          npm test
+          npx ng test --browsers=ChromeHeadlessCI --watch=false --code-coverage
       
       - name: Build
         run: |
