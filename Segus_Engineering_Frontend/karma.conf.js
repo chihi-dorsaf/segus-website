@@ -46,8 +46,9 @@ module.exports = function (config) {
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
-    autoWatch: true,
-    browsers: ['FirefoxHeadless'],
+    autoWatch: !process.env.CI,
+    // Use ChromeHeadlessCI in CI to avoid requiring an X server
+    browsers: process.env.CI ? ['ChromeHeadlessCI'] : ['Chrome'],
     browserDisconnectTimeout: 10000,
     browserDisconnectTolerance: 3,
     browserNoActivityTimeout: 60000,

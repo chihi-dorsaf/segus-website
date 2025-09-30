@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   test-backend:
@@ -37,6 +38,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Segus_Engineering_Frontend/package-lock.json
+
+      - name: Install Chrome (for Karma)
+        uses: browser-actions/setup-chrome@v1
       
       - name: Install dependencies
         run: |
@@ -44,9 +50,11 @@ jobs:
           npm ci
       
       - name: Run tests
+        env:
+          CI: true
         run: |
           cd Segus_Engineering_Frontend
-          npm test -- --watch=false
+          npm test
       
       - name: Build
         run: |
@@ -105,4 +113,4 @@ jobs:
           cd ansible
           ansible-playbook -i inventory/production.yml playbooks/deploy.yml
         env:
-          ANSIBLE_HOST_KEY_CHECKING: False
+          ANSIBLE_HOST_KEY_CHECKING: False
