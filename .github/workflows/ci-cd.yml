@@ -58,7 +58,7 @@ jobs:
       - name: Run tests
         run: |
           cd Segus_Engineering_Frontend
-          npm test -- --no-watch --no-progress --browsers=ChromeHeadless --code-coverage
+          npm run test:ci
         env:
           CI: true
           CHROME_BIN: /usr/bin/google-chrome
