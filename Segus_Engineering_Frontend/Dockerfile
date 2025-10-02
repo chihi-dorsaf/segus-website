@@ -24,7 +24,7 @@ FROM nginx:alpine AS production
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application from build stage
-# FIXED: Using correct output path 'segus-engineering-frontend'
+# FIXED: Changed from segus-engineering to segus-engineering-frontend
 COPY --from=build /app/dist/segus-engineering-frontend /usr/share/nginx/html
 
 # Copy environment configuration script
@@ -36,7 +36,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+  CMD curl -f http://localhost/ || exit 1
 
 # Use custom entrypoint for environment variable substitution
 ENTRYPOINT ["/docker-entrypoint.sh"]
