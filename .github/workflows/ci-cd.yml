@@ -97,14 +97,24 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
+      - name: Debug Docker Username
+        run: |
+          echo "Checking DOCKER_USERNAME..."
+          if [ -z "$DOCKER_USERNAME" ]; then
+            echo "ERROR: DOCKER_USERNAME is empty!"
+            exit 1
+          fi
+          echo "DOCKER_USERNAME length: ${#DOCKER_USERNAME}"
+          echo "DOCKER_USERNAME starts with: ${DOCKER_USERNAME:0:3}..."
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./segus_engineering_Backend
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/segus-backend:latest
-            ${{ secrets.DOCKER_USERNAME }}/segus-backend:${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/segus-backend:latest,${{ secrets.DOCKER_USERNAME }}/segus-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
@@ -113,9 +123,7 @@ jobs:
         with:
           context: ./Segus_Engineering_Frontend
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/segus-frontend:latest
-            ${{ secrets.DOCKER_USERNAME }}/segus-frontend:${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/segus-frontend:latest,${{ secrets.DOCKER_USERNAME }}/segus-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
