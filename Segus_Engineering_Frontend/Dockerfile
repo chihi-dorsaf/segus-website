@@ -9,14 +9,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev) so Angular CLI and builders are available
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build the Angular application for production
-RUN npm run build --prod
+RUN npm run build -- --configuration=production
 
 # Stage 2: Production stage with Nginx
 FROM nginx:alpine AS production
