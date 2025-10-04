@@ -8,7 +8,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadless --code-coverage",
+
     "test:headless": "ng test --browsers ChromeHeadless --watch=false --code-coverage",
+
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css}\""
   },
