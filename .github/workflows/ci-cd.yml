@@ -66,7 +66,7 @@ jobs:
       - name: Build
         run: |
           cd Segus_Engineering_Frontend
-          npm run build -- --configuration=production
+          npm run build:prod
 
   build-docker:
     needs: [test-backend, test-frontend]
@@ -75,21 +75,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-
-      - name: Validate Docker secrets
-        run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-            echo "ERROR: DOCKER_USERNAME secret is not set or empty"
-            echo "Please add it at: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
-            echo "ERROR: DOCKER_PASSWORD secret is not set or empty"
-            exit 1
-          fi
-          echo "Docker credentials validated successfully"
-      
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
@@ -99,20 +84,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-
-      - name: Debug Docker Username
-        run: |
-          echo "Checking DOCKER_USERNAME..."
-          if [ -z "$DOCKER_USERNAME" ]; then
-            echo "ERROR: DOCKER_USERNAME is empty!"
-            exit 1
-          fi
-          echo "DOCKER_USERNAME length: ${#DOCKER_USERNAME}"
-          echo "DOCKER_USERNAME starts with: ${DOCKER_USERNAME:0:3}..."
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      
-
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
@@ -130,28 +101,3 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/segus-frontend:latest,${{ secrets.DOCKER_USERNAME }}/segus-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy-ansible:
-    needs: build-docker
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Ansible
-        run: |
-          pip install ansible
-      
-      - name: Setup SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-      
-      - name: Deploy with Ansible
-        run: |
-          cd ansible
-          ansible-playbook -i inventory/production.yml playbooks/deploy.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: False
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
