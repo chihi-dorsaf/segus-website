@@ -1,5 +1,4 @@
 # Multi-stage Dockerfile for Angular Frontend
-
 # Stage 1: Build stage
 FROM node:18-alpine AS build
 
@@ -9,14 +8,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev) so Angular CLI and builders are available
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build the Angular application for production
-RUN npm run build --prod
+RUN npm run build -- --configuration=production
 
 # Stage 2: Production stage with Nginx
 FROM nginx:alpine AS production
@@ -25,7 +24,8 @@ FROM nginx:alpine AS production
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application from build stage
-COPY --from=build /app/dist/segus-engineering /usr/share/nginx/html
+# FIXED: Changed from segus-engineering to segus-engineering-frontend
+COPY --from=build /app/dist/segus-engineering-frontend /usr/share/nginx/html
 
 # Copy environment configuration script
 COPY docker-entrypoint.sh /docker-entrypoint.sh
