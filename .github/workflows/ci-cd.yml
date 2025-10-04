@@ -75,6 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+
       - name: Validate Docker secrets
         run: |
           if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
@@ -88,6 +89,7 @@ jobs:
           fi
           echo "Docker credentials validated successfully"
       
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
@@ -97,6 +99,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
+
       - name: Debug Docker Username
         run: |
           echo "Checking DOCKER_USERNAME..."
@@ -109,6 +112,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       
+
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
