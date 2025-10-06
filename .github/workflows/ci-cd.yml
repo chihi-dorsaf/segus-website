@@ -63,6 +63,10 @@ jobs:
           cd Segus_Engineering_Frontend
           npm ci
 
+      - name: Debug angular.json (first 5 lines)
+        run: |
+          head -n 5 Segus_Engineering_Frontend/angular.json
+
       - name: Run tests
         run: |
           cd Segus_Engineering_Frontend
@@ -82,7 +86,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Validate Docker secrets
         run: |
           if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
@@ -104,7 +108,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
+      
       - name: Debug Docker Username
         run: |
           echo "Checking DOCKER_USERNAME..."
