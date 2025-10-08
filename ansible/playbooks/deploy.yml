@@ -1,51 +1,53 @@
 ---
 - name: Deploy SEGUS Engineering
   hosts: web_servers
-  become: yes
+  become: true
+  collections:
+    - community.docker
   vars:
     app_name: segus-engineering
     docker_compose_file: docker-compose.yml
-  
+
   tasks:
     - name: Update system packages
       apt:
-        update_cache: yes
-        upgrade: yes
-    
+        update_cache: true
+        upgrade: true
+
     - name: Install Docker
       apt:
         name: docker.io
         state: present
-    
-    - name: Install Docker Compose
-      pip:
-        name: docker-compose
+
+    - name: Install Docker Compose v2 plugin
+      apt:
+        name: docker-compose-plugin
         state: present
-    
+
     - name: Start Docker service
       systemd:
         name: docker
         state: started
-        enabled: yes
-    
+        enabled: true
+
     - name: Create app directory
       file:
         path: /opt/{{ app_name }}
         state: directory
         mode: '0755'
-    
+
     - name: Copy docker-compose file
       copy:
         src: "{{ docker_compose_file }}"
         dest: /opt/{{ app_name }}/{{ docker_compose_file }}
-    
+
     - name: Pull latest images
-      docker_compose:
+      community.docker.docker_compose_v2:
         project_src: /opt/{{ app_name }}
-        pull: yes
-    
+        pull: true
+
     - name: Start services
-      docker_compose:
+      community.docker.docker_compose_v2:
         project_src: /opt/{{ app_name }}
         state: present
-        recreate: always
+        recreate: true
