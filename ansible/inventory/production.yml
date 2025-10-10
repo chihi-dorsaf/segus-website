@@ -3,6 +3,6 @@ all:
     web_servers:
       hosts:
         production:
-          ansible_host: votre-ip-serveur
-          ansible_user: ubuntu
+          ansible_host: "{{ lookup('env','PROD_HOST') }}"
+          ansible_user: "{{ lookup('env','PROD_USER') }}"
           ansible_ssh_private_key_file: ~/.ssh/id_rsa
