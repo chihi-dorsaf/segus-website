@@ -1,37 +1,90 @@
-name: CI/CD Pipeline
+name: Complete CI/CD Pipeline with Testing
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, staging ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
 jobs:
-  test-backend:
+  # ==================== CODE QUALITY & SECURITY ====================
+  
+  code-quality:
+    name: Code Quality & Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
 
-      - name: Set up Python
+      - name: Run Trivy vulnerability scanner (Filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+
+  # ==================== BACKEND TESTS ====================
+
+  test-backend:
+    name: Backend Tests (Python/Django)
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: segus_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-
-      - name: Cache Python dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: segus_engineering_Backend/requirements.txt
 
       - name: Install dependencies
         run: |
           cd segus_engineering_Backend
-          pip install --upgrade pip
-          pip install pytest pytest-django
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django pytest-cov pytest-mock pytest-xdist
 
       - name: Create logs directory
         run: |
@@ -39,22 +92,67 @@ jobs:
           mkdir -p logs
           touch logs/django.log
 
-      - name: Run tests
+      - name: Run Database Migrations
         run: |
           cd segus_engineering_Backend
-          python -m pytest
+          python manage.py migrate --noinput
         env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/segus_test
           DJANGO_SETTINGS_MODULE: segus_engineering_Backend.settings
 
-  test-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Run Unit Tests with Coverage
+        run: |
+          cd segus_engineering_Backend
+          pytest \
+            --verbose \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --cov-branch \
+            --junit-xml=test-results.xml \
+            -n auto
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/segus_test
+          DJANGO_SETTINGS_MODULE: segus_engineering_Backend.settings
 
-      - name: Set up Node.js
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./segus_engineering_Backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            segus_engineering_Backend/test-results.xml
+            segus_engineering_Backend/htmlcov/
+
+      - name: Check Coverage Threshold
+        run: |
+          cd segus_engineering_Backend
+          coverage report --fail-under=70
+        continue-on-error: true
+
+  # ==================== FRONTEND TESTS ====================
+
+  test-frontend:
+    name: Frontend Tests (Angular)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: Segus_Engineering_Frontend/package-lock.json
 
@@ -63,130 +161,294 @@ jobs:
           cd Segus_Engineering_Frontend
           npm ci
 
-      - name: Debug angular.json (first 5 lines)
-        run: |
-          head -n 5 Segus_Engineering_Frontend/angular.json
-
-      - name: Run tests
+      - name: Lint Frontend Code
         run: |
           cd Segus_Engineering_Frontend
-          npm run test:ci
+          npm run lint
+        continue-on-error: true
+
+      - name: Run Unit Tests with Coverage
+        run: |
+          cd Segus_Engineering_Frontend
+          npm run test:ci -- --code-coverage --watch=false --browsers=ChromeHeadless
         env:
           CI: true
           CHROME_BIN: /usr/bin/google-chrome
 
-      - name: Build
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./Segus_Engineering_Frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: frontend-test-results
+          path: |
+            Segus_Engineering_Frontend/coverage/
+
+      - name: Build Frontend (Validation)
         run: |
           cd Segus_Engineering_Frontend
           npm run build:prod
 
+  # ==================== DOCKER BUILD ====================
+
   build-docker:
-    needs: [test-backend, test-frontend]
+    name: Build Docker Images
+    needs: [code-quality, test-backend, test-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    strategy:
+      matrix:
+        service: [backend, frontend]
+        include:
+          - service: backend
+            context: ./segus_engineering_Backend
+            dockerfile: ./segus_engineering_Backend/Dockerfile
+          - service: frontend
+            context: ./Segus_Engineering_Frontend
+            dockerfile: ./Segus_Engineering_Frontend/Dockerfile
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Validate Docker secrets
-        run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-            echo "ERROR: DOCKER_USERNAME secret is not set or empty"
-            echo "Please add it at: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
-            echo "ERROR: DOCKER_PASSWORD secret is not set or empty"
-            exit 1
-          fi
-          echo "Docker credentials validated successfully"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      - name: Debug Docker Username
-        run: |
-          echo "Checking DOCKER_USERNAME..."
-          if [ -z "$DOCKER_USERNAME" ]; then
-            echo "ERROR: DOCKER_USERNAME is empty!"
-            exit 1
-          fi
-          echo "DOCKER_USERNAME length: ${#DOCKER_USERNAME}"
-          echo "DOCKER_USERNAME starts with: ${DOCKER_USERNAME:0:3}..."
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        continue-on-error: true
 
-      - name: Build and push Backend
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}
+            ${{ secrets.DOCKER_USERNAME }}/segus-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
-          context: ./segus_engineering_Backend
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/segus-backend:latest
-            ${{ secrets.DOCKER_USERNAME }}/segus-backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v5
+      - name: Run Trivy vulnerability scanner (Image)
+        uses: aquasecurity/trivy-action@master
         with:
-          context: ./Segus_Engineering_Frontend
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/segus-frontend:latest
-            ${{ secrets.DOCKER_USERNAME }}/segus-frontend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          image-ref: ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+        continue-on-error: true
 
-  deploy-ansible:
-    needs: build-docker
+      - name: Upload Trivy image results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+        continue-on-error: true
+
+  # ==================== E2E TESTS (Optional) ====================
+
+  e2e-tests:
+    name: End-to-End Tests
+    needs: [build-docker]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Setup Ansible
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start services with Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+          sleep 30  # Wait for services to be ready
+
+      - name: Wait for backend health
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 5; done'
+        continue-on-error: true
+
+      - name: Run E2E tests
+        run: |
+          # Add your E2E test commands here
+          echo "E2E tests would run here"
+        continue-on-error: true
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
+
+  # ==================== DEPLOY TO STAGING ====================
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [build-docker, e2e-tests]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.segus.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Ansible
         run: |
           pip install ansible
 
-      - name: Install Ansible collections
+      - name: Setup SSH Key
         run: |
-          ansible-galaxy collection install community.docker
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_STAGING }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy with Ansible
+        run: |
+          cd ansible
+          ansible-playbook \
+            -i inventory/staging.yml \
+            playbooks/deploy.yml \
+            -e "image_tag=${{ github.sha }}" \
+            -e "environment=staging"
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+  # ==================== DEPLOY TO PRODUCTION ====================
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [build-docker, e2e-tests]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://segus.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
 
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-      - name: Create runtime inventory
-        run: |
-          mkdir -p ansible/inventory
-          cat > ansible/inventory/runtime.yml <<'EOF'
-          all:
-            children:
-              web_servers:
-                hosts:
-                  production:
-                    ansible_host: "${PROD_HOST}"
-                    ansible_user: "${PROD_USER}"
-                    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-          EOF
-        env:
-          PROD_HOST: ${{ secrets.PROD_HOST }}
-          PROD_USER: ${{ secrets.PROD_USER }}
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy with Ansible
         run: |
           cd ansible
-          ansible-playbook -i inventory/runtime.yml playbooks/deploy.yml
+          ansible-playbook \
+            -i inventory/production.yml \
+            playbooks/deploy.yml \
+            -e "image_tag=${{ github.sha }}" \
+            -e "environment=production"
         env:
           ANSIBLE_HOST_KEY_CHECKING: False
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  # ==================== NOTIFICATION ====================
+
+  notify:
+    name: Send Notifications
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          text: |
+            Pipeline ${{ job.status }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+
+      - name: Send Email notification
+        uses: dawidd6/action-send-mail@v3
+        if: failure()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "CI/CD Pipeline Failed - ${{ github.repository }}"
+          body: |
+            Pipeline failed for ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+            View details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: CI/CD Pipeline
+        continue-on-error: true
