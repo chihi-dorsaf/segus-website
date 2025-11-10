@@ -174,8 +174,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Check Nexus secrets
+        id: check_nexus
+        shell: bash
+        env:
+          NEXUS_REGISTRY: ${{ secrets.NEXUS_REGISTRY }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          enabled=false
+          if [[ -n "${NEXUS_REGISTRY}" && -n "${NEXUS_USERNAME}" && -n "${NEXUS_PASSWORD}" ]]; then
+            enabled=true
+          fi
+          echo "enabled=${enabled}" >> $GITHUB_OUTPUT
+
       - name: Login to Nexus Docker Registry (optional)
-        if: ${{ secrets.NEXUS_REGISTRY && secrets.NEXUS_USERNAME && secrets.NEXUS_PASSWORD }}
+        if: steps.check_nexus.outputs.enabled == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.NEXUS_REGISTRY }}
@@ -183,7 +197,7 @@ jobs:
           password: ${{ secrets.NEXUS_PASSWORD }}
 
       - name: Build and push Backend to Nexus (optional)
-        if: ${{ secrets.NEXUS_REGISTRY && secrets.NEXUS_USERNAME && secrets.NEXUS_PASSWORD }}
+        if: steps.check_nexus.outputs.enabled == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./segus_engineering_Backend
@@ -195,7 +209,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Frontend to Nexus (optional)
-        if: ${{ secrets.NEXUS_REGISTRY && secrets.NEXUS_USERNAME && secrets.NEXUS_PASSWORD }}
+        if: steps.check_nexus.outputs.enabled == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./Segus_Engineering_Frontend
@@ -221,11 +235,24 @@ jobs:
     name: SonarCloud Analysis
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
-    if: ${{ secrets.SONAR_TOKEN && secrets.SONAR_ORG && secrets.SONAR_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Check Sonar secrets
+        id: check_sonar
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORG: ${{ secrets.SONAR_ORG }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          enabled=false
+          if [[ -n "${SONAR_TOKEN}" && -n "${SONAR_ORG}" && -n "${SONAR_PROJECT_KEY}" ]]; then
+            enabled=true
+          fi
+          echo "enabled=${enabled}" >> $GITHUB_OUTPUT
 
       - name: Download coverage artifacts
         uses: actions/download-artifact@v4
@@ -233,12 +260,14 @@ jobs:
           path: coverage-artifacts
 
       - name: Set up Java (for SonarScanner)
+        if: steps.check_sonar.outputs.enabled == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Generate sonar-project.properties
+        if: steps.check_sonar.outputs.enabled == 'true'
         run: |
           cat > sonar-project.properties << 'EOF'
           sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
@@ -252,6 +281,7 @@ jobs:
           EOF
 
       - name: SonarCloud Scan
+        if: steps.check_sonar.outputs.enabled == 'true'
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -260,8 +290,12 @@ jobs:
         if: always()
         run: |
           echo "## SonarCloud" >> $GITHUB_STEP_SUMMARY
-          echo "- Project: ${{ secrets.SONAR_PROJECT_KEY }} (org: ${{ secrets.SONAR_ORG }})" >> $GITHUB_STEP_SUMMARY
-          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_sonar.outputs.enabled }}" = "true" ]; then
+            echo "- Project: ${{ secrets.SONAR_PROJECT_KEY }} (org: ${{ secrets.SONAR_ORG }})" >> $GITHUB_STEP_SUMMARY
+            echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Skipped (Sonar secrets not set)" >> $GITHUB_STEP_SUMMARY
+          fi
 
   deploy-ansible:
     needs: build-docker
