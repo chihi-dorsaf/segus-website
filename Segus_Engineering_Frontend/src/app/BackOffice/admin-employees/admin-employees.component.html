@@ -245,6 +245,10 @@
                   <span *ngIf="employeeForm.get('email')?.errors?.['required']">L'email est requis</span>
                   <span *ngIf="employeeForm.get('email')?.errors?.['email']">Format d'email invalide</span>
                 </div>
+                <!-- Backend errors for email -->
+                <div *ngIf="serverErrors['email']?.length" class="error-message">
+                  <span *ngFor="let err of serverErrors['email']">{{ err }}</span>
+                </div>
               </div>
 
               <!-- Prénom -->
@@ -291,6 +295,10 @@
                 <div class="error" *ngIf="employeeForm.get('position')?.invalid && employeeForm.get('position')?.touched">
                   Poste requis
                 </div>
+                <!-- Backend errors for position -->
+                <div *ngIf="serverErrors['position']?.length" class="error-message">
+                  <span *ngFor="let err of serverErrors['position']">{{ err }}</span>
+                </div>
               </div>
 
               <div class="form-group">
@@ -302,6 +310,20 @@
                   placeholder="+33 1 23 45 67 89"
                 />
               </div>
+
+              <div class="form-group">
+                <label for="address">Adresse</label>
+                <input
+                  type="text"
+                  id="address"
+                  formControlName="address"
+                  placeholder="Adresse complète"
+                />
+                <!-- Backend errors for address -->
+                <div *ngIf="serverErrors['address']?.length" class="error-message">
+                  <span *ngFor="let err of serverErrors['address']">{{ err }}</span>
+                </div>
+              </div>
             </div>
 
             <div class="form-row">
@@ -312,6 +334,10 @@
                   id="birth_date"
                   formControlName="birth_date"
                 />
+                <!-- Backend errors for birth_date -->
+                <div *ngIf="serverErrors['birth_date']?.length" class="error-message">
+                  <span *ngFor="let err of serverErrors['birth_date']">{{ err }}</span>
+                </div>
               </div>
 
 
@@ -341,6 +367,10 @@
                   id="hire_date"
                   formControlName="hire_date"
                 />
+                <!-- Backend errors for hire_date -->
+                <div *ngIf="serverErrors['hire_date']?.length" class="error-message">
+                  <span *ngFor="let err of serverErrors['hire_date']">{{ err }}</span>
+                </div>
               </div>
 
               <div class="form-group">
@@ -353,6 +383,10 @@
                   step="0.001"
                 />
                 <small class="form-text">Montant en dinars tunisiens (TND)</small>
+                <!-- Backend errors for salary -->
+                <div *ngIf="serverErrors['salary']?.length" class="error-message">
+                  <span *ngFor="let err of serverErrors['salary']">{{ err }}</span>
+                </div>
               </div>
             </div>
           </div>

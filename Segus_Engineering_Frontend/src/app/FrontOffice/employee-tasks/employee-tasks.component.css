@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+  background: #002552; /* Navy blue accent */
   border-radius: 16px 16px 0 0;
 }
 
@@ -42,11 +42,7 @@
 }
 
 .header-section h2 i {
-  color: #6366f1;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #002552; /* Navy blue icon */
 }
 
 .filter-section {
@@ -80,9 +76,9 @@
 }
 
 .view-controls .btn.active {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background: #002552; /* Navy blue */
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 37, 82, 0.3);
   transform: translateY(-1px);
 }
 

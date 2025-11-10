@@ -118,6 +118,12 @@ export class SocketService {
     console.log('📨 Message WebSocket reçu:', data);
     
     switch (data.type) {
+      case 'connected':
+        // Server handshake/acknowledgement
+        return;
+      case 'ping':
+        // Keep-alive from server, no action needed
+        return;
       case 'work_session_update':
         this.workSessionUpdates.next(data.data);
         break;

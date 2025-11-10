@@ -181,19 +181,51 @@ export class AdminTasksComponent implements OnInit {
   }
 
   loadEmployees() {
-    this.employeeService.getEmployees().subscribe({
-      next: (response) => {
-        this.employees = (response.results || []).map((emp: any) => ({
-          id: emp.id, // Use Employee ID for assignment (will be converted in backend)
-          username: emp.user?.username || emp.username,
-          email: emp.user?.email || emp.email,
-          role: emp.user?.role || emp.role || 'EMPLOYE',
-          full_name: emp.user?.full_name || emp.full_name || `${emp.user?.first_name || ''} ${emp.user?.last_name || ''}`.trim()
-        }));
-        console.log('TASK DEBUG: Employees loaded:', this.employees);
+    // Prefer endpoint tailored for assigning to projects/tasks that returns UserSimple[] directly
+    this.employeeService.getEmployeesForProjects().subscribe({
+      next: (employees) => {
+        this.employees = employees || [];
+        console.log('TASK DEBUG: Employees loaded (UserSimple[]):', this.employees.length);
+        // Fallback if empty
+        if (!this.employees || this.employees.length === 0) {
+          console.warn('TASK DEBUG: Employees list empty from users/ employees endpoint. Falling back to employees service...');
+          this.employeeService.getEmployees().subscribe({
+            next: (response) => {
+              const results = response?.results || [];
+              this.employees = results.map((emp: any) => ({
+                id: emp.id,
+                username: emp.user?.username || emp.username,
+                email: emp.user?.email || emp.email,
+                role: emp.user?.role || emp.role || 'EMPLOYE',
+                full_name: emp.user?.full_name || emp.full_name || `${emp.user?.first_name || ''} ${emp.user?.last_name || ''}`.trim()
+              }));
+              console.log('TASK DEBUG: Employees loaded via fallback mapping:', this.employees.length);
+            },
+            error: (err) => {
+              console.error('Erreur lors du chargement des employés (fallback):', err);
+            }
+          });
+        }
       },
       error: (error) => {
         console.error('Erreur lors du chargement des employés:', error);
+        // Fallback on error as well
+        this.employeeService.getEmployees().subscribe({
+          next: (response) => {
+            const results = response?.results || [];
+            this.employees = results.map((emp: any) => ({
+              id: emp.id,
+              username: emp.user?.username || emp.username,
+              email: emp.user?.email || emp.email,
+              role: emp.user?.role || emp.role || 'EMPLOYE',
+              full_name: emp.user?.full_name || emp.full_name || `${emp.user?.first_name || ''} ${emp.user?.last_name || ''}`.trim()
+            }));
+            console.log('TASK DEBUG: Employees loaded via fallback after error:', this.employees.length);
+          },
+          error: (err) => {
+            console.error('Erreur lors du chargement des employés (fallback après erreur):', err);
+          }
+        });
       }
     });
   }
@@ -481,6 +513,14 @@ export class AdminTasksComponent implements OnInit {
     setTimeout(() => {
       console.log('Modal should be visible now:', this.showCreateTaskModal);
     }, 100);
+
+    // Ensure data lists are loaded when opening modal
+    if (!this.projects || this.projects.length === 0) {
+      this.loadProjects();
+    }
+    if (!this.employees || this.employees.length === 0) {
+      this.loadEmployees();
+    }
   }
 
   openEditTaskModal(task: Task) {
@@ -646,6 +686,21 @@ export class AdminTasksComponent implements OnInit {
       }
     } else {
       this.editTaskForm.assigned_employee_ids = this.editTaskForm.assigned_employee_ids.filter(id => id !== employeeId);
+    }
+  }
+
+  // Méthode pour basculer l'assignation d'employé lors de la création d'une tâche
+  toggleCreateTaskEmployee(employeeId: number, event: any) {
+    if (!this.createTaskForm.assigned_employee_ids) {
+      this.createTaskForm.assigned_employee_ids = [];
+    }
+
+    if (event.target.checked) {
+      if (!this.createTaskForm.assigned_employee_ids.includes(employeeId)) {
+        this.createTaskForm.assigned_employee_ids.push(employeeId);
+      }
+    } else {
+      this.createTaskForm.assigned_employee_ids = this.createTaskForm.assigned_employee_ids.filter(id => id !== employeeId);
     }
   }
 

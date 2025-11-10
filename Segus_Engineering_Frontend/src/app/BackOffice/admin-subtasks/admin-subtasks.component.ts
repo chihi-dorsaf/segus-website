@@ -86,6 +86,7 @@ export class AdminSubtasksComponent implements OnInit {
   selectedTask = '';
   selectedProjectForTask = '';
   filteredTasksForProject: any[] = [];
+  employeeSearchTerm = '';
 
   constructor(
     private taskService: TaskService,
@@ -159,12 +160,34 @@ export class AdminSubtasksComponent implements OnInit {
     });
   }
 
-  loadEmployees() {
-    return this.employeeService.getEmployees().toPromise().then((response: any) => {
-      this.employees = response.results || [];
-    }).catch(error => {
-      console.error('Erreur lors du chargement des employés:', error);
-    });
+  loadEmployees(): Promise<void> {
+    // Essayer d'abord l'endpoint dédié aux utilisateurs employables pour projets/sous-tâches
+    return this.employeeService
+      .getEmployeesForProjects()
+      .toPromise()
+      .then((users) => {
+        this.employees = Array.isArray(users) ? users : [];
+        if (!this.employees.length) {
+          // Fallback sur la liste paginée des employés
+          return this.employeeService
+            .getEmployees()
+            .toPromise()
+            .then((response: any) => {
+              this.employees = response?.results || [];
+            });
+        }
+        // Rien à faire de plus si la liste est non vide
+        return Promise.resolve();
+      })
+      .catch(() => {
+        // En cas d'erreur sur le premier endpoint, fallback direct
+        return this.employeeService
+          .getEmployees()
+          .toPromise()
+          .then((response: any) => {
+            this.employees = response?.results || [];
+          });
+      });
   }
 
   // Filtrage et recherche
@@ -534,22 +557,40 @@ export class AdminSubtasksComponent implements OnInit {
     console.log('Filtered tasks:', this.filteredTasksForProject.length);
   }
 
-  // Gestion des événements clavier
-  @HostListener('document:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      this.closeAllModals();
+  // Filtre de recherche pour la liste d'employés (création)
+  get filteredEmployeesBySearch(): UserSimple[] {
+    const term = (this.employeeSearchTerm || '').toLowerCase().trim();
+    if (!term) return this.employees;
+    return this.employees.filter(e =>
+      (e.full_name || '').toLowerCase().includes(term) ||
+      (e.username || '').toLowerCase().includes(term) ||
+      (e.email || '').toLowerCase().includes(term)
+    );
+  }
+
+  // Gestion des cases à cocher pour la création (assignation d'employés)
+  toggleCreateEmployeeAssignment(employeeId: number, event: any) {
+    const isChecked = event?.target?.checked ?? false;
+    if (!Array.isArray(this.createSubtaskForm.assigned_employee_ids)) {
+      this.createSubtaskForm.assigned_employee_ids = [];
+    }
+    const idx = this.createSubtaskForm.assigned_employee_ids.indexOf(employeeId);
+    if (isChecked && idx === -1) {
+      this.createSubtaskForm.assigned_employee_ids.push(employeeId);
+    } else if (!isChecked && idx > -1) {
+      this.createSubtaskForm.assigned_employee_ids.splice(idx, 1);
     }
   }
 
-  // Helper methods
+  // Sélection globale (vue liste)
   selectAll(event: any) {
-    const isChecked = event.target.checked;
+    const isChecked = event?.target?.checked ?? false;
     this.filteredSubtasks.forEach(subtask => {
       (subtask as any).selected = isChecked;
     });
   }
 
+  // Icône de tri pour l'entête de tableau
   getSortIcon(field: string): string {
     if (this.sortField !== field) {
       return 'fas fa-sort';
@@ -557,12 +598,12 @@ export class AdminSubtasksComponent implements OnInit {
     return this.sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
   }
 
+  // Cases à cocher d'assignation (modale d'assignation)
   toggleEmployeeAssignment(employeeId: number, event: any) {
-    const isChecked = event.target.checked;
+    const isChecked = event?.target?.checked ?? false;
     if (!this.editSubtaskForm.assigned_employee_ids) {
       this.editSubtaskForm.assigned_employee_ids = [];
     }
-    
     if (isChecked) {
       if (!this.editSubtaskForm.assigned_employee_ids.includes(employeeId)) {
         this.editSubtaskForm.assigned_employee_ids.push(employeeId);
@@ -575,6 +616,7 @@ export class AdminSubtasksComponent implements OnInit {
     }
   }
 
+  // Fermer toutes les modales
   closeAllModals() {
     this.showCreateSubtaskModal = false;
     this.showEditSubtaskModal = false;

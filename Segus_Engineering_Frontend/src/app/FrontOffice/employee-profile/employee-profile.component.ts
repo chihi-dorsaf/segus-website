@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EmployeeFrontofficeService } from '../../services/employee-frontoffice.service';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface EmployeeProfileUI {
   first_name: string;
@@ -75,12 +76,8 @@ export class EmployeeProfileComponent implements OnInit {
             emergency_phone: user.emergency_phone || ''
           });
 
-          // Gérer l'URL de prévisualisation de la photo
-          if (user.profile_photo) {
-            this.previewUrl = user.profile_photo;
-          } else {
-            this.previewUrl = null;
-          }
+          // Gérer l'URL de prévisualisation de la photo (absolue)
+          this.previewUrl = this.toAbsoluteMediaUrl(user.profile_photo);
         }
       },
       error: (error: any) => {
@@ -140,6 +137,10 @@ export class EmployeeProfileComponent implements OnInit {
           this.loading = false;
           this.success = 'Profil mis à jour avec succès !';
           this.selectedFile = null; // Reset file selection
+          // Mettre à jour l'aperçu localement si la réponse contient la nouvelle photo
+          if ((response as any)?.profile_photo) {
+            this.previewUrl = this.toAbsoluteMediaUrl((response as any).profile_photo);
+          }
           this.loadCurrentUser();
           this.isEditing = false;
           
@@ -160,5 +161,17 @@ export class EmployeeProfileComponent implements OnInit {
         }
       });
     }
+  }
+
+  private toAbsoluteMediaUrl(path?: string | null): string | null {
+    if (!path) return null;
+    // Si l'URL est déjà absolue, retourner telle quelle
+    if (/^https?:\/\//i.test(path)) return path;
+    // Sinon préfixer par l'apiUrl
+    const base = environment.apiUrl.replace(/\/$/, '');
+    if (path.startsWith('/')) {
+      return `${base}${path}`;
+    }
+    return `${base}/${path}`;
   }
 }

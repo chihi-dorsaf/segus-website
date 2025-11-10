@@ -165,6 +165,14 @@ class WorkSessionConsumer(AsyncWebsocketConsumer):
         # Envoyer les statistiques aux admins
         await self.send(text_data=json.dumps({"type": "admin_stats_update", "data": event["data"]}))
 
+    # --- Notifications génériques ---
+    async def notification(self, event):
+        """Transmettre une notification en temps réel au client"""
+        await self.send(text_data=json.dumps({
+            "type": "notification",
+            "data": event.get("data", {})
+        }))
+
     @database_sync_to_async
     def authenticate_user(self, token):
         """Authentifier un utilisateur via JWT token"""

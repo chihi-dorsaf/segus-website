@@ -412,6 +412,15 @@ export class AdminProjectsComponent implements OnInit {
 
   openAssignModal(project: Project): void {
     this.selectedProject = project;
+    // Préparer le formulaire d'édition/assignation avec l'état actuel
+    this.editProjectForm = {
+      title: project.title,
+      description: project.description,
+      status: project.status,
+      start_date: project.start_date,
+      end_date: project.end_date,
+      assigned_employee_ids: project.assigned_employees?.map(e => e.id) || []
+    };
     this.showAssignModal = true;
   }
 
@@ -449,11 +458,32 @@ export class AdminProjectsComponent implements OnInit {
   assignEmployees(): void {
     if (!this.selectedProject) return;
 
-    const employeeIds = this.assignTaskForm.assigned_employee_ids;
+    const employeeIds = this.editProjectForm.assigned_employee_ids || [];
     console.log('Assigning employees:', employeeIds, 'to project:', this.selectedProject.id);
 
-    this.showAssignModal = false;
-    alert('Employés assignés avec succès!');
+    this.loading = true;
+    this.projectService.assignEmployees(this.selectedProject.id, employeeIds).subscribe({
+      next: (updatedProject) => {
+        const idx = this.projects.findIndex(p => p.id === this.selectedProject?.id);
+        if (idx !== -1) {
+          this.projects[idx] = updatedProject as Project;
+          this.filteredProjects = [...this.projects];
+        }
+        // Mettre à jour le projet sélectionné si ouvert
+        if (this.selectedProject) {
+          this.selectedProject = updatedProject as Project;
+        }
+        this.calculateStats();
+        this.showAssignModal = false;
+        this.loading = false;
+        alert('Employés assignés avec succès!');
+      },
+      error: (error) => {
+        console.error('Error assigning employees to project:', error);
+        this.loading = false;
+        alert(error.userMessage || 'Erreur lors de l\'assignation des employés');
+      }
+    });
   }
 
   public applyFilters(): void {
@@ -551,12 +581,14 @@ export class AdminProjectsComponent implements OnInit {
     console.log('FRONTEND DEBUG: Final data being sent:', JSON.stringify(this.createProjectForm, null, 2));
 
     this.loading = true;
-    this.projectService.createProject(this.createProjectForm).subscribe({
+    const payload = this.normalizeProjectPayload(this.createProjectForm);
+    this.projectService.createProject(payload).subscribe({
       next: (project) => {
         console.log('FRONTEND DEBUG: Project created successfully:', project);
         console.log('FRONTEND DEBUG: Assigned employees in response:', project.assigned_employees);
         this.projects.push(project);
         this.applyFilters();
+        this.calculateStats();
         this.showCreateModal = false;
         this.resetCreateForm();
         this.loading = false;
@@ -575,12 +607,14 @@ export class AdminProjectsComponent implements OnInit {
     if (!this.selectedProject) return;
 
     this.loading = true;
-    this.projectService.updateProject(this.selectedProject.id, this.editProjectForm).subscribe({
+    const payload = this.normalizeProjectPayload(this.editProjectForm);
+    this.projectService.updateProject(this.selectedProject.id, payload).subscribe({
       next: (updatedProject) => {
         const index = this.projects.findIndex(p => p.id === this.selectedProject!.id);
         if (index !== -1) {
           this.projects[index] = updatedProject;
           this.applyFilters();
+          this.calculateStats();
         }
         this.showEditModal = false;
         this.selectedProject = null;
@@ -1018,12 +1052,69 @@ export class AdminProjectsComponent implements OnInit {
 
 
   calculateStats(): void {
-    this.projectStats.total = this.projects.length;
-    this.projectStats.completed = this.projects.filter(p => p.status === ProjectStatus.COMPLETED).length;
-    this.projectStats.active = this.projects.filter(p => p.status === ProjectStatus.ACTIVE).length;
-    this.projectStats.overdue = this.projects.filter(p => p.status === ProjectStatus.PAUSED).length;
-    this.totalItems = this.projects.length;
+    const total = this.projects.length;
+    const completed = this.projects.filter(p => p.status === ProjectStatus.COMPLETED).length;
+    const active = this.projects.filter(p => p.status === ProjectStatus.ACTIVE).length;
+    const paused = this.projects.filter(p => p.status === ProjectStatus.PAUSED).length;
+
+    // Remplir les deux schémas de propriétés utilisés dans le template/état
+    this.projectStats.total = total;
+    this.projectStats.completed = completed;
+    this.projectStats.active = active;
+    this.projectStats.overdue = paused; // conservé pour compatibilité interne
+
+    this.projectStats.totalProjects = total;
+    this.projectStats.completedProjects = completed;
+    this.projectStats.activeProjects = active;
+    this.projectStats.pausedProjects = paused;
+
+    this.totalItems = total;
     this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+  }
+
+  // Normalisation des payloads: dates en YYYY-MM-DD, suppression des champs vides pour PATCH, arrays sûres
+  private normalizeProjectPayload(payload: any): any {
+    const normalized: any = { ...payload };
+
+    const toYMD = (val: any): string | null => {
+      if (val === undefined || val === null || val === '') return null;
+      const s = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      return null;
+    };
+
+    if ('start_date' in normalized) normalized.start_date = toYMD(normalized.start_date);
+    if ('end_date' in normalized) normalized.end_date = toYMD(normalized.end_date);
+
+    ['title', 'description', 'status'].forEach((k) => {
+      if (k in normalized && (normalized[k] === '' || normalized[k] === undefined)) {
+        // Supprimer les champs vides au lieu d'envoyer null (évite 400 sur PATCH)
+        delete normalized[k];
+      }
+    });
+
+    // Nettoyer dates nulles (supprimer au lieu d'envoyer null)
+    ['start_date', 'end_date'].forEach((k) => {
+      if (k in normalized && normalized[k] === null) {
+        delete normalized[k];
+      }
+    });
+
+    // assigned_employee_ids: conserver array si fourni, sinon ne pas envoyer la clé
+    if ('assigned_employee_ids' in normalized) {
+      if (!Array.isArray(normalized.assigned_employee_ids)) {
+        normalized.assigned_employee_ids = normalized.assigned_employee_ids ? [normalized.assigned_employee_ids] : [];
+      }
+    }
+
+    return normalized;
   }
 
   // Task-related properties and methods

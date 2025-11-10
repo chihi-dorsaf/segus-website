@@ -127,7 +127,7 @@
 
       <div class="card-body">
         <h3 class="project-title">{{ project.title }}</h3>
-        <p class="project-description">{{ project.description | slice:0:100 }}{{ project.description.length > 100 ? '...' : '' }}</p>
+        <p class="project-description">{{ project.description | slice:0:100 }}{{ (project.description?.length || 0) > 100 ? '...' : '' }}</p>
 
         <div class="project-progress">
           <div class="progress-info">
@@ -152,15 +152,15 @@
 
         <div class="project-team">
           <div class="team-avatars">
-            <div class="avatar" *ngFor="let emp of project.assigned_employees?.slice(0, 3)"
-                 [title]="emp.full_name || emp.username">
-              {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+            <div class="avatar" *ngFor="let emp of (project.assigned_employees ? project.assigned_employees.slice(0, 3) : [])"
+                 [title]="emp?.full_name || emp?.username || emp?.email || 'Membre'">
+              {{ ((emp?.full_name || emp?.username || emp?.email || '?') | slice:0:1) | uppercase }}
             </div>
-            <div class="avatar-more" *ngIf="(project.assigned_employees.length || 0) > 3">
-              +{{ (project.assigned_employees.length || 0) - 3 }}
+            <div class="avatar-more" *ngIf="((project.assigned_employees?.length || 0) > 3)">
+              +{{ (project.assigned_employees?.length || 0) - 3 }}
             </div>
           </div>
-          <span class="team-count">{{ project.assigned_employees.length || 0 }} membre(s)</span>
+          <span class="team-count">{{ project.assigned_employees?.length || 0 }} membre(s)</span>
         </div>
 
         <div class="project-tasks">
@@ -214,7 +214,9 @@
           <td>
             <div class="project-title-cell">
               <strong>{{ project.title }}</strong>
-              <p class="project-description-small">{{ project.description | slice:0:50 }}{{ project.description.length > 50 ? '...' : '' }}</p>
+              <p class="project-description-small" *ngIf="project.description && (project.description.trim() !== project.title?.trim())">
+                {{ project.description | slice:0:50 }}{{ (project.description?.length || 0) > 50 ? '...' : '' }}
+              </p>
             </div>
           </td>
           <td>
@@ -237,17 +239,20 @@
             </div>
           </td>
           <td>
-            <div class="team-cell">
+            <div class="team-cell" *ngIf="(project.assigned_employees?.length || 0) > 0; else noTeamList">
               <div class="team-avatars">
-                <div class="avatar" *ngFor="let emp of project.assigned_employees?.slice(0, 2)"
-                     [title]="emp.full_name || emp.username">
-                  {{ (emp.full_name || emp.username).charAt(0).toUpperCase() }}
+                <div class="avatar" *ngFor="let emp of (project.assigned_employees ? project.assigned_employees.slice(0, 2) : [])"
+                     [title]="emp?.full_name || emp?.username || emp?.email || 'Membre'">
+                  {{ ((emp?.full_name || emp?.username || emp?.email || '?') | slice:0:1) | uppercase }}
                 </div>
-                <div class="avatar-more" *ngIf="(project.assigned_employees.length || 0) > 2">
-                  +{{ (project.assigned_employees.length || 0) - 2 }}
+                <div class="avatar-more" *ngIf="((project.assigned_employees?.length || 0) > 2)">
+                  +{{ (project.assigned_employees?.length || 0) - 2 }}
                 </div>
               </div>
             </div>
+            <ng-template #noTeamList>
+              <span class="team-count">0</span>
+            </ng-template>
           </td>
           <td>
             <span class="task-count">
@@ -339,16 +344,26 @@
       </div>
       <div class="modal-body">
         <form (ngSubmit)="createProject()">
-          <div class="form-group">
-            <label for="create-title">Titre</label>
-            <input
-              type="text"
-              id="create-title"
-              [(ngModel)]="createProjectForm.title"
-              name="title"
-              required
-              placeholder="Titre du projet"
-            />
+          <div class="form-row">
+            <div class="form-group">
+              <label for="create-title">Titre</label>
+              <input
+                type="text"
+                id="create-title"
+                [(ngModel)]="createProjectForm.title"
+                name="title"
+                required
+                placeholder="Titre du projet"
+              />
+            </div>
+            <div class="form-group">
+              <label for="create-status">Statut</label>
+              <select id="create-status" [(ngModel)]="createProjectForm.status" name="status">
+                <option *ngFor="let status of Object.values(ProjectStatus)" [value]="status">
+                  {{ getStatusLabel(status) }}
+                </option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
             <label for="create-description">Description</label>
@@ -359,14 +374,6 @@
               rows="3"
               placeholder="Description du projet"
             ></textarea>
-          </div>
-          <div class="form-group">
-            <label for="create-status">Statut</label>
-            <select id="create-status" [(ngModel)]="createProjectForm.status" name="status">
-              <option *ngFor="let status of Object.values(ProjectStatus)" [value]="status">
-                {{ getStatusLabel(status) }}
-              </option>
-            </select>
           </div>
           <div class="form-row">
             <div class="form-group">

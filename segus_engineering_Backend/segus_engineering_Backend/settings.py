@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
@@ -88,17 +89,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "segus_engineering_Backend.wsgi.application"
 
-# Configuration simplifiée sans Channels pour l'instant
-# ASGI_APPLICATION = 'segus_engineering_Backend.asgi.application'
+# ASGI (Channels)
+ASGI_APPLICATION = 'segus_engineering_Backend.asgi.application'
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
+# Channel layers: In-memory backend for development (no Redis required)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Database
 DATABASES = {
@@ -150,6 +149,10 @@ CORS_ALLOW_ALL_ORIGINS = True  # Pour le développement seulement
 # Static files
 STATIC_URL = "static/"
 
+# Media files (for uploaded profile photos)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -161,6 +164,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
 }
 
 # Djoser Configuration
@@ -170,9 +178,10 @@ DJOSER = {
     "PASSWORD_RESET_CONFIRM_URL": "http://localhost:4200/reset-password/confirm/{uid}/{token}",
     "SERIALIZERS": {
         "user_create": "users.serializers.UserRegistrationSerializer",
-        "user": "users.serializers.UserProfileSerializer",  # Updated to UserProfileSerializer
-        "current_user": "users.serializers.UserProfileSerializer",  # Updated to UserProfileSerializer
-        "jwt_create": "users.serializers.JWTCreateWithEmailSerializer",  # Updated to JWTCreateWithEmailSerializer
+        # Exposer les champs du profil (dont profile_photo) pour GET/PATCH /api/auth/users/me/
+        "user": "users.serializers.UserSerializer",
+        "current_user": "users.serializers.UserSerializer",
+        "jwt_create": "users.serializers.JWTCreateWithEmailSerializer",
     },
     "EMAIL": {"password_reset": "users.emails.CustomPasswordResetEmail"},
     "HIDE_USERS": False,

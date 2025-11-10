@@ -34,18 +34,14 @@
 .navbar-brand {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #002552 !important;
+  color: #002552 !important; /* Navy blue */
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: color 0.2s ease;
   letter-spacing: 0.3px;
-  background: linear-gradient(135deg, #002552 0%, #1a73c1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .navbar-brand:hover {
-  color: #ff6b35 !important;
+  color: #002552 !important; /* Keep same navy on hover */
 }
 
 .nav-icon {
@@ -675,6 +671,41 @@
   font-size: 0.7rem;
   opacity: 0.8;
   line-height: 1.2;
+}
+
+/* --- UI polish: username/role spacing and role badge --- */
+.employee-nav .username {
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.employee-nav .user-role {
+  opacity: 1;
+  background: #e6eef6; /* light navy background */
+  color: #002552;
+  border: 1px solid rgba(0, 37, 82, 0.15);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* --- Avatar subtle ring --- */
+.employee-nav .profile-photo {
+  box-shadow: 0 0 0 2px rgba(0, 37, 82, 0.08);
+}
+
+/* --- Bell spacing and size for better balance --- */
+.employee-nav .nav-item > .nav-link .fa-bell {
+  font-size: 18px;
+}
+
+.employee-nav .nav-item.dropdown + .user-profile {
+  margin-left: 8px;
+}
+
+/* Compact on very small screens */
+@media (max-width: 420px) {
+  .employee-nav .user-info { display: none; }
 }
 
 /* Notification Badge in Navbar */

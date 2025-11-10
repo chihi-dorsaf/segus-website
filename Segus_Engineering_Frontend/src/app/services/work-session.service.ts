@@ -59,6 +59,7 @@ export class WorkSessionService {
   private pauseTimerInterval: any;
   private pauseStartTime: Date | null = null;
   private accumulatedPauseMs: number = 0;
+  private autoStartedOnce: boolean = false;
 
   constructor(private http: HttpClient, private authService: AuthService) {
     // Attendre que l'utilisateur soit authentifié avant de charger la session
@@ -70,6 +71,8 @@ export class WorkSessionService {
         console.log('🔑 [WorkSessionService] No authenticated user, clearing session');
         this.currentSessionSubject.next(null);
         this.resetTimer();
+        // Reset the auto-start guard when user logs out
+        this.autoStartedOnce = false;
       }
     });
   }
@@ -144,6 +147,8 @@ export class WorkSessionService {
           this.stopPauseTimer(true);
           this.accumulatedPauseMs = 0;
           this.totalPauseSubject.next('00:00:00');
+          // Auto-start if no active session and not already auto-started
+          this.maybeAutoStart();
         }
       },
       error: (error: any) => {
@@ -154,6 +159,8 @@ export class WorkSessionService {
         }
         this.currentSessionSubject.next(null);
         this.resetTimer();
+        // Also try auto-start on error if authenticated
+        this.maybeAutoStart();
       }
     });
   }
@@ -164,7 +171,7 @@ export class WorkSessionService {
     }
 
     return this.handleRequest(
-      this.http.post<WorkSession>(`${this.apiUrl}start_session/`,
+      this.http.post<WorkSession>(`${this.apiUrl}work-sessions/`,
         { notes: notes || '' },
         { headers: this.getAuthHeaders() }
       ).pipe(
@@ -197,7 +204,7 @@ export class WorkSessionService {
     }
 
     return this.handleRequest(
-      this.http.post<WorkSession>(`${this.apiUrl}${sessionId}/pause_session/`, {},
+      this.http.post<WorkSession>(`${this.apiUrl}${sessionId}/pause/`, {},
         { headers: this.getAuthHeaders() }
       ).pipe(
         tap(session => {
@@ -226,7 +233,7 @@ export class WorkSessionService {
     }
 
     return this.handleRequest(
-      this.http.post<WorkSession>(`${this.apiUrl}${sessionId}/resume_session/`, {},
+      this.http.post<WorkSession>(`${this.apiUrl}${sessionId}/resume/`, {},
         { headers: this.getAuthHeaders() }
       ).pipe(
         tap(session => {
@@ -268,7 +275,7 @@ export class WorkSessionService {
     }
 
     return this.handleRequest(
-      this.http.post<WorkSession>(`${this.apiUrl}${sessionId}/end_session/`, {},
+      this.http.post<WorkSession>(`${this.apiUrl}${sessionId}/end/`, {},
         { headers: this.getAuthHeaders() }
       ).pipe(
         tap(session => {
@@ -290,7 +297,7 @@ export class WorkSessionService {
     }
     
     // Try both URL formats for compatibility
-    const url = `${this.apiUrl}current-session/`;
+    const url = `${this.apiUrl}current/`;
     console.log('🔍 [WorkSessionService] Attempting to fetch current session from:', url);
     
     return this.http.get<WorkSession>(url, { headers: this.getAuthHeaders() }).pipe(
@@ -536,5 +543,25 @@ export class WorkSessionService {
   // Obtenir le temps total de pause courant (incluant segment en cours)
   getTotalPauseTime(): string {
     return this.totalPauseSubject.value;
+  }
+
+  // Démarrage automatique d'une session de travail si l'utilisateur est authentifié et qu'aucune session n'est active
+  private maybeAutoStart(): void {
+    if (this.autoStartedOnce) {
+      return;
+    }
+    if (!this.authService.isTokenValid()) {
+      return;
+    }
+    this.autoStartedOnce = true;
+    console.log('🚀 [AutoStart] No active session detected, starting a new session automatically');
+    this.startSession().subscribe({
+      next: () => console.log('✅ [AutoStart] Session started automatically'),
+      error: (e) => {
+        console.error('❌ [AutoStart] Failed to start session automatically:', e);
+        // Autoriser un nouvel essai ultérieur
+        this.autoStartedOnce = false;
+      }
+    });
   }
 }

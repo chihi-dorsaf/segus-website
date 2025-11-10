@@ -4,13 +4,14 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { TaskWithDetails, CreateTask, UpdateTask, SubTask } from '../models/project.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
-  private apiUrl = 'http://localhost:8000/api/projects/tasks/';
-  private subtaskApiUrl = 'http://localhost:8000/api/projects/subtasks/';
+  private apiUrl = `${environment.apiUrl}/api/tasks/`;
+  private subtaskApiUrl = `${environment.apiUrl}/api/subtasks/`;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
@@ -542,14 +543,17 @@ export class TaskService {
   }
 
   markSubtaskCompleted(subtaskId: number): Observable<any> {
-    // Utiliser l'endpoint pour les sous-tâches du système de projets
-    return this.http.post(`http://localhost:8000/api/gamification/subtasks/${subtaskId}/complete_project_subtask/`, {}, {
+    // Utiliser l'endpoint Projects: /api/subtasks/{id}/mark_completed/
+    return this.http.post(`${this.subtaskApiUrl}${subtaskId}/mark_completed/`, {}, {
       headers: this.getAuthHeaders()
     }).pipe(
       catchError((error) => {
         console.error('Error marking subtask as completed:', error);
         if (error.status === 401) {
           return this.handle401Error(() => this.markSubtaskCompleted(subtaskId));
+        } else if (error.status === 403) {
+          const userMessage = "Permissions insuffisantes pour marquer cette sous-tâche comme terminée";
+          return throwError(() => ({ ...error, userMessage }));
         }
         return throwError(() => error);
       })
@@ -557,17 +561,17 @@ export class TaskService {
   }
 
   markSubtaskUncompleted(subtaskId: number): Observable<any> {
-    // Utiliser l'API standard pour marquer comme non terminé
-    return this.http.patch(`${this.subtaskApiUrl}${subtaskId}/`, {
-      is_completed: false,
-      status: 'TODO'
-    }, {
+    // Utiliser l'endpoint Projects: /api/subtasks/{id}/mark_uncompleted/
+    return this.http.post(`${this.subtaskApiUrl}${subtaskId}/mark_uncompleted/`, {}, {
       headers: this.getAuthHeaders()
     }).pipe(
       catchError((error) => {
         console.error('Error marking subtask as uncompleted:', error);
         if (error.status === 401) {
           return this.handle401Error(() => this.markSubtaskUncompleted(subtaskId));
+        } else if (error.status === 403) {
+          const userMessage = "Permissions insuffisantes pour modifier cette sous-tâche";
+          return throwError(() => ({ ...error, userMessage }));
         }
         return throwError(() => error);
       })

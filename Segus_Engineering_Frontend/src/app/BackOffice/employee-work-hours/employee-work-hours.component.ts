@@ -829,8 +829,9 @@ export class EmployeeWorkHoursComponent implements OnInit, OnDestroy {
     console.log('🔄 Chargement des statistiques de travail...');
     this.isLoading = true;
 
-    // Appeler l'API des statistiques de travail au lieu de tous les employés
-    const apiUrl = `${environment.apiUrl}/api/employees/work-sessions/employee-stats/`;
+    // Appeler l'API des statistiques de travail (EmployeeWorkStatsViewSet)
+    // Backend route: /api/employees/work-stats/employee-stats/
+    const apiUrl = `${environment.apiUrl}/api/employees/work-stats/employee-stats/`;
     console.log('📡 URL appelée:', apiUrl);
 
     this.http.get(apiUrl).subscribe({

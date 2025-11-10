@@ -15,6 +15,9 @@ def send_welcome_email(employee, password):
     try:
         # Préparer les données pour le template
         context = {
+            # Full employee object is needed by the template (employee.user.*, employee.matricule, etc.)
+            "employee": employee,
+            # Convenience fields if needed by other templates
             "employee_name": employee.full_name,
             "email": employee.email,
             "password": password,

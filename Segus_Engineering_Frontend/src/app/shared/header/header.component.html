@@ -4,7 +4,6 @@
     <div class="navbar-brand-wrapper">
       <img src="assets/favicon.ico" alt="Logo Segus Engineering" class="logo" />
       <a class="navbar-brand" routerLink="/">Segus Engineering</a>
-      <span class="nav-icon"><i class="bx bx-menu"></i></span>
     </div>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
       aria-controls="navbarNav" aria-expanded="false" aria-label="Basculer la navigation">
@@ -110,9 +109,8 @@
 
         <!-- Actions rapides - Style navbar -->
         <li class="nav-item dropdown" #notificationDropdown>
-          <a class="nav-link" href="#" role="button" (click)="toggleNotifications()" title="Notifications">
+          <a class="nav-link" href="#" role="button" (click)="toggleNotifications()" aria-label="Notifications" title="Notifications">
             <i class="fas fa-bell nav-icon" [class.fa-shake]="hasUnreadNotifications"></i>
-            <span class="nav-text">Notifications</span>
             <span class="notification-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
           </a>
           <div class="notification-panel dropdown-menu" [class.show]="showNotifications">
@@ -160,31 +158,26 @@
           </div>
         </li>
 
-        <!-- Toggle Dark/Light - Style navbar -->
-        <li class="nav-item">
-          <a class="nav-link" href="#" (click)="basculerModeSombre()" title="Changer de thème">
-            <i class="fas nav-icon" [ngClass]="{ 'fa-moon': !isDarkMode, 'fa-sun': isDarkMode }"></i>
-            <span class="nav-text">Thème</span>
-          </a>
-        </li>
+        
 
         <!-- Profil utilisateur - Style navbar avec photo -->
         <li class="nav-item dropdown user-profile" #profileDropdown>
           <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" (click)="toggleUserMenu()" title="Mon profil">
             <!-- Photo de profil -->
-            <div class="profile-photo">
+            <div class="profile-photo profile-photo--round">
               <img *ngIf="currentUser && currentUser.profile_photo && !currentUser.profile_photo.includes('default-avatar')"
-                   [src]="'http://127.0.0.1:8000' + currentUser.profile_photo"
+                   [src]="toAbsoluteMediaUrl(currentUser.profile_photo)"
                    [alt]="(currentUser.username || '')"
                    class="profile-img" />
-              <div *ngIf="!currentUser || !currentUser.profile_photo || (currentUser.profile_photo && currentUser.profile_photo.includes('default-avatar'))" 
+              <div *ngIf="!currentUser || !currentUser.profile_photo || (currentUser.profile_photo && currentUser.profile_photo.includes('default-avatar'))"
                    class="profile-placeholder">
                 <i class="fas fa-user"></i>
               </div>
             </div>
             <div class="user-info d-none d-md-block">
-              <span class="nav-text username">{{ currentUser?.first_name || currentUser?.username }}</span>
-              <small class="user-role">{{ getUserRoleLabel(currentUser?.role || '') }}</small>
+              <span class="nav-text username">
+                {{ (currentUser?.first_name || '') + (currentUser?.last_name ? ' ' + currentUser?.last_name : (currentUser?.first_name ? '' : currentUser?.username)) }}
+              </span>
             </div>
           </a>
 
@@ -194,7 +187,7 @@
             <div class="dropdown-header p-3 bg-primary text-white text-center">
               <div class="mb-2">
                 <img *ngIf="currentUser && currentUser.profile_photo && !currentUser.profile_photo.includes('default-avatar')"
-                     [src]="'http://127.0.0.1:8000' + currentUser.profile_photo"
+                     [src]="toAbsoluteMediaUrl(currentUser.profile_photo)"
                      [alt]="(currentUser.username || '')"
                      style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid white;" />
                 <i *ngIf="!currentUser || !currentUser.profile_photo || (currentUser.profile_photo && currentUser.profile_photo.includes('default-avatar'))" class="fas fa-user fa-2x"></i>

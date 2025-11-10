@@ -43,7 +43,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  background: #002552; /* Navy top bar */
   border-radius: 16px 16px 0 0;
 }
 
@@ -53,15 +53,16 @@
   border-radius: 50%;
   object-fit: cover;
   border: 6px solid transparent;
-  background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899) border-box;
+  /* White inner with navy border ring */
+  background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #002552, #00356f) border-box;
   margin-bottom: 1.5rem;
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 37, 82, 0.25);
   transition: all 0.3s ease;
 }
 
 .profile-photo:hover {
   transform: scale(1.05);
-  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 37, 82, 0.35);
 }
 
 .file-input {
@@ -71,7 +72,7 @@
 .upload-btn {
   display: inline-block;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: #002552; /* Navy button */
   color: white;
   border: none;
   border-radius: 12px;
@@ -79,7 +80,7 @@
   font-size: 14px;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 37, 82, 0.25);
   position: relative;
   overflow: hidden;
 }
@@ -91,21 +92,18 @@
 
 .upload-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
-  background: linear-gradient(135deg, #5b5bd6, #7c3aed);
+  box-shadow: 0 6px 24px rgba(0, 37, 82, 0.3);
+  background: #013062; /* Darker navy */
 }
 
 .profile-container h2 {
   text-align: center;
-  color: #1f2937;
+  color: #002552;
   margin: 0;
   padding: 2rem;
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  /* Solid navy title */
   position: relative;
 }
 
@@ -117,7 +115,7 @@
   transform: translateX(-50%);
   width: 100px;
   height: 4px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: #002552;
   border-radius: 2px;
 }
 
@@ -138,7 +136,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #10b981, #34d399, #6366f1);
+  background: #002552; /* Navy top bar */
   border-radius: 16px 16px 0 0;
 }
 

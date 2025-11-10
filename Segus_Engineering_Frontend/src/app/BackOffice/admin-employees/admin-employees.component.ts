@@ -58,6 +58,8 @@ export class AdminEmployeesComponent implements OnInit {
   successMessage: string = '';
   errorMessage: string = '';
   importResult: { imported_count: number; errors: string[] } | null = null;
+  // Backend field errors mapping
+  serverErrors: { [key: string]: string[] } = {};
 
   constructor(
     private employeeService: EmployeeService,
@@ -75,6 +77,7 @@ export class AdminEmployeesComponent implements OnInit {
       generate_password: [true],
       position: ['', Validators.required],
       phone: [''],
+      address: [''],
       hire_date: [''],
       birth_date: [''],
       salary: [null]
@@ -89,6 +92,38 @@ export class AdminEmployeesComponent implements OnInit {
       target_hours: [8.0, [Validators.required, Validators.min(1), Validators.max(24)]],
       objective_date: ['']
     });
+  }
+
+  // Normalize payload before sending to backend: dates to YYYY-MM-DD, empty strings to null
+  private normalizeEmployeePayload(payload: any): any {
+    const normalized: any = { ...payload };
+
+    const toYMD = (val: any): string | null => {
+      if (val === undefined || val === null || val === '') return null;
+      const s = String(val).trim();
+      // If already YYYY-MM-DD, keep as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      return null;
+    };
+
+    if ('birth_date' in normalized) normalized.birth_date = toYMD(normalized.birth_date);
+    if ('hire_date' in normalized) normalized.hire_date = toYMD(normalized.hire_date);
+
+    // Convert empty strings to null for optional fields
+    ['phone', 'address', 'first_name', 'last_name', 'email'].forEach((k) => {
+      if (k in normalized && (normalized[k] === '' || normalized[k] === undefined)) {
+        normalized[k] = null;
+      }
+    });
+
+    return normalized;
   }
 
   ngOnInit(): void {
@@ -231,6 +266,7 @@ export class AdminEmployeesComponent implements OnInit {
   // Gestion des employés
   createEmployee(): void {
     if (this.employeeForm.invalid) {
+      this.employeeForm.markAllAsTouched();
       this.showError('Veuillez corriger les erreurs dans le formulaire.');
       return;
     }
@@ -245,46 +281,50 @@ export class AdminEmployeesComponent implements OnInit {
 
 
   private submitEmployeeCreation(formData: any): void {
-    const employeeData: CreateEmployeeRequest = {
+    const employeeData: CreateEmployeeRequest = this.normalizeEmployeePayload({
       email: formData.email,
       first_name: formData.first_name,
       last_name: formData.last_name,
       generate_password: formData.generate_password === null ? true : formData.generate_password,
       position: formData.position,
       hire_date: formData.hire_date,
+      address: formData.address,
       salary: formData.salary
-      // L'ID employé sera généré automatiquement par le backend
-    };
+    }) as CreateEmployeeRequest;
 
     this.employeeService.createEmployee(employeeData).subscribe({
       next: (response) => {
         this.isSubmitting = false;
-        this.showSuccess(response.message);
+        this.serverErrors = {};
+        this.showSuccess('Employé créé avec succès');
         this.closeForm();
         this.loadEmployees();
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.showError('Erreur lors de la création: ' + error.message);
+        this.applyServerErrors(error?.error?.details);
+        this.showError('Erreur lors de la création: ' + (error?.message || 'Données invalides'));
       }
     });
   }
 
   updateEmployee(): void {
     if (!this.selectedEmployee || this.employeeForm.invalid) {
+      this.employeeForm.markAllAsTouched();
       this.showError('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
     this.isSubmitting = true;
-    const employeeData: UpdateEmployeeRequest = this.employeeForm.value;
+    const employeeData: UpdateEmployeeRequest = this.normalizeEmployeePayload(this.employeeForm.value) as UpdateEmployeeRequest;
 
     console.log(`✏️ [AdminEmployees] Mise à jour employé ${this.selectedEmployee.id}:`, employeeData);
 
     this.employeeService.updateEmployee(this.selectedEmployee.id, employeeData).subscribe({
       next: (response) => {
-        console.log('✅ [AdminEmployees] Employé mis à jour:', response.message);
-        this.showSuccess(response.message);
+        console.log('✅ [AdminEmployees] Employé mis à jour:', response?.id);
+        this.serverErrors = {};
+        this.showSuccess('Employé mis à jour avec succès');
         this.closeForm();
         this.loadEmployees();
         this.loadStats();
@@ -292,6 +332,7 @@ export class AdminEmployeesComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ [AdminEmployees] Erreur mise à jour:', error);
+        this.applyServerErrors(error?.error?.details);
         this.showError('Erreur lors de la mise à jour de l\'employé');
         this.isSubmitting = false;
       }
@@ -307,9 +348,9 @@ export class AdminEmployeesComponent implements OnInit {
     this.isLoading = true;
 
     this.employeeService.deleteEmployee(employee.id).subscribe({
-      next: (response) => {
-        console.log('✅ [AdminEmployees] Employé supprimé:', response.message);
-        this.showSuccess(response.message || 'Employé supprimé avec succès');
+      next: () => {
+        console.log('✅ [AdminEmployees] Employé supprimé');
+        this.showSuccess('Employé supprimé avec succès');
         this.loadEmployees();
         this.loadStats();
         this.isLoading = false;
@@ -343,10 +384,10 @@ export class AdminEmployeesComponent implements OnInit {
     employee.is_active = newStatus;
 
     // Appeler le service pour mettre à jour le backend
-    this.employeeService.updateEmployee(employee.id, { is_active: newStatus }).subscribe({
-      next: (response: any) => {
+    this.employeeService.toggleEmployeeStatus(employee.id, newStatus).subscribe({
+      next: (response) => {
         console.log('✅ [AdminEmployees] Statut changé:', response.message);
-        this.showSuccess(response.message);
+        this.showSuccess(response.message || 'Statut mis à jour avec succès');
         this.loadEmployees();
         this.loadStats();
       },
@@ -355,6 +396,24 @@ export class AdminEmployeesComponent implements OnInit {
         // Restaurer l'ancien statut en cas d'erreur
         employee.is_active = !newStatus;
         this.showError('Erreur lors du changement de statut');
+      }
+    });
+  }
+
+  // Map backend validation errors to specific controls and local serverErrors
+  private applyServerErrors(details: any): void {
+    if (!details || typeof details !== 'object') {
+      return;
+    }
+    this.serverErrors = {};
+    Object.keys(details).forEach((key) => {
+      const messages = Array.isArray(details[key]) ? details[key] : [String(details[key])];
+      this.serverErrors[key] = messages;
+      const control = this.employeeForm.get(key);
+      if (control) {
+        const currentErrors = control.errors || {};
+        control.setErrors({ ...currentErrors, server: true });
+        control.markAsTouched();
       }
     });
   }
@@ -450,15 +509,43 @@ export class AdminEmployeesComponent implements OnInit {
   openEditForm(employee: Employee): void {
     this.isEditMode = true;
     this.selectedEmployee = employee;
+    // Fallback pour les noms si user_details est absent
+    let firstName = employee.user_details?.first_name || '';
+    let lastName = employee.user_details?.last_name || '';
+    if ((!firstName || !lastName) && employee.full_name) {
+      const parts = employee.full_name.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        firstName = firstName || parts[0];
+        lastName = lastName || parts.slice(1).join(' ');
+      } else if (parts.length === 1) {
+        firstName = firstName || parts[0];
+      }
+    }
+
+    // Normaliser les dates au format YYYY-MM-DD pour l'input type=date
+    const toYMD = (val: string | null | undefined): string => {
+      if (!val) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      return '';
+    };
+
     this.employeeForm.patchValue({
       email: employee.email || '',
-      first_name: employee.user_details?.first_name || '',
-      last_name: employee.user_details?.last_name || '',
+      first_name: firstName,
+      last_name: lastName,
       generate_password: false, // Ne pas générer de mot de passe lors de l'édition
       position: employee.position || '',
       phone: employee.phone || '',
-      hire_date: employee.hire_date || '',
-      birth_date: employee.birth_date || '',
+      address: employee.address || '',
+      hire_date: toYMD(employee.hire_date),
+      birth_date: toYMD(employee.birth_date),
       salary: employee.salary || null
     });
     this.showForm = true;

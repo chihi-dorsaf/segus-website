@@ -83,8 +83,8 @@ export interface ImportResult {
   providedIn: 'root'
 })
 export class EmployeeService {
-  private apiUrl = `${environment.apiUrl}/api/employees/employees/`; // For HR-related employee management
-  private usersApiUrl = `${environment.usersUrl}/`; // Dedicated users base
+  private apiUrl = `${environment.employeesUrl}/`; // Correct base: /api/employees/
+  private usersApiUrl = `${environment.usersUrl}/`; // Correct users base: /api/users/
 
   constructor(
     private http: HttpClient,
@@ -192,32 +192,32 @@ export class EmployeeService {
     );
   }
 
-  createEmployee(employee: CreateEmployeeRequest): Observable<{ message: string; employee: Employee }> {
+  createEmployee(employee: CreateEmployeeRequest): Observable<Employee> {
     console.log('➕ [EmployeeService] Creating employee:', employee);
-    return this.http.post<{ message: string; employee: Employee }>(this.apiUrl, employee, {
+    return this.http.post<Employee>(this.apiUrl, employee, {
       headers: this.getAuthHeaders()
     }).pipe(
-      tap(response => console.log('✅ [EmployeeService] Employee created successfully:', response.message)),
+      tap(response => console.log('✅ [EmployeeService] Employee created successfully:', response?.id)),
       catchError(this.handleError.bind(this))
     );
   }
 
-  updateEmployee(id: number, employee: UpdateEmployeeRequest): Observable<{ message: string; employee: Employee }> {
+  updateEmployee(id: number, employee: UpdateEmployeeRequest): Observable<Employee> {
     console.log(`✏️ [EmployeeService] Updating employee ${id}:`, employee);
-    return this.http.patch<{ message: string; employee: Employee }>(`${this.apiUrl}${id}/`, employee, {
+    return this.http.patch<Employee>(`${this.apiUrl}${id}/`, employee, {
       headers: this.getAuthHeaders()
     }).pipe(
-      tap(response => console.log('✅ [EmployeeService] Employee updated successfully:', response.message)),
+      tap(response => console.log('✅ [EmployeeService] Employee updated successfully:', response?.id)),
       catchError(this.handleError.bind(this))
     );
   }
 
-  deleteEmployee(id: number): Observable<{ message: string }> {
+  deleteEmployee(id: number): Observable<void> {
     console.log(`🗑️ [EmployeeService] Deleting employee ${id}`);
-    return this.http.delete<{ message: string }>(`${this.apiUrl}${id}/`, {
-      headers: this.getAuthHeaders()
+    return this.http.delete<void>(`${this.apiUrl}${id}/`, {
+      headers: this.getAuthHeaders(),
     }).pipe(
-      tap(response => console.log('✅ [EmployeeService] Employee deleted successfully:', response.message)),
+      tap(() => console.log('✅ [EmployeeService] Employee deleted successfully')),
       catchError(this.handleError.bind(this))
     );
   }
@@ -279,9 +279,10 @@ export class EmployeeService {
     );
   }
 
-  toggleEmployeeStatus(employeeId: number, newStatus: boolean): Observable<{ message: string; employee: Employee }> {
-    console.log(`🔄 [EmployeeService] Toggling employee ${employeeId} status to ${newStatus}`);
-    return this.http.patch<{ message: string; employee: Employee }>(`${this.apiUrl}${employeeId}/toggle-status/`, { is_active: newStatus }, {
+  toggleEmployeeStatus(employeeId: number, newActive: boolean): Observable<{ message: string; employee: Employee }> {
+    console.log(`🔄 [EmployeeService] Toggling employee ${employeeId} active to ${newActive}`);
+    const payload = { status: newActive ? 'ACTIVE' : 'INACTIVE' };
+    return this.http.patch<{ message: string; employee: Employee }>(`${this.apiUrl}${employeeId}/toggle-status/`, payload, {
       headers: this.getAuthHeaders()
     }).pipe(
       tap(response => console.log('✅ [EmployeeService] Employee status updated successfully:', response.message)),
@@ -291,7 +292,7 @@ export class EmployeeService {
 
   // --- Espace Employé (FrontOffice) ---
   getEmployeeDashboard(): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/projects/employee/dashboard/`, {
+    return this.http.get<any>(`${environment.projectsUrl}/employee/dashboard/`, {
       headers: this.getAuthHeaders()
     }).pipe(
       catchError(this.handleError.bind(this))
@@ -303,7 +304,7 @@ export class EmployeeService {
     if (status) {
       params = params.set('status', status);
     }
-    return this.http.get<any[]>(`${environment.apiUrl}/projects/employee/tasks/`, {
+    return this.http.get<any[]>(`${environment.projectsUrl}/employee/tasks/`, {
       params,
       headers: this.getAuthHeaders()
     }).pipe(
@@ -312,7 +313,7 @@ export class EmployeeService {
   }
 
   getEmployeeProjects(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/projects/employee/projects/`, {
+    return this.http.get<any[]>(`${environment.projectsUrl}/employee/projects/`, {
       headers: this.getAuthHeaders()
     }).pipe(
       catchError(this.handleError.bind(this))

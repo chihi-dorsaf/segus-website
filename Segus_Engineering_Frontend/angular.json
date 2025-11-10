@@ -62,13 +62,16 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Segus_Engineering_Frontend:build:production"
+              "browserTarget": "Segus_Engineering_Frontend:build:production"
             },
             "development": {
-              "buildTarget": "Segus_Engineering_Frontend:build:development"
+              "browserTarget": "Segus_Engineering_Frontend:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "browserTarget": "Segus_Engineering_Frontend:build:development"
+          }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",

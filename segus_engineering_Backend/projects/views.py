@@ -1,4 +1,6 @@
 import logging
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -98,6 +100,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
         try:
             employee = User.objects.get(id=employee_id)
             project.assigned_employees.add(employee)
+            # Notifier l'employé en temps réel
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{employee.id}",
+                {
+                    "type": "notification",
+                    "data": {
+                        "title": "Affectation au projet",
+                        "message": f"Vous avez été ajouté au projet: {project.title}",
+                        "type": "project",
+                        "project_id": project.id,
+                        "created_at": timezone.now().isoformat(),
+                        "is_read": False,
+                    },
+                },
+            )
             return Response({"message": "Employé assigné avec succès"})
         except User.DoesNotExist:
             return Response({"error": "Employé non trouvé"}, status=status.HTTP_404_NOT_FOUND)
@@ -338,6 +356,35 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+        # Émettre des notifications temps réel pour chaque employé assigné
+        subtask = serializer.instance
+        try:
+            assigned_users = list(subtask.assigned_employees.all())
+        except Exception:
+            assigned_users = []
+
+        if assigned_users:
+            channel_layer = get_channel_layer()
+            for user in assigned_users:
+                try:
+                    async_to_sync(channel_layer.group_send)(
+                        f"user_{user.id}",
+                        {
+                            "type": "notification",
+                            "data": {
+                                "title": "Nouvelle sous-tâche",
+                                "message": f"Vous avez été assigné à la sous-tâche: {getattr(subtask, 'section_name', 'Sous-tâche')}",
+                                "type": "subtask",
+                                "subtask_id": subtask.id,
+                                "task_id": subtask.task_id if hasattr(subtask, 'task_id') else None,
+                                "created_at": timezone.now().isoformat(),
+                                "is_read": False,
+                            },
+                        },
+                    )
+                except Exception:
+                    # Ne pas casser la création si la notif échoue
+                    logger.exception("Erreur d'envoi de notification temps réel")
 
 
 class SubTaskViewSet(viewsets.ModelViewSet):

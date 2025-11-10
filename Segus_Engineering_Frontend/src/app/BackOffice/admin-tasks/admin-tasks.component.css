@@ -5,6 +5,21 @@
   min-height: 100vh;
 }
 
+/* App-specific modal classes to avoid Bootstrap conflicts */
+.app-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2147480000 !important;
+  backdrop-filter: blur(4px) !important;
+}
+
 /* En-tête du dashboard */
 .dashboard-header {
   background: white;
@@ -868,11 +883,14 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 99999 !important;
+  z-index: 2147480000 !important; /* above any overlay */
   backdrop-filter: blur(4px) !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .modal {
+  display: block !important; /* ensure visible over Bootstrap default */
   background: white !important;
   border-radius: 16px !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
@@ -880,8 +898,13 @@
   width: 90% !important;
   max-height: 90vh !important;
   overflow-y: auto !important;
-  position: relative !important;
-  z-index: 100000 !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 2147483000 !important; /* above overlay */
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .modal-sm {

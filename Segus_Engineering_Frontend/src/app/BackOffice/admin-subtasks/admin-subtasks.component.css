@@ -571,6 +571,8 @@ input:focus, select:focus {
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  z-index: 10001;
 }
 
 .modal.modal-sm {

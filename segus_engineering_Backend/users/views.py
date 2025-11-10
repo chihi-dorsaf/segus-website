@@ -5,6 +5,7 @@ import random
 from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework import status, viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -161,7 +162,13 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["get", "patch"], url_path="me", url_name="me")
+    @action(
+        detail=False,
+        methods=["get", "patch"],
+        url_path="me",
+        url_name="me",
+        parser_classes=[MultiPartParser, FormParser],
+    )
     def me(self, request):
         """
         Get or update current user profile

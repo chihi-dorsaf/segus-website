@@ -3,7 +3,7 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">
-        <i class="icon-subtasks"></i>
+        <i class="fa-solid fa-list-check"></i>
         Gestion des Sous-tâches
       </h1>
       <p class="page-description">
@@ -17,7 +17,7 @@
         (click)="forceSyncSubtasks()"
         [disabled]="loading"
         title="Synchroniser les sous-tâches terminées par les employés">
-        <i class="fas fa-sync-alt"></i>
+        <i class="fa-solid fa-rotate"></i>
         <span class="sync-text">Synchroniser</span>
       </button>
       <button
@@ -25,7 +25,7 @@
         class="btn btn-primary"
         (click)="openCreateSubtaskModal()"
         [disabled]="loading">
-        <i class="icon-plus"></i>
+        <i class="fa-solid fa-plus"></i>
         Nouvelle Sous-tâche
       </button>
     </div>
@@ -38,7 +38,7 @@
       <div class="filter-group">
         <label for="search">Rechercher</label>
         <div class="search-input">
-          <i class="icon-search"></i>
+          <i class="fa-solid fa-magnifying-glass"></i>
           <input
             type="text"
             id="search"
@@ -123,14 +123,14 @@
         class="btn btn-sm"
         [class.active]="viewMode === 'grid'"
         (click)="viewMode = 'grid'">
-        <i class="icon-grid"></i>
+        <i class="fa-solid fa-grip"></i>
         Grille
       </button>
       <button
         class="btn btn-sm"
         [class.active]="viewMode === 'list'"
         (click)="viewMode = 'list'">
-        <i class="icon-list"></i>
+        <i class="fa-solid fa-list"></i>
         Liste
       </button>
     </div>
@@ -163,7 +163,7 @@
         </div>
         <div class="card-menu">
           <button class="btn-menu" (click)="openSubtaskMenu($event, subtask)">
-            <i class="icon-more"></i>
+            <i class="fa-solid fa-ellipsis-vertical"></i>
           </button>
         </div>
       </div>
@@ -217,13 +217,13 @@
             class="btn btn-sm btn-secondary"
             (click)="openEditSubtaskModal(subtask)"
             title="Modifier">
-            <i class="icon-edit"></i>
+            <i class="fa-solid fa-pen"></i>
           </button>
           <button
             class="btn btn-sm btn-primary"
             (click)="openAssignModal(subtask)"
             title="Assigner">
-            <i class="icon-users"></i>
+            <i class="fa-solid fa-users"></i>
           </button>
         </div>
       </div>
@@ -317,19 +317,19 @@
                 class="btn btn-sm btn-secondary"
                 (click)="openEditSubtaskModal(subtask)"
                 title="Modifier">
-                <i class="icon-edit"></i>
+                <i class="fa-solid fa-pen"></i>
               </button>
               <button
                 class="btn btn-sm btn-primary"
                 (click)="openAssignModal(subtask)"
                 title="Assigner">
-                <i class="icon-users"></i>
+                <i class="fa-solid fa-users"></i>
               </button>
               <button
                 class="btn btn-sm btn-danger"
                 (click)="openDeleteModal(subtask)"
                 title="Supprimer">
-                <i class="icon-delete"></i>
+                <i class="fa-solid fa-trash"></i>
               </button>
             </div>
           </td>
@@ -360,7 +360,7 @@
         class="btn btn-sm"
         [disabled]="currentPage === 1"
         (click)="goToPage(currentPage - 1)">
-        <i class="icon-chevron-left"></i>
+        <i class="fa-solid fa-chevron-left"></i>
       </button>
 
       <button
@@ -375,7 +375,7 @@
         class="btn btn-sm"
         [disabled]="currentPage === totalPages"
         (click)="goToPage(currentPage + 1)">
-        <i class="icon-chevron-right"></i>
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
     </div>
 
@@ -444,7 +444,9 @@
               [(ngModel)]="createSubtaskForm.section_number"
               name="sectionNumber"
               required
-              placeholder="Ex: S001">
+              placeholder="Ex: S001"
+              pattern="^S\d{3}$"
+              title="Format attendu: 'S' suivi de 3 chiffres, ex: S001">
           </div>
 
           <div class="form-group">
@@ -455,7 +457,9 @@
               [(ngModel)]="createSubtaskForm.section_id"
               name="sectionId"
               required
-              placeholder="Ex: SEC-001">
+              placeholder="Ex: SEC-001"
+              pattern="^SEC-\d{3}$"
+              title="Format attendu: 'SEC-' suivi de 3 chiffres, ex: SEC-001">
           </div>
         </div>
 
@@ -481,6 +485,7 @@
               id="task"
               [(ngModel)]="createSubtaskForm.task"
               name="task"
+              [disabled]="!selectedProjectForTask"
               required>
               <option value="">Sélectionner une tâche</option>
               <option *ngFor="let task of filteredTasksForProject" [value]="task.id">
@@ -500,19 +505,33 @@
             min="0"
             step="0.01"
             placeholder="0.00">
+          <small class="text-muted">En kilomètres. Utilisez un point comme séparateur décimal (ex: 12.50).</small>
         </div>
 
         <div class="form-group">
-          <label for="assignedEmployees">Employés assignés</label>
-          <select
-            id="assignedEmployees"
-            [(ngModel)]="createSubtaskForm.assigned_employee_ids"
-            name="assignedEmployees"
-            multiple>
-            <option *ngFor="let employee of employees" [value]="employee.id">
-              {{employee.full_name || employee.username}}
-            </option>
-          </select>
+          <label>Employés assignés</label>
+          <input
+            type="text"
+            placeholder="Rechercher un employé..."
+            [(ngModel)]="employeeSearchTerm"
+            name="employeeSearch"
+          />
+          <div class="employee-checkboxes">
+            <div *ngFor="let employee of filteredEmployeesBySearch" class="employee-checkbox">
+              <input
+                type="checkbox"
+                [id]="'create-subtask-employee-' + employee.id"
+                [value]="employee.id"
+                [checked]="createSubtaskForm.assigned_employee_ids?.includes(employee.id)"
+                (change)="toggleCreateEmployeeAssignment(employee.id, $event)"
+              >
+              <label [for]="'create-subtask-employee-' + employee.id">
+                {{ (employee.full_name || employee.username) }}
+                <span class="text-muted" *ngIf="employee.email"> — {{ employee.email }}</span>
+              </label>
+            </div>
+          </div>
+          <small class="text-muted">Sélectionnés: {{ createSubtaskForm.assigned_employee_ids?.length || 0 }}</small>
         </div>
 
         <div class="modal-actions">
