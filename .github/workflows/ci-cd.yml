@@ -20,6 +20,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: Segus_Engineering_Frontend/package-lock.json
 
+      - name: Set up Chrome
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
       - name: Install frontend deps and build
         run: |
           cd Segus_Engineering_Frontend
@@ -142,10 +148,10 @@ jobs:
         run: |
           cd Segus_Engineering_Frontend
           mkdir -p reports/junit
-          npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage
+          npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
         env:
           CI: true
-          CHROME_BIN: /usr/bin/google-chrome
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
 
       - name: Upload frontend coverage artifact (HTML)
         if: always()
