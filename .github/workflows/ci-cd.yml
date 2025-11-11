@@ -335,24 +335,81 @@ jobs:
       - name: Compose report
         id: compose
         run: |
-          summary="CI Summary for ${{ github.repository }}@${{ github.sha }}\n\n"
-          summary+="Backend: see artifacts 'coverage-backend', 'coverage-backend-html', 'junit-backend'\n"
-          summary+="Frontend: see artifacts 'coverage-frontend', 'coverage-frontend-html', 'junit-frontend'\n"
-          summary+="SonarCloud: project ${{ secrets.SONAR_PROJECT_KEY }} (org: ${{ secrets.SONAR_ORG }})\n"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          cat > /tmp/report.html <<'HTML'
+          <html>
+          <head>
+            <meta charset="UTF-8" />
+            <style>
+              body{font-family:Arial,Helvetica,sans-serif;color:#111}
+              .wrap{max-width:700px;margin:auto;border:1px solid #eee;border-radius:8px;padding:16px}
+              h2{margin:0 0 12px 0}
+              .ok{color:#11823b}.fail{color:#c62828}
+              ul{margin:8px 0 0 16px}
+              code{background:#f5f5f5;padding:2px 4px;border-radius:4px}
+              .footer{margin-top:16px;font-size:12px;color:#666}
+            </style>
+          </head>
+          <body>
+            <div class="wrap">
+              <h2>CI Summary – ${{ github.repository }} @ <code>${{ github.sha }}</code></h2>
+              <p>Status: <strong>${{ job.status }}</strong></p>
+              <h3>Artifacts</h3>
+              <ul>
+                <li>Backend: <code>coverage-backend</code>, <code>coverage-backend-html</code>, <code>junit-backend</code></li>
+                <li>Frontend: <code>coverage-frontend</code>, <code>coverage-frontend-html</code>, <code>junit-frontend</code></li>
+              </ul>
+              <h3>SonarCloud</h3>
+              <p>Project: <code>${{ secrets.SONAR_PROJECT_KEY }}</code> (org: <code>${{ secrets.SONAR_ORG }}</code>)</p>
+              <p>Open run details and download artifacts here: <a href="${RUN_URL}">${RUN_URL}</a></p>
+              <div class="footer">Sent automatically by GitHub Actions</div>
+            </div>
+          </body>
+          </html>
+          HTML
           echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$summary" >> $GITHUB_OUTPUT
+          cat /tmp/report.html >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Check SMTP secrets
+        id: check_smtp
+        shell: bash
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          TO_EMAILS: ${{ secrets.TO_EMAILS }}
+        run: |
+          enabled=false
+          from_val="$FROM_EMAIL"
+          if [[ -z "$from_val" && -n "$SMTP_USERNAME" ]]; then
+            from_val="$SMTP_USERNAME"
+          fi
+          secure=false
+          if [[ "$SMTP_PORT" == "465" ]]; then
+            secure=true
+          fi
+          if [[ -n "$SMTP_SERVER" && -n "$SMTP_PORT" && -n "$SMTP_USERNAME" && -n "$SMTP_PASSWORD" && -n "$TO_EMAILS" && -n "$from_val" ]]; then
+            enabled=true
+          fi
+          echo "enabled=${enabled}" >> $GITHUB_OUTPUT
+          echo "from=${from_val}" >> $GITHUB_OUTPUT
+          echo "secure=${secure}" >> $GITHUB_OUTPUT
+
       - name: Send mail
+        if: steps.check_smtp.outputs.enabled == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_SERVER }}
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: CI Report - ${{ github.repository }}@${{ github.sha }}
+          subject: "CI Report – ${{ github.repository }} @ ${{ github.sha }}"
           to: ${{ secrets.TO_EMAILS }}
-          from: ${{ secrets.FROM_EMAIL }}
-          secure: true
+          from: ${{ steps.check_smtp.outputs.from }}
+          secure: ${{ steps.check_smtp.outputs.secure }}
+          content_type: text/html
           body: ${{ steps.compose.outputs.body }}
   
