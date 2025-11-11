@@ -66,7 +66,7 @@ describe('EmployeeService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/`);
+      const req = httpMock.expectOne(`${environment.employeesUrl}/`);
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
     });
@@ -76,7 +76,7 @@ describe('EmployeeService', () => {
         expect(employee).toEqual(mockEmployee);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/1/`);
+      const req = httpMock.expectOne(`${environment.employeesUrl}/1/`);
       expect(req.request.method).toBe('GET');
       req.flush(mockEmployee);
     });
@@ -94,7 +94,7 @@ describe('EmployeeService', () => {
         expect(employee).toEqual(mockEmployee);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/`);
+      const req = httpMock.expectOne(`${environment.employeesUrl}/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(newEmployee);
       req.flush(mockEmployee);
@@ -108,7 +108,7 @@ describe('EmployeeService', () => {
         expect(employee).toEqual(updatedEmployee);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/1/`);
+      const req = httpMock.expectOne(`${environment.employeesUrl}/1/`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual(updatePayload);
       req.flush(updatedEmployee);
@@ -119,7 +119,7 @@ describe('EmployeeService', () => {
         expect(response).toBeUndefined();
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/1/`);
+      const req = httpMock.expectOne(`${environment.employeesUrl}/1/`);
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
     });
@@ -135,7 +135,7 @@ describe('EmployeeService', () => {
         }
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/`);
+      const req = httpMock.expectOne(`${environment.employeesUrl}/`);
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
   });
