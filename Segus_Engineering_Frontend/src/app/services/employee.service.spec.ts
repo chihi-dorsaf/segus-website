@@ -90,40 +90,38 @@ describe('EmployeeService', () => {
         salary: 2500.0
       };
 
-      service.createEmployee(newEmployee).subscribe(res => {
-        expect(res.employee).toEqual(mockEmployee);
-        expect(res.message).toBeDefined();
+      service.createEmployee(newEmployee).subscribe(employee => {
+        expect(employee).toEqual(mockEmployee);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(newEmployee);
-      req.flush({ message: 'created', employee: mockEmployee });
+      req.flush(mockEmployee);
     });
 
     it('should update employee', () => {
       const updatePayload: UpdateEmployeeRequest = { position: 'Senior Développeur' };
       const updatedEmployee = { ...mockEmployee, position: 'Senior Développeur' };
 
-      service.updateEmployee(1, updatePayload).subscribe(res => {
-        expect(res.employee).toEqual(updatedEmployee);
-        expect(res.message).toBeDefined();
+      service.updateEmployee(1, updatePayload).subscribe(employee => {
+        expect(employee).toEqual(updatedEmployee);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/1/`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual(updatePayload);
-      req.flush({ message: 'updated', employee: updatedEmployee });
+      req.flush(updatedEmployee);
     });
 
     it('should delete employee', () => {
       service.deleteEmployee(1).subscribe(response => {
-        expect(response.message).toBeDefined();
+        expect(response).toBeUndefined();
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/employees/1/`);
       expect(req.request.method).toBe('DELETE');
-      req.flush({ message: 'deleted' });
+      req.flush(null);
     });
   });
   // Removed Work Sessions & custom Statistics tests: these methods do not exist in EmployeeService
