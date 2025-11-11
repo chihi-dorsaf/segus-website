@@ -1,12 +1,17 @@
-name: Build and Push Frontend Docker Image
+name: Build and Push Frontend Docker Image (disabled)
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      enabled:
+        description: "Set to 'true' to run this disabled workflow manually"
+        required: true
+        default: 'false'
 
 jobs:
   build:
+    # This workflow is disabled by default; it only runs if manually dispatched with enabled=true
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.enabled == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
