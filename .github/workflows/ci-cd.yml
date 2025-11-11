@@ -8,7 +8,45 @@ on:
   workflow_dispatch:
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Segus_Engineering_Frontend/package-lock.json
+
+      - name: Install frontend deps and build
+        run: |
+          cd Segus_Engineering_Frontend
+          npm ci
+          npm run build:prod
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install backend deps
+        run: |
+          cd segus_engineering_Backend
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
   test-backend:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +68,7 @@ jobs:
         run: |
           cd segus_engineering_Backend
           pip install --upgrade pip
-          pip install pytest pytest-django
+          pip install pytest pytest-django pytest-cov coverage
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Create logs directory
@@ -39,14 +77,47 @@ jobs:
           mkdir -p logs
           touch logs/django.log
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
           cd segus_engineering_Backend
-          python -m pytest
+          mkdir -p reports/junit
+          python -m pytest --maxfail=1 --disable-warnings -q \
+            --cov=. \
+            --cov-report=xml:coverage-backend/coverage-backend.xml \
+            --cov-report=html:coverage-backend-html \
+            --junitxml=reports/junit/backend-tests.xml
         env:
           DJANGO_SETTINGS_MODULE: segus_engineering_Backend.settings
 
+      - name: Upload backend coverage artifact (XML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: segus_engineering_Backend/coverage-backend/coverage-backend.xml
+
+      - name: Upload backend coverage artifact (HTML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend-html
+          path: segus_engineering_Backend/coverage-backend-html
+
+      - name: Upload backend JUnit test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-backend
+          path: segus_engineering_Backend/reports/junit/backend-tests.xml
+
+      - name: Backend job summary
+        if: always()
+        run: |
+          echo "## Backend Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage XML: artifact 'coverage-backend'" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage HTML: artifact 'coverage-backend-html'" >> $GITHUB_STEP_SUMMARY
+          echo "- JUnit: artifact 'junit-backend'" >> $GITHUB_STEP_SUMMARY
+
   test-frontend:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,10 +141,41 @@ jobs:
       - name: Run tests
         run: |
           cd Segus_Engineering_Frontend
-          npm run test:ci
+          mkdir -p reports/junit
+          npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage
         env:
           CI: true
           CHROME_BIN: /usr/bin/google-chrome
+
+      - name: Upload frontend coverage artifact (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend-html
+          path: Segus_Engineering_Frontend/coverage/segus-engineering
+
+      - name: Upload frontend JUnit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-frontend
+          path: Segus_Engineering_Frontend/reports/junit/frontend-tests.xml
+
+      - name: Upload frontend coverage artifact (LCOV)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: |
+            Segus_Engineering_Frontend/coverage/**/lcov.info
+            Segus_Engineering_Frontend/coverage/lcov.info
+
+      - name: Frontend job summary
+        if: always()
+        run: |
+          echo "## Frontend Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage report: artifact 'coverage-frontend' (LCOV)" >> $GITHUB_STEP_SUMMARY
 
       - name: Build
         run: |
@@ -145,48 +247,106 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy-ansible:
-    needs: build-docker
+      - name: Docker build job summary
+        if: always()
+        run: |
+          echo "## Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: docker.io/${{ secrets.DOCKER_USERNAME }}/segus-backend:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: docker.io/${{ secrets.DOCKER_USERNAME }}/segus-frontend:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  sonarcloud:
+    name: SonarCloud Analysis
+    needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Ansible
+      - name: Check Sonar secrets
+        id: check_sonar
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORG: ${{ secrets.SONAR_ORG }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
-          pip install ansible
+          enabled=false
+          if [[ -n "${SONAR_TOKEN}" && -n "${SONAR_ORG}" && -n "${SONAR_PROJECT_KEY}" ]]; then
+            enabled=true
+          fi
+          echo "enabled=${enabled}" >> $GITHUB_OUTPUT
 
-      - name: Install Ansible collections
-        run: |
-          ansible-galaxy collection install community.docker
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage-artifacts
 
-      - name: Setup SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+      - name: Set up Java (for SonarScanner)
+        if: steps.check_sonar.outputs.enabled == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Create runtime inventory
+      - name: Generate sonar-project.properties
+        if: steps.check_sonar.outputs.enabled == 'true'
         run: |
-          mkdir -p ansible/inventory
-          cat > ansible/inventory/runtime.yml <<'EOF'
-          all:
-            children:
-              web_servers:
-                hosts:
-                  production:
-                    ansible_host: "${PROD_HOST}"
-                    ansible_user: "${PROD_USER}"
-                    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          cat > sonar-project.properties << 'EOF'
+          sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          sonar.organization=${{ secrets.SONAR_ORG }}
+          sonar.host.url=https://sonarcloud.io
+          sonar.sources=Segus_Engineering_Frontend/src,segus_engineering_Backend
+          sonar.exclusions=**/*.spec.ts,**/node_modules/**,**/dist/**
+          sonar.javascript.lcov.reportPaths=coverage-artifacts/coverage-frontend/**/lcov.info,coverage-artifacts/coverage-frontend/lcov.info
+          sonar.python.coverage.reportPaths=coverage-artifacts/coverage-backend/coverage-backend.xml
+          sonar.sourceEncoding=UTF-8
           EOF
-        env:
-          PROD_HOST: ${{ secrets.PROD_HOST }}
-          PROD_USER: ${{ secrets.PROD_USER }}
 
-      - name: Deploy with Ansible
-        run: |
-          cd ansible
-          ansible-playbook -i inventory/runtime.yml playbooks/deploy.yml
+      - name: SonarCloud Scan
+        if: steps.check_sonar.outputs.enabled == 'true'
+        uses: SonarSource/sonarcloud-github-action@v2
         env:
-          ANSIBLE_HOST_KEY_CHECKING: False
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Sonar job summary
+        if: always()
+        run: |
+          echo "## SonarCloud" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_sonar.outputs.enabled }}" = "true" ]; then
+            echo "- Project: ${{ secrets.SONAR_PROJECT_KEY }} (org: ${{ secrets.SONAR_ORG }})" >> $GITHUB_STEP_SUMMARY
+            echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Skipped (Sonar secrets not set)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-email:
+    name: Send Email Report
+    needs: [build-docker, sonarcloud]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compose report
+        id: compose
+        run: |
+          summary="CI Summary for ${{ github.repository }}@${{ github.sha }}\n\n"
+          summary+="Backend: see artifacts 'coverage-backend', 'coverage-backend-html', 'junit-backend'\n"
+          summary+="Frontend: see artifacts 'coverage-frontend', 'coverage-frontend-html', 'junit-frontend'\n"
+          summary+="SonarCloud: project ${{ secrets.SONAR_PROJECT_KEY }} (org: ${{ secrets.SONAR_ORG }})\n"
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$summary" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send mail
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: CI Report - ${{ github.repository }}@${{ github.sha }}
+          to: ${{ secrets.TO_EMAILS }}
+          from: ${{ secrets.FROM_EMAIL }}
+          secure: true
+          body: ${{ steps.compose.outputs.body }}
+  
