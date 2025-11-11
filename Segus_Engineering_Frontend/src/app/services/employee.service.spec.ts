@@ -116,7 +116,7 @@ describe('EmployeeService', () => {
 
     it('should delete employee', () => {
       service.deleteEmployee(1).subscribe(response => {
-        expect(response).toBeUndefined();
+        expect(response).toBeNull();
       });
 
       const req = httpMock.expectOne(`${environment.employeesUrl}/1/`);
