@@ -7,6 +7,7 @@ module.exports = function (config) {
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
       require('karma-coverage'),
+      require('karma-junit-reporter'),
       require('@angular-devkit/build-angular/plugins/karma')
     ],
     client: {
@@ -25,7 +26,12 @@ module.exports = function (config) {
         { type: 'lcovonly' }
       ]
     },
-    reporters: ['progress', 'kjhtml'],
+    reporters: ['progress', 'kjhtml', 'junit'],
+    junitReporter: {
+      outputDir: require('path').join(__dirname, 'reports/junit'),
+      outputFile: 'frontend-tests.xml',
+      useBrowserName: false
+    },
     browsers: ['Chrome'],
     customLaunchers: {
       ChromeHeadlessCI: {

@@ -42,22 +42,41 @@ jobs:
       - name: Run tests with coverage
         run: |
           cd segus_engineering_Backend
-          python -m pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml:coverage-backend.xml
+          mkdir -p reports/junit
+          python -m pytest --maxfail=1 --disable-warnings -q \
+            --cov=. \
+            --cov-report=xml:coverage-backend/coverage-backend.xml \
+            --cov-report=html:coverage-backend-html \
+            --junitxml=reports/junit/backend-tests.xml
         env:
           DJANGO_SETTINGS_MODULE: segus_engineering_Backend.settings
 
-      - name: Upload backend coverage artifact
+      - name: Upload backend coverage artifact (XML)
         uses: actions/upload-artifact@v4
         with:
           name: coverage-backend
-          path: segus_engineering_Backend/coverage-backend.xml
+          path: segus_engineering_Backend/coverage-backend/coverage-backend.xml
+
+      - name: Upload backend coverage artifact (HTML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend-html
+          path: segus_engineering_Backend/coverage-backend-html
+
+      - name: Upload backend JUnit test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-backend
+          path: segus_engineering_Backend/reports/junit/backend-tests.xml
 
       - name: Backend job summary
         if: always()
         run: |
           echo "## Backend Tests" >> $GITHUB_STEP_SUMMARY
           echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Coverage report: artifact 'coverage-backend' (XML)" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage XML: artifact 'coverage-backend'" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage HTML: artifact 'coverage-backend-html'" >> $GITHUB_STEP_SUMMARY
+          echo "- JUnit: artifact 'junit-backend'" >> $GITHUB_STEP_SUMMARY
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -87,6 +106,20 @@ jobs:
         env:
           CI: true
           CHROME_BIN: /usr/bin/google-chrome
+
+      - name: Upload frontend coverage artifact (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend-html
+          path: Segus_Engineering_Frontend/coverage/segus-engineering
+
+      - name: Upload frontend JUnit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-frontend
+          path: Segus_Engineering_Frontend/reports/junit/frontend-tests.xml
 
       - name: Upload frontend coverage artifact (LCOV)
         if: always()
@@ -276,7 +309,7 @@ jobs:
           sonar.sources=Segus_Engineering_Frontend/src,segus_engineering_Backend
           sonar.exclusions=**/*.spec.ts,**/node_modules/**,**/dist/**
           sonar.javascript.lcov.reportPaths=coverage-artifacts/coverage-frontend/**/lcov.info,coverage-artifacts/coverage-frontend/lcov.info
-          sonar.python.coverage.reportPaths=coverage-artifacts/coverage-backend/coverage-backend.xml,segus_engineering_Backend/coverage-backend.xml
+          sonar.python.coverage.reportPaths=coverage-artifacts/coverage-backend/coverage-backend.xml
           sonar.sourceEncoding=UTF-8
           EOF
 
@@ -297,48 +330,4 @@ jobs:
             echo "- Skipped (Sonar secrets not set)" >> $GITHUB_STEP_SUMMARY
           fi
 
-  deploy-ansible:
-    needs: build-docker
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Ansible
-        run: |
-          pip install ansible
-
-      - name: Install Ansible collections
-        run: |
-          ansible-galaxy collection install community.docker
-
-      - name: Setup SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Create runtime inventory
-        run: |
-          mkdir -p ansible/inventory
-          cat > ansible/inventory/runtime.yml <<'EOF'
-          all:
-            children:
-              web_servers:
-                hosts:
-                  production:
-                    ansible_host: "${PROD_HOST}"
-                    ansible_user: "${PROD_USER}"
-                    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-          EOF
-        env:
-          PROD_HOST: ${{ secrets.PROD_HOST }}
-          PROD_USER: ${{ secrets.PROD_USER }}
-
-      - name: Deploy with Ansible
-        run: |
-          cd ansible
-          ansible-playbook -i inventory/runtime.yml playbooks/deploy.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: False
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  
